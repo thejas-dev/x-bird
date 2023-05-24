@@ -1,54 +1,25 @@
-import Image from 'next/image'
-import Main from '../components/Main';
 import {useRouter} from 'next/navigation';
 import {useRecoilState} from 'recoil'
-import {loginRoute,registerRoute} from '../utils/ApiRoutes';
-import axios from 'axios';
 import {currentUserState} from '../atoms/userAtom'
+import SignInComponent from '../components/SignInComponent';
 import {useEffect} from 'react';
+import {loginRoute,registerRoute} from '../utils/ApiRoutes';
 import {getProviders,getSession,useSession} from 'next-auth/react'
+import axios from 'axios';
 
 export default function Home({providers,session2}) {
-	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
+	// body...
+	console.log(session2,providers)
 	const router = useRouter();
+	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const {data:session} = useSession();
 
 	useEffect(()=>{
-		console.log(providers,session2,session)
-
-	},[])
-
-	useEffect(()=>{
-		if(!currentUser){
-			if(session){
-				handleValidation()
-			}else if(localStorage.getItem('xbird')){
-				handleLogin(localStorage.getItem('xbird'));
-			}else{
-				router.push('./signIn')
-			}
-		}	
-	},[])
-
-	useEffect(()=>{
-		if(!currentUser){
-			if(session){
-				handleValidation()
-			}else if(localStorage.getItem('xbird')){
-				handleLogin(localStorage.getItem('xbird'));
-			}else{
-				router.push('./signIn')
-			}
-		}	
-	},[currentUser])
-
-	const handleLogin = async() =>{
-	    let email = session?.user.email
-	    const {data} = await axios.post(loginRoute,{
-	      email,
-	    });
-	    setCurrentUser(data?.user);
-	}
+		if(session){
+			console.log(session)
+			handleValidation();
+		}
+	},[session])
 
 	const handleValidation = async() =>{
 	    let email = session?.user.email
@@ -74,12 +45,21 @@ export default function Home({providers,session2}) {
 	    }
 	  }
 
-  return (
-    <div className="h-screen w-full">
-      <Main/>
-    </div>
-  )
+	useEffect(()=>{
+		if(currentUser){
+			router.push('./')
+		}	
+	},[currentUser])
+	
+
+	return (
+		<div className="h-screen w-full">
+			<SignInComponent id={providers.google.id}/>
+		</div>
+
+	)
 }
+
 
 export async function getServerSideProps(context){
 	const providers = await getProviders();

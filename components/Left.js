@@ -2,12 +2,16 @@ import {FiHash} from 'react-icons/fi'
 import {BsThreeDots} from 'react-icons/bs';
 import {RiHome7Fill,RiFileList3Fill,RiFileList3Line} from 'react-icons/ri';	
 import {CiHashtag} from 'react-icons/ci';
+import {useRecoilState} from 'recoil'
+import {currentChatState,currentUserState} from '../atoms/userAtom'
 import {BiHomeCircle} from 'react-icons/bi';
 import {HiOutlineMail,HiMail,HiOutlineUser,HiUser} from 'react-icons/hi';
 import {BsBookmark,BsBookmarkFill} from 'react-icons/bs'
 
 export default function Left({setCurrentWindow,currentWindow}) {
 	// body...
+
+	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 
 
 	return (
@@ -88,10 +92,10 @@ export default function Left({setCurrentWindow,currentWindow}) {
 			</div>
 			<div className="hidden xl:flex gap-3 ml-8 px-3 py-2 mb-3 items-center mr-7 justify-between rounded-full hover:bg-gray-200 transition-all duration-200 ease-in-out cursor-pointer">
 				<div className="gap-3 flex items-center">
-				<img src="twitter-icon.png" alt="" className="h-10 w-10 rounded-full"/>
+				<img src={currentUser?.image} alt="" className="h-10 w-10 rounded-full"/>
 				<div className="flex-col flex items-center" >
-					<h1 className="text-lg font-semibold text-black">Thejas hari</h1>
-					<h1 className="text-gray-500 ">@hari_thejas</h1>
+					<h1 className="text-lg font-semibold text-black">{currentUser?.name}</h1>
+					<h1 className="text-gray-500 ">@{currentUser?.username}</h1>
 				</div>
 				</div>
 				<BsThreeDots className="h-5 w-5 text-black"/>

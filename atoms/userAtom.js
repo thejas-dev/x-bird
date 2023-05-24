@@ -2,5 +2,15 @@ import { atom } from 'recoil';
 
 export const currentChatState = atom({
 	key:"currentChatState",
-	default:'d'
+	default:''
+})
+
+export const currentUserState = atom({
+	key:"currentUserState",
+	default:''
+})
+
+export const chatsState = atom({
+	key:"chatsState",
+	default:[]
 })

@@ -5,15 +5,17 @@ import Right from './Right'
 import Center from './Center'
 import Bottom from './Bottom'
 import Message from './Message'
+import {loginRoutes,registerRoutes} from '../utils/ApiRoutes'
+import Explore from './Explore';
 
 export default function Main() {
 	// body...
-	const client = new TwitterApi({ clientId: 'SjFRRG40N1JrN3FnTjhVc05MNzk6MTpjaQ', clientSecret: 'Wzx7zLqLV9rS3QbAftLpOawY3ZGAbLJyL2RlSVsnuiNObOEGPG' });
-	const CALLBACK_URL = 'http://localhost:3000'
-	const [id,setId] = useState(0);
-	const [accessToken,setAccessToken] = useState('');
-	const [bearerToken,setBearerToken] = useState('');
-	const [refreshToken,setRefreshToken] = useState('');
+	// const client = new TwitterApi({ clientId: 'SjFRRG40N1JrN3FnTjhVc05MNzk6MTpjaQ', clientSecret: 'Wzx7zLqLV9rS3QbAftLpOawY3ZGAbLJyL2RlSVsnuiNObOEGPG' });
+	// const CALLBACK_URL = 'http://localhost:3000'
+	// const [id,setId] = useState(0);
+	// const [accessToken,setAccessToken] = useState('');
+	// const [bearerToken,setBearerToken] = useState('');
+	// const [refreshToken,setRefreshToken] = useState('');
 	const [currentWindow,setCurrentWindow] = useState('Home');
 
 
@@ -25,6 +27,9 @@ export default function Main() {
 			{
 				currentWindow === 'Messages'?
 				<Message currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow}  />
+				:
+				currentWindow === 'Explore'?
+				<Explore currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} />
 				:
 				<Center currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow}  />
 

@@ -2,7 +2,7 @@ import {AiOutlineSetting} from 'react-icons/ai';
 import {RiMailAddLine} from 'react-icons/ri';
 import {BiSearchAlt2} from 'react-icons/bi';
 import {useRecoilState} from 'recoil'
-import {currentChatState} from '../atoms/userAtom'
+import {currentChatState,chatsState} from '../atoms/userAtom'
 import {useState} from 'react'
 import {BsThreeDots} from 'react-icons/bs';
 
@@ -10,22 +10,8 @@ export default function Message(argument) {
 	// body...
 
 	const [currentChat,setCurrentChat] = useRecoilState(currentChatState);
+	const [chats,setChats] = useRecoilState(chatsState);
 	const [search,setSearch] = useState('');
-
-	const [chats,setChats] = useState([
-	{
-		name:'Dhoni',
-		username:'msdhoni123',
-		image:'https://pbs.twimg.com/profile_images/1641363952608108546/3MncKdlW_400x400.jpg',
-		lastChat:'uwu'
-	},
-	{
-		name:'MS Dhoni Fans',
-		username:'BleedDhonism',
-		image:'https://pbs.twimg.com/profile_images/1407536632908050432/u-GOFBjP_400x400.jpg',
-		lastChat:'Hello'
-	}
-	]);
 
 	return(
 
@@ -50,17 +36,24 @@ export default function Message(argument) {
 			<div className="mt-4 flex-col flex">
 				{
 					chats.map((chat,i)=>(
-						<div key={i} className="px-5 py-[14px] hover:bg-gray-200/40 transition-all duration-200 ease-in-out 
-						cursor-pointer flex items-center gap-3 group w-full">
+						<div key={i} 
+						onClick={()=>setCurrentChat(chat)}
+						className={`px-5 relative py-[14px] hover:bg-gray-200/40 transition-all duration-200 ease-in-out 
+						${currentChat.name === chat.name ? 'bg-sky-200/60' : ''}
+						cursor-pointer flex items-center gap-3 group w-full`}>
+							<div className={`absolute right-0 h-full w-1 ${currentChat.name === chat.name ? 'bg-blue-500' : ''}`}/>
 							<img src={chat.image} className="h-12 w-12 rounded-full" alt=""/>
 							<div className="flex flex-col w-full">
-								<div className="flex w-full gap-1 items-center justify-between">
-									<div className="flex items-center">
-										<h1 className="text-black font-semibold text-lg truncate">{chat.name}</h1>
-										<h1 className="text-gray-500 text-lg truncate">@{chat.username}</h1>
-										<h1 className="text-gray-500 text-lg whitespace-nowrap"> - 3h</h1>
+								<div className="flex w-full flex-wrap gap-1 items-center justify-between">
+									<div className="flex max-w-[85%] shrink gap-[1.7px] items-center">
+										<h1 className="text-black font-semibold text-lg truncate select-none ">{chat.name}</h1>
+										<h1 className="text-gray-500 text-lg truncate select-none ">@{chat.username}</h1>
+										<h1 className="text-gray-500 text-lg whitespace-nowrap select-none "> - 3h</h1>
 									</div>
-									<BsThreeDots className="h-5 w-5 text-gray-500 hidden group-hover:block"/>
+									<div className="p-1 hidden group-hover:block rounded-full hover:bg-sky-200/50 peer transition-all duration-200
+									ease-in-out cursor-pointer">
+										<BsThreeDots className="h-5 w-5 text-gray-500 hidden hover:text-sky-500 group-hover:block"/>
+									</div>
 								</div>
 								<h1 className="text-gray-500 text-md">{chat.lastChat}</h1>
 							</div>	
