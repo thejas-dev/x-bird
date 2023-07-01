@@ -47,7 +47,7 @@ export default function Home({providers,session2}) {
 
 	useEffect(()=>{
 		if(currentUser){
-			router.push('./')
+			router.push('/')
 		}	
 	},[currentUser])
 	

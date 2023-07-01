@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Temporary</title>
+</head>
+<body>
+	<h1 class="">Enter the data</h1>
+	<input type="text" name="" id="text">
+	<h1 class="" id="result"></h1>
+
+</body>
+<script type="text/javascript">
+	const ele = document.getElementById('text');
+	let firstNumberObtained = false;
+
+	ele.addEventListener('change',function(e) {		
+		let letter = e.target.value[e.target.value.length-1];
+		switch(letter){
+			case '+':firstNumberObtained=true;break;
+			case '-':firstNumberObtained=true;break;
+			case '*':firstNumberObtained=true;break;
+			case '/':firstNumberObtained=true;break;
+			case '//':firstNumberObtained=true;break;
+			case '^':firstNumberObtained=true;break;
+			default:break;
+		}
+		if(firstNumberObtained){
+			displayResult(e.target.value);
+		}
+	})
+	const displayResult = (text) => {
+		const ele = document.getElementById('result')
+		ele.innerHTML = eval(text)
+	}
+	console.log(new Date())
+
+</script>
+</html>

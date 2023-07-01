@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Main from '../components/Main';
-import {useRouter} from 'next/navigation';
+import {useState} from 'react'
+import {useRouter} from 'next/navigation'
 import {useRecoilState} from 'recoil'
 import {loginRoute,registerRoute} from '../utils/ApiRoutes';
 import axios from 'axios';
@@ -12,53 +13,55 @@ export default function Home({providers,session2}) {
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const router = useRouter();
 	const {data:session} = useSession();
-
-	useEffect(()=>{
-		console.log(providers,session2,session)
-
-	},[])
+	const [loading,setLoading] = useState(true);
 
 	useEffect(()=>{
 		if(!currentUser){
-			if(session){
+			if(session2){
 				handleValidation()
+				console.log("having session")
 			}else if(localStorage.getItem('xbird')){
+				console.log("having storage")
 				handleLogin(localStorage.getItem('xbird'));
 			}else{
 				router.push('./signIn')
+				console.log("routing")
+
 			}
 		}	
 	},[])
 
+
 	useEffect(()=>{
 		if(!currentUser){
-			if(session){
+			if(session2){
 				handleValidation()
 			}else if(localStorage.getItem('xbird')){
-				handleLogin(localStorage.getItem('xbird'));
+				handleLogin(JSON.parse(localStorage.getItem('xbird')));
 			}else{
 				router.push('./signIn')
 			}
 		}	
 	},[currentUser])
 
-	const handleLogin = async() =>{
-	    let email = session?.user.email
-	    const {data} = await axios.post(loginRoute,{
-	      email,
-	    });
-	    setCurrentUser(data?.user);
+	const handleLogin = async(email) =>{
+    	const {data} = await axios.post(loginRoute,{
+	      email
+	    });	
+	    console.log(data)
+	    setCurrentUser(data?.user)
+	    setLoading(false);
 	}
 
 	const handleValidation = async() =>{
-	    let email = session?.user.email
+	    let email = session2?.user.email
 	    const {data} = await axios.post(loginRoute,{
 	      email,
 	    });
 	    if(data.status === false){
-	      const name = session?.user.name;
-	      const username = session?.user.name;
-	      const image = session?.user.image;
+	      const name = session2?.user.name || session?.user.name;
+	      const username = session2?.user.name || session?.user.name;
+	      const image = session2?.user.image || session?.user.image;
 	      const {data} = await axios.post(registerRoute,{
 	        email,name,username,image
 	      })
@@ -66,12 +69,27 @@ export default function Home({providers,session2}) {
 	        localStorage.setItem('xbird',JSON.stringify(data?.user.email));
 	      }
 	      setCurrentUser(data?.user);
+	      setLoading(false);
 	    }else{
 	      if(!localStorage.getItem('xbird')){
 	        localStorage.setItem('xbird',JSON.stringify(data?.user.email));
 	      }
 	      setCurrentUser(data?.user);
+	      setLoading(false);
 	    }
+	  }
+
+	  if(loading){
+	  	return (
+		  	<div className="fixed z-50 h-full backdrop-blur-lg w-full flex items-center justify-center">
+	  			
+	  			<span className="loader2">
+	  				<img src="twitter-icon.png" className="absolute h-10 w-10 top-0 bottom-0 left-0 right-0 m-auto" alt=""/>
+	  			</span>
+	  			
+	  		</div>
+
+	  	)
 	  }
 
   return (

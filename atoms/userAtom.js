@@ -14,3 +14,13 @@ export const chatsState = atom({
 	key:"chatsState",
 	default:[]
 })
+
+export const mainFeedState = atom({
+	key:"mainFeedState",
+	default:[]
+})
+
+export const loaderState = atom({
+	key:'loaderState',
+	default:false
+})

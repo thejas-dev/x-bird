@@ -1,40 +1,53 @@
 import {FiSearch} from 'react-icons/fi'
 import {useRecoilState} from 'recoil'
 import {currentChatState,currentUserState,chatsState} from '../atoms/userAtom'
-import {HiOutlineChevronDoubleDown} from 'react-icons/hi';
+import {HiOutlineChevronDoubleDown,HiOutlineArrowLeft} from 'react-icons/hi';
 import {RiMailAddLine,RiSendPlane2Line} from 'react-icons/ri';
+import {CiMicrophoneOn} from 'react-icons/ci';
 import {BiSearchAlt2} from 'react-icons/bi';
-import {useState,useEffect} from 'react'
+import {useState,useEffect,useRef} from 'react'
 import {BsThreeDots} from 'react-icons/bs';
-import {AiOutlineInfoCircle} from 'react-icons/ai';
-import {BsCardImage,BsEmojiSmile} from 'react-icons/bs';
+import {AiOutlineInfoCircle,AiOutlineSend,AiOutlineRight} from 'react-icons/ai';
+import {BsCardImage,BsEmojiSmile,BsArrowLeft} from 'react-icons/bs';
 import {TbGif} from 'react-icons/tb';
+import {searchProfile,sendMsgRoute,updateUserChats,getAllMsgRoute,host,getUserByIdRoute,
+	updateMsg,getGroupMessage,addGroupMessage,updateGroupMsg} from '../utils/ApiRoutes';
+import axios from 'axios';
+import EmojiPicker from 'emoji-picker-react';
+import {io} from 'socket.io-client';
+import {socket} from '../service/socket';
+import DateDiff from 'date-diff'
 
 
 
-export default function Right({setCurrentWindow,currentWindow}) {
+export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
+	setNewMessageSearch,setRevealNotify,revealNotify,msgReveal,setMsgReveal,
+	notify,setNotify,setFullScreenLoader,fullScreenLoader,openOverlay,setOpenOverlay,
+	overlayFor,setOverlayFor,setNeedToReloadProfile,needToReloadProfile}) {
+
 	const [currentChat,setCurrentChat] = useRecoilState(currentChatState);
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const [search,setSearch] = useState('');
-	const [msgReveal,setMsgReveal] = useState(false);
 	const [chats,setChats] = useRecoilState(chatsState);
-
-	// {
-	// 	name:'Dhoni',
-	// 	username:'msdhoni123',
-	// 	image:'https://pbs.twimg.com/profile_images/1641363952608108546/3MncKdlW_400x400.jpg',
-	// 	lastChat:'uwu',
-	// 	description:'MS Dhoni Fan Club providing latest updates and everything about the Legend #MSDhoni 🏏❤️ #WhistlePodu #IPL2023 #Dhoni #Cricket',
-	// 	joinedDate:'September 2013'
-	// },
-	// {
-	// 	name:'MS Dhoni Fans',
-	// 	username:'BleedDhonism',
-	// 	image:'https://pbs.twimg.com/profile_images/1407536632908050432/u-GOFBjP_400x400.jpg',
-	// 	lastChat:'Hello',
-	// 	description:'MS Dhoni Fan Club providing latest updates and everything about the Legend #MSDhoni 🏏❤️ #WhistlePodu #IPL2023 #Dhoni #Cricket',
-	// 	joinedDate:'September 2013'
-	// }
+	const [revealExploreInfo,setRevealExploreInfo] = useState(false);
+	const [searchText,setSearchText] = useState('');
+	const [searchResult,setSearchResult] = useState([]); 
+	const [selectedUser,setSelectedUsers] = useState([]);
+	const [url,setUrl] = useState([]);
+	const [path,setPath] = useState('');
+	const [messageText,setMessageText] = useState('');
+	const [emojiInput,setEmojiInput] = useState(false);
+	const [iconsReveal,setIconsReveal] = useState(false);
+	const [messages,setMessages] = useState([]);
+	const scrollRef = useRef();
+	const [tempData,setTempData] = useState('');
+	const [loading,setLoading] = useState(true);
+	const [clientConnected,setClientConnected] = useState(false);
+	const [arrivalMessage,setArrivalMessage] = useState('');
+	const [userRefetchTrigger,setUserRefetchTrigger] = useState(false);
+	const [messagesRefetchTrigger,setMessagesRefetchTrigger] = useState(false);
+	const [tempMsg,setTempMsg] = useState('');
+	const [senderImages,setSenderImages] = useState({});
 
 	const tempEventData = [
 		{
@@ -82,68 +95,800 @@ export default function Right({setCurrentWindow,currentWindow}) {
 		}
 	]
 
+	const calDate = (date) => {
+		const date1 = new Date();
+		const date2 = new Date(date);
+		var diff = new DateDiff(date1, date2);
+		if(diff.minutes() <= 60){
+			return Math.trunc(diff.minutes()) + 'm'
+		}else if(diff.hours() <= 24){
+			return Math.trunc(diff.hours()) + 'h'
+		}else if(diff.days() <= 30){
+			return Math.trunc(diff.days()) + 'd'
+		}else if(diff.months() <= 12){
+			return Math.trunc(diff.minutes()) + 'M'
+		}else if(diff.years() <= 12){
+			return Math.trunc(diff.years()) + 'y'
+		}
+	}
+
+	const sendNotify = async(newData) => {
+		console.log(newData)
+		const {data} = await axios.get(`${getUserByIdRoute}/${newData.from}`);
+		const dat = {
+			user:data.user,
+			newData:newData
+		}
+		setNotify(true);
+		setRevealNotify(dat);
+		setTimeout(()=>{
+			setNotify(false);
+			setTimeout(()=>{
+				setRevealNotify('');
+			},400)
+		},5000)
+	}
+
+	useEffect(()=>{
+		if(tempData){	
+			if(tempData?.group){
+				if(currentChat?.group){
+					if(!currentChat?._id?.includes(tempData?.from)){
+						console.log(" iran")
+						sendNotify(tempData);	
+					}else{
+						setArrivalMessage(tempData);				
+					}	
+				}else{
+					console.log(" i onl yran")
+					sendNotify(tempData);	
+				}						
+				setTempData('');				
+			}else{
+				if(currentChat._id!==tempData.from){
+					sendNotify(tempData);
+				}else{
+					setArrivalMessage(tempData);				
+				}						
+				setTempData('');
+			}
+		}
+	},[tempData])
+
+	useEffect(()=>{
+		refetchUser();
+		setUserRefetchTrigger(false);
+	},[userRefetchTrigger])
+
+	useEffect(()=>{
+		if(messagesRefetchTrigger){
+			fetchMessages();
+			setMessagesRefetchTrigger(false);			
+		}
+	},[messagesRefetchTrigger])
+
+	const refetchUser = async() => {
+		if(currentUser){
+			const {data} = await axios.get(`${getUserByIdRoute}/${currentUser._id}`)
+			setCurrentUser(data.user)			
+		}
+	}
+
+	useEffect(()=>{
+		socket.on('msg-recieve',(newData)=>{
+			setTempData(newData);	
+			console.log(newData)	
+		});
+
+		socket.on('user-refetch',(data)=>{
+			setUserRefetchTrigger(true)
+		})
+
+		socket.on('messages-refetch',(data)=>{
+			console.log("refreshing messages")
+			setMessagesRefetchTrigger(true);
+		})
+		return ()=>{
+			socket.off('msg-recieve');
+			socket.off('user-refetch');
+			socket.off('messages-refetch')
+		}
+
+	},[])
+
+
+	useEffect(()=>{
+		if(arrivalMessage) {
+			setMessages((prev)=>[...prev,arrivalMessage]);
+			setArrivalMessage('');
+		}
+	},[arrivalMessage]);
+
+	function tConvert(i) {
+		let split = i.split('T');
+		const date = split[0];
+		let time = split[1].split('.')[0]
+	    // Check correct time format and split into components
+	    time = time.toString().match(/^([01]\d|2[0-3])(:)([0-5]\d)(:[0-5]\d)?$/) || [time];
+
+	    if (time.length > 1) { // If time format correct
+	      time = time.slice(1); // Remove full string match value
+
+
+	      time[2] = Number(time[2]) + 30;
+
+	      if(Number(time[2])>60){
+	      	time[2] = Number(time[2]) -60
+	      	if(time[2]<10){
+	      		time[2] = 0+ time[2].toString()
+	      	}
+	      	time[0] = Number(time[0]) + 1
+	      }
+
+	      time[0] = Number(time[0]) + 5;
+	      time[5] = +time[0] < 12 || time[0] === 24 ? ' AM' : ' PM'; // Set AM/PM
+	      time[0] = +time[0] % 12 || 12; // Adjust hours
+	      
+	      time.splice(3,1)
+	      
+	    }
+	    return time.join(''); // return adjusted time or original string
+  	}
+
+	useEffect(()=>{
+		if(searchText){
+			findExplore()
+		}
+	},[searchText])
+
+	const findExplore = async() => {
+		const {data} = await axios.post(searchProfile,{
+			searchText
+		});
+		setSearchResult(data.user);
+	}
+
+	useEffect(()=>{
+		const ele = document.getElementById('exploreRightSearch')
+		const ele2 = document.getElementById('messageInput');
+		if(ele2){
+			ele2.addEventListener('focus',()=>{
+				setIconsReveal(true);
+			})
+			ele2.addEventListener('blur',()=>{
+				setIconsReveal(false);		
+			})			
+		}
+		if(ele){
+			ele.addEventListener('focus',()=>{
+				setRevealExploreInfo(true);
+			})
+			ele.addEventListener('blur',()=>{
+				setTimeout(()=>{
+					setRevealExploreInfo(false);
+				},200)
+			})			
+		}
+	},[])
+
+	// console.log(iconsReveal)
+
 	useEffect(()=>{
 		if(currentUser?.chats?.length > 0){
 			setChats(currentUser?.chats);
 		}
 	},[currentUser])
 
+	useEffect(()=>{
+		if(currentUser && !clientConnected){
+			setClientConnected(true)
+			socket.emit('add-user',currentUser._id);
+		}
+	},[currentUser])
+
+	const openEmojiInput = () => setEmojiInput(!emojiInput)
+
+	// console.log(currentChat._id,currentUser.chats);
+	const checkSimilarity = (array1,array2) => {
+		// console.log(array1,array2)
+
+		var is_same = (array1?.length == array2?.length) && array1?.every(function(element, index) {
+		    return element === array2[index];
+		});
+		return is_same
+	}
+
+	const openFileInput = () => {
+		if(url.length<4){
+			document.getElementById('file1').click();
+		}
+	}
+
+	useEffect(()=>{
+		if(currentChat){
+			setMessages([]);
+			setLoading(false);
+			fetchMessages();
+		}
+	},[currentChat])
+
+	const fetchMessages = async() =>{
+		if(currentChat.group){
+			const {data} = await axios.post(getGroupMessage,{
+				groupId:currentChat.groupId,
+				from:currentUser._id
+			})
+			// console.log(data);
+			setMessages(data);
+			setLoading(true);
+		}else{
+			const {data} = await axios.post(getAllMsgRoute,{
+				from:currentUser?._id,
+				to:currentChat?._id
+			})
+			// console.log(data);
+			setMessages(data);
+			setLoading(true);
+		}
+	}	
+// console.log(senderImages['646a4c7a1e5a0d4873f4f828'])
+	const sendMessageTo = async(tempMsg) => {
+		const msg = tempMsg.message
+		if(currentChat.group){
+			for(let i = 0;i < currentChat._id.length; i++){
+				socket.emit("add-msg",{
+					to:currentChat._id[i],
+					from:currentUser._id,
+					group:true,
+					message:msg,
+					_id:tempMsg._id,
+					seenBy:tempMsg.seenBy,
+					updatedAt:tempMsg.updatedAt
+				})	
+			}
+		}else{
+			socket.emit("add-msg",{
+				to:currentChat._id,
+				from:currentUser._id,
+				message:msg,
+				_id:tempMsg._id,
+				seenBy:tempMsg.seenBy,
+				updatedAt:tempMsg.updatedAt
+			})			
+		}
+		setTempMsg('');
+
+		if(!currentChat.group){
+			const check2 = await currentUser.chats.some(element=>{
+				if(element._id === currentChat._id){
+					return true;
+				}
+				return false
+			})
+
+			if(!check2){
+				const tempChat = {...currentChat , newMessage:false, lastChat: msg, updatedMsg:new Date().toISOString() };
+
+				const chats = [tempChat, ...currentUser.chats];
+				const res = await axios.post(`${updateUserChats}/${currentUser._id}`,{
+					chats
+				})
+				setCurrentUser(res.data.user);
+			}else{
+				const tempChat = {...currentChat , newMessage:false, lastChat: msg, updatedMsg:new Date().toISOString() };
+
+				const idx = await currentUser.chats.findIndex(element=>{
+					if(element._id === currentChat._id){
+						return true
+					}
+					return false
+				})
+				let userChats = [...currentUser.chats];
+				await userChats.splice(idx,1);
+				userChats = [tempChat, ...userChats];
+				const res = await axios.post(`${updateUserChats}/${currentUser._id}`,{
+					chats:userChats
+				})
+				setCurrentUser(res.data.user);
+			}
+		}else{
+			const check2 = await currentUser.chats.some(element=>{
+				if(element.groupId === currentChat.groupId){
+					return true;
+				}
+				return false
+			})
+			if(!check2){
+				const tempChat = {...currentChat , newMessage:false, lastChat: msg, updatedMsg:new Date().toISOString() };
+
+				const chats = [tempChat, ...currentUser.chats];
+				const res = await axios.post(`${updateUserChats}/${currentUser._id}`,{
+					chats
+				})
+				setCurrentUser(res.data.user);
+			}else{
+				const tempChat = {...currentChat , newMessage:false, lastChat: msg, updatedMsg:new Date().toISOString() };
+
+				const idx = await currentUser.chats.findIndex(element=>{
+					if(element.groupId === currentChat.groupId){
+						return true;
+					}
+					return false
+				})
+				let userChats = [...currentUser.chats];
+				await userChats.splice(idx,1);
+				userChats = [tempChat, ...userChats];
+				const res = await axios.post(`${updateUserChats}/${currentUser._id}`,{
+					chats:userChats
+				})
+				setCurrentUser(res.data.user);
+			}
+		}
+		
+
+		if(!currentChat?.group){
+			const check3 = await currentChat.chats.some(element=>{
+				if(element._id === currentUser._id){
+					return true;
+				}
+				return false
+			})
+
+			if(!check3){
+				const tempChat = {...currentUser , newMessage:true, lastChat: msg, updatedMsg:new Date().toISOString() };
+
+				const chats2 = [tempChat, ...currentChat.chats];
+				const res2 = await axios.post(`${updateUserChats}/${currentChat._id}`,{
+					chats:chats2
+				})
+				socket.emit("refetch-user",{
+					to:currentChat._id				
+				})
+			}else{
+				const tempChat = {...currentUser , newMessage:true, lastChat: msg, updatedMsg:new Date().toISOString() };
+
+				const idx2 = await currentChat.chats.findIndex(element=>{
+					if(element._id === currentUser._id){
+						return true
+					}
+					return false
+				})
+				let userChats = [...currentChat.chats];
+				await userChats.splice(idx2,1);
+				userChats = [tempChat, ...userChats];
+				const res = await axios.post(`${updateUserChats}/${currentChat._id}`,{
+					chats:userChats
+				})
+				socket.emit("refetch-user",{
+					to:currentChat._id				
+				})
+			}
+		}else{
+			for(let i  = 0;i < currentChat._id.length ; i++){
+				const {data} = await axios.get(`${getUserByIdRoute}/${currentChat._id[i]}`);
+				const check3 = await data.user.chats.some(element=>{
+					if(element.groupId === currentChat.groupId){
+						return true;
+					}
+					return false
+				})
+
+				if(!check3){
+					const tempChat = {...currentChat , newMessage:true, lastChat: msg, updatedMsg:new Date().toISOString() };
+
+					const chats2 = [tempChat, ...data.user.chats];
+					const res2 = await axios.post(`${updateUserChats}/${data?.user?._id}`,{
+						chats:chats2
+					})
+					socket.emit("refetch-user",{
+						to:data.user._id				
+					})
+				}else{
+					const tempChat = {...currentChat , newMessage:true, lastChat: msg, updatedMsg:new Date().toISOString() };
+
+					const idx2 = await data.user.chats.findIndex(element=>{
+						if(element.groupId === currentChat.groupId){
+							return true;
+						}
+						return false
+					})
+					let userChats = [...data.user.chats];
+					await userChats.splice(idx2,1);
+					userChats = [tempChat, ...userChats];
+					const res = await axios.post(`${updateUserChats}/${data?.user?._id}`,{
+						chats:userChats
+					})
+					socket.emit("refetch-user",{
+						to:data.user._id				
+					})
+				}
+
+			}
+		}
+
+	}
+
+	useEffect(()=>{
+		if(tempMsg){
+			sendMessageTo(tempMsg);
+		}
+	},[tempMsg])
+
+	const sendMessage = async(e) => {
+		if(e) e.preventDefault();
+
+		const msg = messageText;
+		setMessageText('');
+		const msgs = [...messages];
+		msgs.push({fromSelf:true,message:msg,updatedAt:new Date().toISOString()});
+		setMessages(msgs);
+		if(currentChat.group){
+			const result = await axios.post(addGroupMessage,{
+				from:currentUser._id,
+				to:currentChat._id,
+				message:msg,
+				groupId:currentChat.groupId
+			})
+			setTempMsg(result.data.msg)
+		}else{
+			const result = await axios.post(sendMsgRoute,{
+				from:currentUser._id,
+				to:currentChat._id,
+				message:msg,
+			})
+			setTempMsg(result.data.msg)			
+		}
+	}
+
+	const seenChecker = async() => {
+		const len = messages.length - 1 ;
+		if(messages[len]?.seenBy){
+			const check3 = await messages[len].seenBy.some(element=>{
+				if(element === currentUser._id){
+					return true;
+				}
+				return false
+			})
+			if(!check3){
+				// console.log('checked');
+				const seen = [currentUser._id, ...messages[len].seenBy];
+				if(currentChat.group){
+					const {data} = await axios.post(`${updateGroupMsg}/${messages[len]._id}`,{
+						seenBy:seen
+					})
+					if(currentChat?.group){
+						for (let i = 0; i<currentChat?._id.length; i++){
+							socket.emit('refetch-messages',{
+								to:currentChat?._id[i]
+							});		
+						}
+					}else{
+						socket.emit('refetch-messages',{
+							to:currentChat?._id
+						});					
+					}
+				}else{
+					const {data} = await axios.post(`${updateMsg}/${messages[len]._id}`,{
+						seenBy:seen
+					})
+					if(currentChat?.group){
+						for (let i = 0; i<currentChat?._id.length; i++){
+							socket.emit('refetch-messages',{
+								to:currentChat?._id[i]
+							});		
+						}
+					}else{
+						socket.emit('refetch-messages',{
+							to:currentChat?._id
+						});					
+					}					
+				}
+			}			
+		}
+	}
+	// console.log(senderImages)
+
+	const getUserImage  = async(id) => {
+		console.log(id)
+		const {data} = await axios.get(`${getUserByIdRoute}/${id}`);
+		if(data.user){
+			let temp = senderImages;
+			temp[id] = data?.user?.image;
+			setSenderImages(temp);			
+		}
+	}
+
+	const fetchSenderImages = async() => {
+		for (let i = 0; i<messages.length;i++){
+			if(!(messages[i].sender in senderImages)){
+				getUserImage(messages[i].sender)
+			}
+		}
+	}
+
+
+	const showSeenPeoples = async(ids) => {
+		setFullScreenLoader(true);
+		let users = []
+		for (let i = 0; i<ids.length; i++){
+			const {data} = await axios.get(`${getUserByIdRoute}/${ids[i]}`);
+			users = [...users,data.user];
+			if(i+1===ids.length){
+				setFullScreenLoader(false);
+				setOpenOverlay(users);
+				setOverlayFor('Seen by');
+			}
+		}
+	}
+// console.log(currentUser.chats)
+	const messageReadChecker = async() => {
+		
+		if(currentChat){
+			if(!currentChat?.group){
+				const idx = await currentUser.chats.findIndex(element=>{
+					if(element._id === currentChat._id){
+						return true
+					}
+					return false
+				})
+				let userChats = [...currentUser.chats];
+				if(userChats[idx]?.newMessage){
+					await userChats.splice(idx,1);
+					await userChats.splice(idx,0,{...currentUser.chats[idx], 'newMessage':false})
+					// userChats[idx] = {...currentUser.chats[idx], 'newMessage':false}
+					const result = await axios.post(`${updateUserChats}/${currentUser._id}`,{
+						chats:userChats
+					})
+					setCurrentUser(result.data.user);
+				}
+			}else{
+				const idx = await currentUser.chats.findIndex(element=>{
+					if(element.groupId === currentChat.groupId){
+						return true
+					}
+					return false
+				})				
+				// console.log(idx)
+				let userChats = [...currentUser.chats];
+				if(userChats[idx]?.newMessage){
+					await userChats.splice(idx,1);
+					await userChats.splice(idx,0,{...currentUser.chats[idx], 'newMessage':false})
+					// userChats[idx] = {...currentUser.chats[idx], 'newMessage':false}
+					const result = await axios.post(`${updateUserChats}/${currentUser._id}`,{
+						chats:userChats
+					})
+					setCurrentUser(result.data.user);
+				}
+			}
+		}
+	}
+
+	useEffect(()=>{
+		scrollRef.current?.scrollIntoView({behaviour:"smooth"});
+		if(messages.length>0  && currentUser){
+			seenChecker();
+			messageReadChecker();
+			fetchSenderImages();
+		}
+	},[messages])
+
+	useEffect(()=>{
+		scrollRef.current?.scrollIntoView({behaviour:"smooth"});
+		if(messages.length>0 && currentUser) {
+			seenChecker()
+		}	
+	},[currentWindow])
+
 	if(currentWindow === 'Messages'){
 		return (
-			<div className={`lg:w-[50.6%] md:w-[80%] xs:w-[90%] relative w-[100%] ${currentChat ? 'block':'hidden'} h-full lg:block overflow-y-scroll`}>
-				<div className={`w-full ${!currentChat && 'hidden'} sticky top-0 backdrop-blur-md flex justify-end p-2`}>
-					<div className="p-2 cursor-pointer rounded-full hover:bg-gray-200 transition-all duration-200 ease-in-out">
+			<div className={`lg:w-[50.6%] md:w-[80%] xs:w-[90%] w-[100%] ${currentChat ? 'relative':'hidden lg:block'} relative  overflow-hidden`}>
+				
+				<div className={`h-full w-full backdrop-blur-lg bg-white flex items-center justify-center absolute z-50 ${loading && 'hidden'}`}>
+					<span className="loader3"></span>
+				</div>
+				<div className={`w-full ${!currentChat && 'hidden'} overflow-hidden px-5 sticky top-0 backdrop-blur-lg bg-white/50 flex justify-between p-2`}>
+					<div 
+					onClick={()=>{
+						if(!currentChat?.group){
+							setCurrentWindow('Profile')
+							window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);														
+						}
+					}}
+					className="flex cursor-pointer items-center lg:ml-0 ml-7 gap-2 shrink">
+						{
+							!currentChat?.group ?
+							<img src={currentChat.image} className="h-7 w-7 rounded-full "/>
+							:
+							<div className="grid-cols-2 grid h-7 w-7 rounded-full overflow-hidden">
+								{
+									currentChat?.image?.map((img,j)=>{
+										if(currentChat.image.length === 3){
+											if(j<2){
+												return (
+													<img src={img} className="object-cover w-full h-full" alt=""/>
+												)
+											}
+										}else{
+											if(j<4){
+												return (
+													<img src={img} className="object-cover w-full h-full" alt=""/>
+												)
+											}	
+										}
+										
+									})
+								}
+							</div>
+
+						}
+						<h1 className="text-md text-black font-semibold truncate">{currentChat.name}</h1>
+					</div>
+					<div className="p-2 cursor-pointer rounded-full hover:bg-gray-600/10 transition-all duration-200 ease-in-out">
 						<AiOutlineInfoCircle className="h-5 w-5 text-gray-800"/>
 					</div>
 				</div>
-				{
-					!currentChat ? 
-					<div className="h-full w-full flex items-center justify-center">
-						<div className="lg:w-[60%] w-full px-4 flex flex-col gap-1">
-							<h1 className="md:text-3xl text-2xl font-bold text-black">
-								Select a message
-							</h1>
-							<h1 className="text-md text-gray-500">
-								Choose from your existing conversations, start a new one, or just keep swimming.
-							</h1>
-							<div className="flex">
-								<button className="rounded-full text-lg md:px-9 px-6 md:py-3 py-1 bg-blue-500 hover:bg-blue-700 
-								transition-all duration-200 ease-in-out text-white mt-7 font-bold">New message</button>
+				<div 
+				onClick={()=>{setCurrentChat('');setMessages([])}}
+				className="sticky w-8 h-8 flex items-center justify-center rounded-full z-50 left-2 lg:hidden top-2 cursor-pointer p-1 hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+					<BsArrowLeft className="h-6 w-5 text-gray-800"/>
+				</div>
+				<div className="h-full pt-[115px] w-full scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-200/50 overflow-y-scroll scroll-smooth">
+					{
+						!currentChat ? 
+						<div className="h-full w-full flex items-center justify-center">
+							<div className="lg:w-[60%] w-full px-4 flex flex-col gap-1">
+								<h1 className="md:text-3xl text-2xl font-bold text-black">
+									Select a message
+								</h1>
+								<h1 className="text-md text-gray-500">
+									Choose from your existing conversations, start a new one, or just keep swimming.
+								</h1>
+								<div onClick={()=>{setNewMessageSearch(true)}}
+								className="flex">
+									<button className="rounded-full text-lg md:px-9 px-6 md:py-3 py-1 bg-blue-500 hover:bg-blue-700 
+									transition-all duration-200 ease-in-out text-white mt-7 font-bold">New message</button>
+								</div>
+							</div>
+						</div>	
+						:
+						<div className="mt-2 w-full flex flex-col px-5">
+							<div 
+							onClick={()=>{
+								if(!currentChat?.group){
+									setCurrentWindow('Profile')
+									window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);																
+								}
+							}}
+							className="w-full hover:bg-gray-100 rounded-md transition-all duration-200 ease-in-out 
+							cursor-pointer px-4 py-6 pb-14 border-gray-200/70 border-b-[1px] flex flex-col">
+								{
+									currentChat.group ? 
+									<div className="h-[70px] w-[70px] rounded-full overflow-hidden mx-auto grid grid-cols-2">
+										{
+											currentChat?.image?.map((img,j)=>{
+												if(currentChat.image.length === 3){
+													if(j<2){
+														return (
+															<img src={img} className="object-cover w-full h-full" alt=""/>
+														)
+													}
+												}else{
+													if(j<4){
+														return (
+															<img src={img} className="object-cover w-full h-full" alt=""/>
+														)
+													}	
+												}
+											})
+										}
+									</div>
+									:
+									<img src={currentChat.image} alt="" className="h-[70px] w-[70px] rounded-full mx-auto"/>
+								}
+								<h1 className="text-black text-lg font-bold select-none text-center mx-auto">{currentChat?.name}</h1>
+								<h1 className="text-gray-600 text-md select-none text-center mx-auto">@{currentChat?.username}</h1>
+								<h1 className="text-gray-900 mt-5 select-none text-center mx-auto">{currentChat?.description}</h1>
+								<h1 className="text-gray-600 mt-2 select-none text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]} {!currentChat?.group && <span> - {currentChat?.followers?.length} Followers</span>}</h1>
+								{
+								!currentChat?.group &&
+								<h1 className="text-gray-600 text-sm select-none mt-2 text-center mx-auto">Not followed by anyone you're following</h1>
+								}
 							</div>
 						</div>
-					</div>	
-					:
-					<div className="h-full mt-2 w-full flex flex-col px-5">
-						<div className="w-full hover:bg-gray-100 rounded-md transition-all duration-200 ease-in-out 
-						cursor-pointer px-4 py-6 pb-14 border-gray-200/70 border-b-[1px] flex flex-col">
-							<img src={currentChat.image} alt="" className="h-[70px] w-[70px] rounded-full mx-auto"/>
-							<h1 className="text-black text-xl font-bold text-center mx-auto">{currentChat?.name}</h1>
-							<h1 className="text-gray-600 text-xl text-center mx-auto">@{currentChat?.username}</h1>
-							<h1 className="text-gray-900 mt-5 text-center mx-auto">{currentChat?.description}</h1>
-							<h1 className="text-gray-600 mt-2 text-center mx-auto">Joined {currentChat.joinedDate} ~ {currentChat.followers} Followers</h1>
-							<h1 className="text-gray-600 text-sm mt-2 text-center mx-auto">Not followed by anyone you're following</h1>
-						</div>
+					}
+					<div className={`flex flex-col h-auto gap-3 md:px-3 px-2 py-2 w-full ${!currentChat && 'hidden'}`}>
+						{
+							messages?.map((msg,j)=>(
+								<div ref={scrollRef} key={j} className={`flex w-full ${msg.fromSelf ? 'justify-end':'justify-start'} gap-1`}>
+									{
+										senderImages[msg.sender] &&
+										!msg?.fromSelf && 
+										<img id={msg.sender} src={senderImages[msg.sender]} className={`h-8 w-8 mt-1 rounded-full ${msg.sender}`}/>
+									}
+									<div className={`flex flex-col gap-1  ${msg.fromSelf ? 'justify-end':'justify-start'} max-w-[80%]`}>
+										<div className={`rounded-2xl ${msg.fromSelf ? 'ml-auto' : 'mr-auto'}  flex px-[14px] py-2 ${msg.fromSelf ? 'bg-sky-500 hover:bg-sky-600' : 'bg-gray-300/50 hover:bg-gray-300/70'}`}>
+											<h1 className={`${msg.fromSelf ? 'text-white' : 'text-black'} text-md`}>{msg.message}</h1>
+										</div>
+										<h1 className={`text-gray-600/70 ${msg.fromSelf ? 'text-end':'text-start'} ${msg.fromSelf ? 'justify-end':'justify-start'} text-sm mx-1 select-none cursor-pointer hover:underline flex `}>
+										{tConvert(msg?.updatedAt)}
+										{msg.seenBy && currentChat.group ?
+											<span
+											onClick={()=>{
+												showSeenPeoples(msg.seenBy)
+											}}
+											>{
+												j+1 === messages.length && msg.fromSelf &&
+											 	<span
+											 	onClick={()=>{
+
+											 	}}
+											 	>&nbsp;• Seen by {msg?.seenBy?.includes(currentUser._id) ? 
+											 		msg?.seenBy?.length - 1 === 1 ?
+											 			`${msg.seenBy.length-1} person`
+											 			:
+											 			`${msg.seenBy.length-1} people`
+											 		: 
+											 		`${msg.seenBy.length} people`
+											 	} </span>
+											}</span>
+											:
+											msg?.seenBy?.includes(currentChat._id) && j+1 === messages?.length && msg?.fromSelf && ' • Seen'
+										}
+										</h1>
+									</div>
+								</div>
+
+							))
+						}
 					</div>
-				}
-				<div className={`${!currentChat && 'hidden'} sticky bottom-0 w-full px-2 py-2 border-t-[1px] border-gray-200/70`}>
+				</div>
+				<div className={`${!currentChat && 'hidden' } backdrop-blur-lg bg-white/40 sticky bottom-0 w-full px-2 py-2 border-t-[1px] border-gray-200/70`}>
 					<div className="bg-gray-200/70 rounded-2xl flex items-center gap-2 py-[6px] px-2">
 						<div className="flex items-center">
 							<div className="hover:bg-sky-200/80 transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
-								<BsCardImage className="text-sky-500 h-[18px] w-[18px]"/>
+								<BsCardImage onClick={openFileInput} className={`h-[18px] w-[18px] ${url.length<4 ? 'text-sky-500':'text-gray-500'}`}/>
+								<input type="file" id="file1" accept="image/*" 
+								value={path}
+								onChange={(e)=>setPath(e.target.value)}
+								hidden
+								/>
 							</div>
 							<div className="hover:bg-sky-200/80 transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
 								<TbGif className="text-sky-500 h-[18px] w-[18px]"/>
 							</div>
-							<div className="hover:bg-sky-200/80 transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
-								<BsEmojiSmile className="text-sky-500 h-[18px] w-[18px]"/>
+							<div className="hover:bg-sky-200/80 z-50 relative transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
+								<BsEmojiSmile onClick={openEmojiInput} className={`h-[18px] w-[18px] text-sky-500 z-30 ${iconsReveal && 'hidden w-0 overflow-hidden'}`}/>
+								{
+									emojiInput &&
+									<div className="absolute bottom-11 -left-[65px] z-50">
+										<EmojiPicker Theme="dark" onEmojiClick={(emoji)=>{
+											setMessageText((messageText)=>{return messageText+' '+emoji.emoji})
+										}}/>
+									</div>											
+								}
 							</div>
 						</div>	
 						<div className="w-[100%]">
-							<input type="text" className="outline-none bg-transparent placeholder:text-gray-500 text-black text-md w-full" 
+							<input type="text" 
+							onSubmit={(e)=>sendMessage(e)}
+							value={messageText}
+							onChange={(e)=>{setMessageText(e.target.value)}}
+							className="outline-none bg-transparent placeholder:text-gray-500 text-black text-md w-full" 
 							placeholder="Start a new message"/>
 						</div>
-						<div className="rounded-full mr-1 hover:bg-sky-100 transition-all duration-200 ease-in-out cursor-pointer">
-							<RiSendPlane2Line className="h-5 w-5 text-sky-500"/>
+						<div 
+						onClick={()=>{if(messageText.length>0) sendMessage()}}
+						className="rounded-full mr-1 hover:bg-sky-100 transition-all duration-200 ease-in-out cursor-pointer">
+							{
+								messageText ? 
+								<RiSendPlane2Line className="h-5 w-5 text-sky-500"/>
+								:
+								<CiMicrophoneOn 
+								onClick = {()=>{
+
+								}}
+								className="h-5 w-5 text-sky-500"/>
+							}
 						</div>
 					</div>
 					
@@ -154,18 +899,48 @@ export default function Right({setCurrentWindow,currentWindow}) {
 		)
 	}else{
 		return (
-			<div className="lg:w-[40.4%] relative xl:w-[32.4%] w-0 hidden lg:block h-full pl-7 pr-10 overflow-y-scroll">
+			<div className="lg:w-[40.4%] relative xl:w-[32.4%] w-0 hidden lg:block h-full pl-7 pr-10 overflow-y-scroll scrollbar-thin scrollbar-thumb-sky-400">
 				<div className="flex flex-col w-full">
-					<div className="mt-2 bg-gray-200/70 rounded-full px-5 py-2 focus-within:bg-transparent w-full
-					focus-within:border-sky-500 border-[1.5px]  flex gap-3 items-center">
+					<div className={`mt-2 relative bg-gray-200/70 rounded-full px-5 py-2 focus-within:bg-transparent w-full
+					focus-within:border-sky-500 border-[1.5px]  flex gap-3 items-center ${currentWindow === 'Explore' && 'hidden'}`}>
 						<FiSearch className="h-5 w-5 text-gray-700 peer-active:text-sky-600 "/>
-						<input type="text" placeholder="Search twitter" className="w-full bg-transparent peer outline-none placholder:text-gray-500 text-black text-lg"/>
+						<input type="text" id="exploreRightSearch" placeholder="Search twitter" 
+						value={searchText} onChange={(e)=>setSearchText(e.target.value)}
+						className="w-full bg-transparent peer outline-none placholder:text-gray-500 text-black text-lg"/>
+						<div className={`absolute left-0 top-[52px] bg-white w-full shadow-xl rounded-xl border-gray-300/80 ${revealExploreInfo ? 'border-[1px] max-h-[400px]' : 'h-0 overflow-hidden'}  flex flex-col`}>
+							<h1 className={`my-5 mx-4 text-md ${!searchText && 'text-center' } w-full text-gray-500`}>
+							{ 
+								!searchText ? 
+								'Try searching for people, topics, or keywords'
+								:
+								`Search for "${searchText}"`
+							}
+							</h1>
+							{
+								searchResult?.map((res)=>(
+									<div 
+									onClick={()=>{
+										setCurrentWindow('Profile')
+										window.history.replaceState({id:100},'Default',`?profile=${res._id}`);
+										setNeedToReloadProfile(true)
+									}}
+									className="flex z-40 overflow-hidden cursor-pointer gap-[7px] w-full px-4 w-full hover:bg-gray-200/50 transition-all duration-200 ease-in-out py-3">
+										<img src={res.image} className="h-12 w-12 rounded-full"/>
+										<div className="flex flex-col truncate shrink">
+											<span className="text-black text-md truncate font-semibold m-0 p-0">{res.name}</span>
+											<span className="text-gray-500 truncate text-md m-0 p-0">@{res.username}</span>
+										</div>
+									</div>
+
+								))
+							}
+						</div>
 					</div>
-					<div className="mt-5 rounded-2xl bg-gray-300/20 flex flex-col overflow-hidden">
+					<div className={`mt-5 rounded-2xl bg-gray-300/20 flex flex-col overflow-hidden ${currentWindow === 'Explore' && 'hidden'}`}>
 						<h1 className="my-3 mx-4 text-xl text-black font-bold">What's happening</h1>
 						{
-							tempEventData.map((event)=>(
-								<div className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
+							tempEventData.map((event,i)=>(
+								<div key={i} className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
 									<div className="flex flex-col ">
 										<h1 className="text-gray-600 text-md">{event.head}</h1>
 										<h1 className="text-black text-lg font-semibold">{event.text}</h1>
@@ -177,8 +952,8 @@ export default function Right({setCurrentWindow,currentWindow}) {
 							))
 						}
 						{
-							tempHashData.map((hash)=>(
-								<div className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
+							tempHashData.map((hash,j)=>(
+								<div key={j} className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
 									<div className="flex flex-col ">
 										<h1 className="text-gray-600 text-md">{hash.head}</h1>
 										<h1 className="text-black text-lg font-semibold">{hash.text}</h1>
@@ -190,8 +965,8 @@ export default function Right({setCurrentWindow,currentWindow}) {
 							))
 						}
 						{
-							tempTextData.map((text)=>(
-								<div className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
+							tempTextData.map((text,k)=>(
+								<div key={k} className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
 									<div className="flex flex-col ">
 										<h1 className="text-gray-500 text-md">{text.head}</h1>
 										<h1 className="text-black text-lg font-semibold">{text.text}</h1>
@@ -233,46 +1008,268 @@ export default function Right({setCurrentWindow,currentWindow}) {
 						</div>
 					</div>
 				</div>
-				<div className={`fixed right-7 lg:w-[36.4%] xl:w-[28.4%] w-0 border-gray-200 border-[1px] flex flex-col h-full 
-				overflow-hidden bg-white pt-4 h-[95%] w-full ${msgReveal ? '-bottom-[60px]' : '-bottom-[90%]'} transition-all 
+				<div className={`fixed right-7 lg:w-[36.4%] xl:w-[28.4%] w-0 border-gray-300 border-[1.5px] flex flex-col h-full 
+				overflow-hidden bg-white ${!currentChat && 'pt-4'} h-[95%] w-full ${msgReveal ? '-bottom-[60px]' : '-bottom-[90%]'} transition-all 
 				duration-200 ease-in-out  rounded-2xl shadow-xl pb-[60px]`}>
-					<div 
-					onClick={()=>setMsgReveal(!msgReveal)}
-					className="flex cursor-pointer items-center justify-between w-full px-5 shadow-sm pb-3 mx-auto">
-						<h1 className="text-black text-2xl select-none font-semibold">Messages</h1>
+					<div className={`flex cursor-pointer items-center justify-between ${currentChat && 'hidden'} w-full px-5 shadow-sm pb-3 mx-auto`}>
+						<h1 
+						onClick={()=>setMsgReveal(!msgReveal)}
+						className="text-black text-2xl select-none font-semibold">Messages</h1>
 						<div className="flex items-center">
-							<div className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+							<div 
+							onClick={()=>{setNewMessageSearch(true);setMsgReveal(true)}}
+							className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
 								<RiMailAddLine className="h-5 w-5 text-black"/>
 							</div>
-							<div className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+							<div 
+							onClick={()=>setMsgReveal(!msgReveal)}
+							className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
 								<HiOutlineChevronDoubleDown className={`h-5 w-5 text-black ${!msgReveal && 'rotate-180'  }`}/>
 							</div>
 						</div>
 					</div>
-					<div className={`h-[100%] transition-all duration-200 ease-in-out flex-col flex w-full overflow-y-scroll`}>
+					<div className={`h-[100%] transition-all duration-200 ease-in-out flex-col flex w-full`}>
 						{
+							currentChat ? 
+							<div className="h-full w-full flex flex-col relative">
+								<div className={`h-full w-full backdrop-blur-lg bg-white flex items-center justify-center absolute z-50 ${loading && 'hidden'}`}>
+									<span className="loader3"></span>
+								</div>
+								<div className={`w-full sticky top-0 backdrop-blur-lg bg-white/50 ${msgReveal ? 'py-3':'py-4' } ${!msgReveal && 'pb-7'} 
+								flex justify-between overflow-hidden items-center px-2 shadow-md`}>
+									<div className="flex gap-3 items-center overflow-hidden">
+										<div onClick={()=>setCurrentChat('')} 
+										className="p-2 cursor-pointer rounded-full hover:bg-gray-200 transition-all duration-200 ease-in-out">
+											<HiOutlineArrowLeft className="h-5 w-5 text-gray-800"/>
+										</div>
+										<div 
+										onClick={()=>{
+											setMsgReveal(!msgReveal);
+										}}
+										className="flex cursor-pointer flex-col truncate shrink">
+											<span className="text-lg text-black truncate font-semibold">{currentChat?.name}</span>
+											{
+												msgReveal &&
+												<span className="text-md truncate text-gray-500">@{currentChat?.username}</span>
+											}
+										</div>
+									</div>
+									<div 
+									onClick={()=>{
+										setMsgReveal(!msgReveal);
+									}}
+									className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+										<HiOutlineChevronDoubleDown className={`h-5 w-5 text-black ${!msgReveal && 'rotate-180'  }`}/>
+									</div>	
+								</div>
+								<div className="w-full h-full overflow-y-scroll flex-col flex scrollbar scrollbar-thin scrollbar-thumb-sky-400 
+								scrollbar-track-gray-200 pb-14">
+									<div 
+									onClick={()=>{
+										if(!currentChat?.group){
+											setCurrentWindow('Profile')
+											window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);																
+										}							
+									}}
+									className="w-full mt-2 hover:bg-gray-100 rounded-md transition-all duration-200 ease-in-out 
+									cursor-pointer px-4 py-6 pb-14 border-gray-200/70 border-b-[1px] flex flex-col">
+										{
+											currentChat?.group ? 
+											<div className="h-[70px] w-[70px] rounded-full overflow-hidden mx-auto grid grid-cols-2">
+												{
+													currentChat?.image?.map((img,j)=>{
+														if(currentChat.image.length === 3){
+															if(j<2){
+																return (
+																	<img src={img} className="object-cover w-full h-full" alt=""/>
+																)
+															}
+														}else{
+															if(j<4){
+																return (
+																	<img src={img} className="object-cover w-full h-full" alt=""/>
+																)
+															}	
+														}
+													})
+												}
+											</div>
+											:
+											<img src={currentChat.image} alt="" className="h-[70px] w-[70px] rounded-full mx-auto"/>
+										}
+										<h1 className="text-black text-lg font-bold select-none text-center mx-auto">{currentChat?.name}</h1>
+										<h1 className="text-gray-600 text-md select-none text-center mx-auto">@{currentChat?.username}</h1>
+										<h1 className="text-gray-900 mt-5 select-none text-center mx-auto">{currentChat?.description}</h1>
+										<h1 className="text-gray-600 mt-2 select-none text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]} {!currentChat?.group && <span> - {currentChat?.followers?.length} Followers</span>}</h1>
+										{
+										!currentChat?.group &&
+										<h1 className="text-gray-600 text-sm select-none mt-2 text-center mx-auto">Not followed by anyone you're following</h1>
+										}
+									</div>
+									<div className={`flex flex-col h-auto gap-3 md:px-3 px-2 py-2 w-full ${!currentChat && 'hidden'}`}>
+										{
+											messages?.map((msg,j)=>(
+												<div ref={scrollRef} key={j} className={`flex w-full ${msg.fromSelf ? 'justify-end':'justify-start'} gap-1`}>
+													{
+														senderImages[msg.sender] &&
+														!msg?.fromSelf && 
+														<img id={msg.sender} src={senderImages[msg.sender]} alt=" " className="h-8 w-8 mt-1 rounded-full"/>
+													}
+													<div className={`flex flex-col gap-1  ${msg.fromSelf ? 'justify-end':'justify-start'} max-w-[80%]`}>
+														<div className={`rounded-2xl ${msg.fromSelf ? 'ml-auto' : 'mr-auto'}  flex px-[14px] py-2 ${msg.fromSelf ? 'bg-sky-500 hover:bg-sky-600' : 'bg-gray-300/50 hover:bg-gray-300/70'}`}>
+															<h1 className={`${msg.fromSelf ? 'text-white' : 'text-black'} text-md`}>{msg.message}</h1>
+														</div>
+														<h1 className={`text-gray-600/70 ${msg.fromSelf ? 'text-end':'text-start'} ${msg.fromSelf ? 'justify-end':'justify-start'} text-sm mx-1 select-none cursor-pointer hover:underline flex `}>
+														{tConvert(msg?.updatedAt)}
+														{msg.seenBy && currentChat.group ?
+															<span
+															onClick={()=>{
+																showSeenPeoples(msg.seenBy)
+															}}
+															>{
+																j+1 === messages.length && msg.fromSelf &&
+															 	<span
+															 	onClick={()=>{
+
+															 	}}
+															 	>&nbsp;• Seen by {msg?.seenBy?.includes(currentUser._id) ? 
+															 		msg?.seenBy?.length - 1 === 1 ?
+															 			`${msg.seenBy.length-1} person`
+															 			:
+															 			`${msg.seenBy.length-1} people`
+															 		: 
+															 		`${msg.seenBy.length} people`
+															 	} </span>
+															}</span>
+															:
+															msg?.seenBy?.includes(currentChat._id) && j+1 === messages?.length && msg?.fromSelf && ' • Seen'
+														}
+														</h1>
+													</div>
+												</div>
+
+											))
+										}
+									</div>
+
+								</div>
+
+
+								<div className="absolute bottom-0 py-1 px-3 bg-white w-full">
+									<div className="rounded-xl bg-gray-200/60 w-full flex px-2 py-1">
+										<div className="flex items-center">
+											<div className={`cursor-pointer rounded-full p-2 hover:bg-gray-200/60 transition-all duration-200 ease-in-out ${iconsReveal && 'hidden w-0 overflow-hidden'}`}>
+												<BsCardImage onClick={openFileInput} className={`h-[17px] w-[17px] ${url.length<4 ? 'text-sky-500':'text-gray-500'}  ${iconsReveal && 'hidden w-0 overflow-hidden'}`}/>
+												<input type="file" id="file1" accept="image/*" 
+												value={path}
+												onChange={(e)=>setPath(e.target.value)}
+												hidden
+												/>
+											</div>
+											<div className={`cursor-pointer rounded-full p-2 hover:bg-gray-200/60 transition-all duration-200 ease-in-out`}>
+												{
+													iconsReveal ? 
+													<AiOutlineRight className={`h-[17px] w-[17px] text-sky-500`}/>
+													:
+													<TbGif className={`h-[17px] w-[17px] text-sky-500`}/>
+												}
+											</div>
+											<div className={`relative cursor-pointer hidden sm:block rounded-full p-2 hover:bg-gray-200/60 transition-all duration-200 ease-in-out ${iconsReveal && 'hidden w-0 overflow-hidden'}`}>
+												<BsEmojiSmile onClick={openEmojiInput} className={`h-[17px] w-[17px] text-sky-500 z-30 ${iconsReveal && 'hidden w-0 overflow-hidden'}`}/>
+												{
+													emojiInput &&
+													<div className="absolute bottom-10 -left-[75px] z-30">
+														<EmojiPicker Theme="dark" onEmojiClick={(emoji)=>{
+															setMessageText((messageText)=>{return messageText+' '+emoji.emoji})
+														}}/>
+													</div>											
+												}
+											</div>												
+										</div>
+										<input type="text"
+										id="messageInput"
+										placeholder="Start a new message"
+										value={messageText}
+										onChange={(e)=>{setMessageText(e.target.value)}}
+										className="w-full placeholder:text-gray-500 text-black outline-none bg-transparent"/>
+										<div 
+										onClick={()=>{if(messageText.length>0) sendMessage()}}
+										className="rounded-full mr-1 hover:bg-sky-100 transition-all duration-200 ease-in-out cursor-pointer">
+											{
+												messageText ? 
+												<AiOutlineSend className="h-5 w-5 text-sky-500"/>
+												:
+												<CiMicrophoneOn 
+												onClick = {()=>{
+													
+												}}
+												className="h-5 w-5 text-sky-500"/>
+											}
+										</div>
+									</div>
+								</div>
+							</div>
+							:
+							chats.length > 0 ?
 							chats.map((chat,i)=>(
 								<div key={i}
-								onClick={()=>{setCurrentChat(chat);setCurrentWindow('Messages')}}
+								onClick={()=>{setCurrentChat(chat)}}
 								className="px-5 py-[14px] hover:bg-gray-200/40 transition-all duration-200 ease-in-out 
 								cursor-pointer flex items-center gap-3 group w-full">
-									<img src={chat.image} className="h-12 w-12 rounded-full" alt=""/>
-									<div className="flex flex-col w-full">
+									{
+										chat.group ? 
+										<div className="h-12 w-12 rounded-full overflow-hidden mx-auto grid grid-cols-2">
+											{
+												chat?.image?.map((img,j)=>{
+													if(chat.image.length === 3){
+														if(j<2){
+															return (
+																<img src={img} className="object-cover w-full h-full" alt=""/>
+															)
+														}
+													}else{
+														if(j<4){
+															return (
+																<img src={img} className="object-cover w-full h-full" alt=""/>
+															)
+														}	
+													}
+												})
+											}
+										</div>
+										:
+										<img src={chat.image} alt="" className="h-12 w-12 rounded-full mx-auto"/>
+									}
+									
+									<div className={`flex flex-col ${chat.group ? 'max-w-[80%]':'w-full'} `}>
 										<div className="flex w-full flex-wrap gap-1 items-center justify-between">
-											<div className="flex max-w-[85%] shrink gap-[1.7px] items-center">
-												<h1 className="select-none text-black font-semibold text-lg truncate">{chat.name}</h1>
-												<h1 className="select-none text-gray-500 text-lg truncate">@{chat.username}</h1>
-												<h1 className="select-none text-gray-500 text-lg whitespace-nowrap"> - 3h</h1>
-											</div>
-											<div className="p-1 max-w-[15%] hidden group-hover:block rounded-full hover:bg-sky-200/50 peer transition-all duration-200
-											ease-in-out cursor-pointer">
-												<BsThreeDots className="h-5 w-5 text-gray-500 hidden hover:text-sky-500 group-hover:block"/>
+											<div className={`flex ${chat.group ? 'w-full':'max-w-[85%]'} shrink gap-[1.7px] items-center`}>
+												<h1 className="select-none text-black font-semibold text-lg truncate">Thejas hari hari thejas thejasgamerx123@gmail.com</h1>
+												<h1 className="select-none text-gray-500 text-lg truncate">@Thejas hari hari thejas thejasgamerx123@gmail.com</h1>
+												<h1 className="select-none text-gray-500 text-lg whitespace-nowrap"> - {calDate(chat.updatedMsg)}</h1>
 											</div>
 										</div>
-										<h1 className="text-gray-500 text-md">{chat.lastChat}</h1>
+										<h1 className={`${chat.newMessage ? 'text-black' : 'text-gray-500' } items-center gap-2 flex text-md`}>{
+											chat?.lastChat?.length > 20 ?
+											chat?.lastChat?.substring(0,17) + '...'
+											:
+											chat?.lastChat
+										} 
+										{
+											chat?.newMessage && 
+											<div className="rounded-full h-4 w-4 bg-sky-500 flex items-center justify-center overflow-hidden
+											text-white text-xs">
+												1
+											</div>
+										}
+										</h1>
 									</div>	
 								</div>
 							))
+							:
+							<div className="h-full w-full flex items-center justify-center">
+								<h1 className="text-center text-2xl font-bold">No Chats</h1>
+							</div>
 						}
 					</div>
 				</div>
