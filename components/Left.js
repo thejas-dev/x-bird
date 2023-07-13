@@ -9,12 +9,14 @@ import {BiHomeCircle} from 'react-icons/bi';
 import {HiOutlineMail,HiMail,HiOutlineUser,HiUser} from 'react-icons/hi';
 import {BsBookmark,BsBookmarkFill} from 'react-icons/bs';
 import {signOut} from 'next-auth/react'
+import {useRouter} from 'next/navigation';
 
 export default function Left({setCurrentWindow,currentWindow}) {
 	// body...
 
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const [revealSignOut,setRevealSignOut] = useState(false);
+	const router = useRouter()
 
 
 	return (
@@ -135,7 +137,9 @@ export default function Left({setCurrentWindow,currentWindow}) {
 				}
 				{
 					!currentUser &&
-					<button className="mt-2 hidden xl:block rounded-full text-xl p-3 font-semibold w-full flex items-center justify-center text-white bg-sky-500">
+					<button 
+					onClick={()=>router.push('/signIn')}
+					className="mt-2 hidden xl:block rounded-full text-xl p-3 font-semibold w-full flex items-center justify-center text-white bg-sky-500">
 						Login
 					</button>
 				}
