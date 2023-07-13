@@ -1,23 +1,26 @@
 import TwitterApi from 'twitter-api-v2';
 import {IoMdClose} from 'react-icons/io';
 import {AiOutlineSearch} from 'react-icons/ai';
-import {HiOutlineUserGroup} from 'react-icons/hi';
+import {HiOutlineUserGroup,HiOutlineCamera} from 'react-icons/hi';
 import {useState,useEffect} from 'react'
+import {useRouter} from 'next/navigation'
 import Left from './Left';
 import Right from './Right'
 import Center from './Center'
 import Bottom from './Bottom'
 import Message from './Message'
-import {loginRoutes,registerRoutes,searchProfile} from '../utils/ApiRoutes'
+import {loginRoutes,registerRoutes,searchProfile,getPostByIdRoute,updateUserProfile} from '../utils/ApiRoutes'
 import {RxCross2} from 'react-icons/rx'
 import Explore from './Explore';
 import Tweet from './Tweet';
 import Profile from './Profile';
 import Bookmark from './Bookmark';
 import axios from 'axios';
+import Lists from './Lists'
 import {useRecoilState} from 'recoil'
-import {currentChatState,chatsState,currentUserState} from '../atoms/userAtom'
-
+import {currentChatState,chatsState,currentUserState,mainFeedState,displayUserState,
+showLoginNowState,showClipboardState} from '../atoms/userAtom'
+import ImageKit from "imagekit"
 
 export default function Main() {
 	const [currentWindow,setCurrentWindow] = useState('Home');
@@ -29,6 +32,7 @@ export default function Main() {
 	const [searchText,setSearchText] = useState('');
 	const [currentChat,setCurrentChat] = useRecoilState(currentChatState);
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
+	const [mainFeed,setMainFeed] = useRecoilState(mainFeedState);
 	const [chats,setChats] = useRecoilState(chatsState);
 	const [selectedUsers,setSelectedUsers] = useState([]);
 	const [revealNotify,setRevealNotify] = useState(false);
@@ -36,6 +40,51 @@ export default function Main() {
 	const [msgReveal,setMsgReveal] = useState(false);
 	const [creatingGroup,setCreatingGroup] = useState(false);
 	const [fullScreenLoader,setFullScreenLoader] = useState(false);
+	const [editProfileShow,setEditProfileShow] = useState(false);
+	const [displayUser,setDisplayUser] = useRecoilState(displayUserState);
+	const [name,setName] = useState('');
+	const [bio,setBio] = useState('');
+	const [userLocation,setUserLocation] = useState('');
+	const [image,setImage] = useState('');
+	const [backgroundImage,setBackgroundImage] = useState('');
+	const [website,setWebsite] = useState('');
+	const [imageUploading,setImageUploading] = useState(false);
+	const [path3,setPath3] = useState('');
+	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
+	const [path4,setPath4] = useState('');
+	const [revealNeedToNotifyLogin,setRevealNeedToNotifyLogin] = useState(true);
+	const [showClipboard,setShowClipboard] = useRecoilState(showClipboardState);
+	const router = useRouter();
+	const imagekit = new ImageKit({
+	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
+	    privateKey : process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE,
+	    urlEndpoint : process.env.NEXT_PUBLIC_IMAGEKIT_ENDPOINT
+	});
+
+	useEffect(()=>{
+		if(showClipboard){
+			setTimeout(()=>{setShowClipboard(false)},5000)
+		}
+	},[showClipboard])
+
+	useEffect(()=>{
+		if(currentUser){
+			setName(currentUser?.name);
+			setBio(currentUser?.bio);
+			setImage(currentUser?.image);
+			setBackgroundImage(currentUser?.backgroundImage);
+			setUserLocation(currentUser?.location);
+			setWebsite(currentUser?.website);
+		}
+	},[currentUser])
+
+	const imagePathCheck = (path) =>{
+		if(path){
+			if(path.split('/').includes('data:image')){
+				return true;				
+			}
+		}
+	}
 
 	useEffect(()=>{
 		if(location.search){
@@ -48,6 +97,77 @@ export default function Main() {
 		}
 
 	},[])
+
+	async function updateProfile() {
+		setImageUploading(true)
+		const {data} = await axios.post(`${updateUserProfile}/${currentUser?._id}`,{
+			name,location:userLocation,bio,image,backgroundImage,website
+		})
+		setImageUploading(false)
+		setEditProfileShow(false);
+		setCurrentUser(data.user);
+		setDisplayUser(data.user);
+	}
+	 
+	const url1Setter = () =>{
+		const file_input = document.getElementById('file3');
+		const file = file_input?.files[0];
+		setPath3('');
+		if(file){
+			const reader = new FileReader();
+			reader.addEventListener('load',()=>{
+				let uploaded_file = reader.result;
+				if(imagePathCheck(uploaded_file)){
+					uploadImage(uploaded_file);
+				}
+			})
+			reader.readAsDataURL(file);
+		}
+	}
+
+	const url2Setter = () =>{
+		const file_input = document.getElementById('file4');
+		const file = file_input?.files[0];
+		setPath4('');
+		if(file){
+			const reader = new FileReader();
+			reader.addEventListener('load',()=>{
+				let uploaded_file = reader.result;
+				if(imagePathCheck(uploaded_file)){
+					uploadBackgroundImage(uploaded_file);
+				}
+			})
+			reader.readAsDataURL(file);			
+		}
+	}
+
+	const uploadImage = async(url) => {
+		setImageUploading(true);
+		imagekit.upload({
+	    file : url, //required
+	    folder:"Images",
+	    fileName : 'TNS_BIRD',   //required
+		}).then(async(response) => {
+			setImage(response.url);
+			setImageUploading(false);
+		}).catch(error => {
+		    console.log(error.message)
+		});
+	}
+
+	const uploadBackgroundImage = async(url) => {
+		setImageUploading(true);
+		imagekit.upload({
+	    file : url, //required
+	    folder:"Images",
+	    fileName : 'TNS_BIRD',   //required
+		}).then(async(response) => {
+			setBackgroundImage(response.url);
+			setImageUploading(false);
+		}).catch(error => {
+		    console.log(error.message)
+		});
+	}
 
 	useEffect(()=>{
 		if(searchText){
@@ -138,6 +258,10 @@ export default function Main() {
 		}
 	}
 
+	const editProfile = () => {
+		setEditProfileShow(true)
+	}
+
 	
 
 	return(
@@ -160,7 +284,12 @@ export default function Main() {
 				currentWindow === 'Profile'?
 				<Profile currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay} 
 				setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor}
-				needToReloadProfile={needToReloadProfile} setNeedToReloadProfile={setNeedToReloadProfile}
+				needToReloadProfile={needToReloadProfile} setNeedToReloadProfile={setNeedToReloadProfile} editProfile={editProfile}
+				/>
+				:
+				currentWindow === 'Lists' ? 
+				<Lists currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay}
+				setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor}
 				/>
 				:
 				currentWindow === 'Bookmarks' ?
@@ -179,6 +308,177 @@ export default function Main() {
 			setNeedToReloadProfile={setNeedToReloadProfile}
 			/>		
 			<Bottom  currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} />	
+			
+			<div className={`fixed w-[180px] text-center bg-green-500 left-0 px-3 py-2 right-0 mx-auto rounded-full border-[1px] border-gray-300/50 ${showClipboard ? 'bottom-3' : '-bottom-[100%]'}
+			transition-all duration-200 ease-in-out`}>
+				<h1 className="text-md text-white">Copied to clipboard</h1>
+			</div>
+
+			<div className={`fixed bg-white px-5 py-3 flex justify-center items-center rounded-t-2xl border-[1px] border-gray-300/60 md:hidden transition-all
+			duration-500 ease-in-out gap-3 ${(!currentUser && revealNeedToNotifyLogin) ? 'bottom-0' : '-bottom-[100%]'} left-0 right-0 mx-auto 
+			max-w-2xl`}>
+				<p 
+				onClick={()=>setRevealNeedToNotifyLogin(false)}
+				className="text-md text-gray-600">Login for more personalized experience</p>
+				<button 
+				onClick={()=>router.push('/signIn')} 
+				className="bg-sky-500 hover:bg-sky-600 rounded-full px-7 py-3 text-white text-md font-semibold">
+					Login
+				</button>
+			</div>
+
+			<div className={`fixed top-0 ${showLoginNow ? 'left-0' : 'left-[100%]'} flex items-center justify-center
+			h-full w-full z-50 bg-black/30 transition-all duration-200 ease-in-out`}>
+				<div className="relative m-auto border-[1.1px] border-gray-200 lg:w-[40%] md:w-[60%] 
+				sm:w-[80%] sm:max-h-[85%] overflow-hidden h-full w-full sm:rounded-3xl bg-white flex flex-col overflow-y-scroll 
+				scrollbar-none">
+					<div className="sticky z-40 bg-white/50 backdrop-blur-lg flex items-center justify-between top-0 px-3 py-2 w-full">
+						<div className="flex items-center gap-4 px-2 py-3">
+							<div 
+							onClick={()=>setShowLoginNow(false)}
+							className="h-8 w-8 p-1 rounded-full hover:bg-gray-300/40 transition-all 
+							duration-200 ease-in-out cursor-pointer">
+								<RxCross2 className="h-full w-full text-black"/>
+							</div>
+							<h1 className="md:text-2xl pb-[1.5px] text-xl text-black font-semibold">Just Swim</h1>
+						</div>
+					</div>
+					<div className="h-full w-full flex flex-col gap-6 mt-[50px] items-center">
+						<img src="twitter-icon.png" alt="" className="h-10 w-10"/>
+						<h1 className="text-center text-xl text-black font-semibold">Please login to access interactive features such as posting tweets, making friends, and 
+						engaging in conversations.</h1>
+						<button 
+						onClick={()=>router.push('/signIn')}
+						className="px-8 text-xl font-semibold py-2 rounded-full text-white bg-sky-500 border-white border-[1px]">
+							Login
+						</button>
+
+
+					</div>
+
+				</div>
+			</div>
+
+			<div className={`fixed top-0 ${editProfileShow ? 'left-0' : 'left-[100%]'} flex items-center justify-center
+			h-full w-full z-50 bg-black/30 transition-all duration-200 ease-in-out`}>
+				<div className="relative m-auto border-[1.1px] border-gray-200 lg:w-[40%] md:w-[60%] 
+				sm:w-[80%] sm:max-h-[85%] overflow-hidden h-full w-full sm:rounded-3xl bg-white flex flex-col overflow-y-scroll 
+				scrollbar-none">
+					<div className={`absolute z-50 flex items-center justify-center h-full w-full bg-white/60 ${!imageUploading && 'hidden'} `}>
+						<span className="loader3 h-14 w-14"/>
+					</div>
+					<div className="sticky z-40 bg-white/50 backdrop-blur-lg flex items-center justify-between top-0 px-3 py-2 w-full">
+						<div className="flex items-center gap-4">
+							<div 
+							onClick={()=>setEditProfileShow(false)}
+							className="h-8 w-8 p-1 rounded-full hover:bg-gray-300/40 transition-all 
+							duration-200 ease-in-out cursor-pointer">
+								<RxCross2 className="h-full w-full text-black"/>
+							</div>
+							<h1 className="md:text-2xl pb-[1.5px] text-xl text-black font-semibold">Edit Profile</h1>
+						</div>
+						<button 
+						onClick={updateProfile}
+						className="bg-black text-white font-semibold rounded-full px-5 py-2">
+							Save
+						</button>
+					</div>
+					<div className="relative w-full lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] bg-blue-200/50">
+						{
+							backgroundImage ?
+							<img src={backgroundImage} alt="" className="lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] w-full"/>
+							:
+							<div className="lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] w-full"/>
+
+						}
+						<div className="flex absolute justify-center top-0 left-0 bottom-0 right-0 items-center m-auto">
+							<div className="flex items-center gap-1">
+								<div 
+								onClick={()=>document.getElementById('file4').click()}
+								className="md:h-10 cursor-pointer h-8 w-8 md:w-10 md:p-[6px] p-1 rounded-full bg-black/40 hover:bg-black/30 top-0 left-0 right-0 bottom-0 m-auto">
+									<HiOutlineCamera className="h-full w-full text-white"/>
+								</div>
+								<input type="file" accept="image/*" multiple="multiple" id="file4"
+								value={path4} onChange={(e)=>{setPath4(e.target.value);url2Setter()}}
+								hidden/>
+								{
+									backgroundImage &&
+									<div 
+									onClick={()=>setBackgroundImage('')}
+									className="md:h-10 cursor-pointer h-8 w-8 md:w-10 md:p-[6px] p-1 rounded-full bg-black/40 hover:bg-red-600/30 top-0 left-0 right-0 bottom-0 m-auto">
+										<RxCross2 className="h-full w-full text-white"/>
+									</div>
+								}
+							</div>
+						</div>
+						<div className="p-1 cursor-pointer absolute lg:-bottom-[36%] md:-bottom-[40%] -bottom-[35%] bg-white rounded-full left-3 md:left-5">
+							<div className="relative" >
+								<div 
+								onClick={()=>document.getElementById('file3').click()}
+								className="absolute md:h-10 h-8 w-8 md:w-10 md:p-[6px] p-1 rounded-full bg-black/40 hover:bg-black/30 top-0 left-0 right-0 bottom-0 m-auto">
+									<HiOutlineCamera className="h-full w-full text-white"/>
+								</div>
+								<input type="file" accept="image/*" multiple="multiple" id="file3"
+								value={path3} onChange={(e)=>{setPath3(e.target.value);url1Setter()}}
+								hidden/>
+								<img src={image} alt="" className="md:h-[150px] h-[100px] z-10 md:w-[150px] w-[100px] rounded-full"/>
+							</div>
+						</div>
+					</div>
+					<div className="md:mt-[80px] mt-[65px] flex flex-col px-3 py-2 w-full gap-5 pb-7">
+						<div className="w-full flex flex-col border-[1.5px] px-2 py-1 rounded-lg focus-within:border-sky-400  border-gray-300/60">
+							<h1 className="text-sm text-gray-500" id="name" >Name</h1>
+							<input type="text" placeholder="Enter your name" 
+							onFocus={()=>document.getElementById('name').classList.add('text-sky-500')}
+							onBlur={()=>document.getElementById('name').classList.remove('text-sky-500')}
+							value={name}
+							onChange={(e)=>setName(e.target.value)}
+							className="w-full text-lg
+							text-black placeholder:text-gray-500/70 outline-none "/>
+						</div>	
+
+						<div className="w-full flex flex-col border-[1.5px] px-2 py-1 rounded-lg focus-within:border-sky-400  border-gray-300/60">
+							<h1 className="text-sm text-gray-500" id="bio" >Bio</h1>
+							<textarea type="text" placeholder="Enter your bio here" 
+							onFocus={()=>document.getElementById('bio').classList.add('text-sky-500')}
+							onBlur={()=>document.getElementById('bio').classList.remove('text-sky-500')}
+							value={bio}
+							onChange={(e)=>setBio(e.target.value)}
+							className="w-full text-lg
+							text-black placeholder:text-gray-500/70 outline-none resize-none h-[100px]"/>
+						</div>	
+
+						<div className="w-full flex flex-col border-[1.5px] px-2 py-1 rounded-lg focus-within:border-sky-400  border-gray-300/60">
+							<h1 className="text-sm text-gray-500" id="location" >Location</h1>
+							<input type="text" placeholder="Location" 
+							onFocus={()=>document.getElementById('location').classList.add('text-sky-500')}
+							onBlur={()=>document.getElementById('location').classList.remove('text-sky-500')}
+							value={userLocation}
+							onChange={(e)=>setUserLocation(e.target.value)}
+							className="w-full text-lg
+							text-black placeholder:text-gray-500/70 outline-none "/>
+						</div>
+
+						<div className="w-full flex flex-col border-[1.5px] px-2 py-1 rounded-lg focus-within:border-sky-400  border-gray-300/60">
+							<h1 className="text-sm text-gray-500" id="website" >Website (separate by comma for multiple URLs)</h1>
+							<input type="text" placeholder="Website url" 
+							onFocus={()=>document.getElementById('website').classList.add('text-sky-500')}
+							onBlur={()=>document.getElementById('website').classList.remove('text-sky-500')}
+							value={website}
+							onChange={(e)=>setWebsite(e.target.value)}
+							className="w-full text-lg
+							text-black placeholder:text-gray-500/70 outline-none "/>
+						</div>
+
+
+					</div>
+
+
+
+				</div>
+			</div>
+
+
 			{
 				newMessageSearch &&
 				<div className="fixed flex items-center justify-center h-full w-full z-50 bg-black/30">
@@ -188,12 +488,13 @@ export default function Main() {
 								<div 
 								onClick={()=>{
 									setNewMessageSearch(false);
+									setCreatingGroup(false)
 								}}
 								className="p-2 hover:bg-gray-300 cursor-pointer transition-all duration-200 ease-in-out rounded-full">
 									<IoMdClose className="h-5 w-5 cursor-pointer text-black"/>
 								</div>
 								<h1 className="text-xl select-none text-black font-semibold">{
-									setCreatingGroup ? 
+									creatingGroup ? 
 									'Create a group'
 									:
 									'New Message'
@@ -260,26 +561,32 @@ export default function Main() {
 								))
 							}
 						</div>
-						<div className="flex flex-col overflow-y-scroll scrollbar-thin 
+						<div className="flex flex-col h-full overflow-y-scroll scrollbar-thin 
 						scrollbar-thumb-sky-400 scrollbar-track-gray-200">
 							{
-								searchResult.length>0?
-									searchResult.map((res)=>(
-										<div 
-										onClick={()=>{
-											modifySelectedUsers(res)
-										}}
-										className="flex z-40 overflow-hidden cursor-pointer gap-[7px] w-full px-4 w-full hover:bg-gray-200/50 transition-all duration-200 ease-in-out py-3">
-											<img src={res.image} className={`h-12 select-none w-12 ${currentUser._id === res._id && 'opacity-50' } rounded-full`}/>
-											<div className="flex flex-col truncate shrink">
-												<span className={`text-black text-md truncate select-none font-semibold m-0 p-0 
-												${currentUser._id === res._id && 'opacity-50' }`}>{res.name}</span>
-												<span className={`text-gray-500 truncate select-none text-md m-0 p-0
-												${currentUser._id === res._id && 'opacity-50' }`}>@{res.username}</span>
+								searchResult?.length>0?
+									<>
+									{
+										searchResult?.map((res)=>(
+											<div 
+											onClick={()=>{
+												modifySelectedUsers(res)
+											}}
+											className="flex z-40 cursor-pointer gap-[7px] w-full px-4 hover:bg-gray-200/50 transition-all duration-200 ease-in-out py-3">
+												<img src={res.image} className={`h-12 select-none w-12 ${currentUser._id === res._id && 'opacity-50' } rounded-full`}/>
+												<div className="flex flex-col truncate shrink">
+													<span className={`text-black text-md truncate select-none font-semibold m-0 p-0 
+													${currentUser._id === res._id && 'opacity-50' }`}>{res.name}</span>
+													<span className={`text-gray-500 truncate select-none text-md m-0 p-0
+													${currentUser._id === res._id && 'opacity-50' }`}>@{res.username}</span>
+												</div>
 											</div>
-										</div>
 
-									))
+										))
+									}
+
+									
+									</>
 									:
 									currentUser.chats.map((res)=>(
 										<div 
@@ -331,9 +638,9 @@ export default function Main() {
 			}
 				
 			<div className={`fixed flex items-center justify-center ${openOverlay.length>0 ? 'left-0' : 'left-[100%]' } transition-all duration-300 ease-in-out w-full h-full z-50 bg-black/30 `}>
-				<div className="relative m-auto lg:w-[40%] md:w-[60%] sm:w-[80%] sm:max-h-[100%] h-full w-full sm:rounded-3xl bg-white px-4 py-3 overflow-y-scroll 
+				<div className="relative m-auto lg:w-[40%] md:w-[60%] sm:w-[80%] sm:max-h-[85%] h-full w-full sm:rounded-3xl bg-white pb-3 overflow-y-scroll 
 				scrollbar-none flex flex-col">
-					<div className="flex sticky top-0 items-center gap-5">
+					<div className="flex pt-3 sticky top-0 bg-white backdrop-blur-lg items-center gap-5 px-2">
 						<div 
 						onClick={()=>{
 							setOpenOverlay([]);
@@ -344,10 +651,23 @@ export default function Main() {
 						</div>
 						<h1 className="text-xl select-none text-black font-semibold">{overlayFor}</h1>
 					</div>
-					<div className="pt-7 flex flex-col gap-3">
+					<div className="pt-7 flex flex-col gap-1 max-w-[100%]">
+						<>
 						{
-							openOverlay.map((user,j)=>(
-								<div className="w-full gap-3 flex" key={j}>
+							openOverlay?.map((user,j)=>(
+								<div 
+								onClick={()=>{
+										setOpenOverlay([]);
+										setOverlayFor('');
+										window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+										if(currentWindow === 'Profile'){
+											setNeedToReloadProfile(true);
+										}else{
+											setCurrentWindow('Profile')
+										}
+									}}
+									className="max-w-[100%] gap-3 flex cursor-pointer hover:bg-gray-300/40 p-2 px-4 transition-all 
+									duration-200 rounded-lg ease-in-out " key={j}>
 									<img src={user.image} 
 									onClick={()=>{
 										setOpenOverlay([]);
@@ -360,7 +680,7 @@ export default function Main() {
 										}
 									}}
 									className="h-12 w-12 rounded-full"/>
-									<div className='flex w-full flex-col'>
+									<div className='flex w-full overflow-hidden flex-col'>
 										<div className="flex items-center justify-between">
 											<div className="flex flex-col truncate shrink">
 												<h1
@@ -379,10 +699,15 @@ export default function Main() {
 												</h1>
 												<h1 
 												onClick={()=>{
-													setCurrentWindow('Profile')
+													
 													setOpenOverlay([]);
 													setOverlayFor('');
 													window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+													if(currentWindow === 'Profile'){
+														setNeedToReloadProfile(true);
+													}else{
+														setCurrentWindow('Profile')
+													}
 												}}
 												className="text-gray-500 text-md truncate select-none">@{user?.username}</h1>
 											</div>
@@ -396,20 +721,30 @@ export default function Main() {
 												?
 												<button className="rounded-full text-black bg-transparent px-5 py-2 border-gray-300/70 border-[1.7px] shadow-sm"
 												onClick={()=>{
-													setCurrentWindow('Profile')
+												
 													setOpenOverlay([]);
 													setOverlayFor('');
 													window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+													if(currentWindow === 'Profile'){
+														setNeedToReloadProfile(true);
+													}else{
+														setCurrentWindow('Profile')
+													}
 												}}
 												>Following</button>
 												:
 												(user.id || user._id) !== currentUser._id && 
 												<button className="rounded-full text-white bg-black px-5 py-2 hover:bg-gray-900"
 												onClick={()=>{
-													setCurrentWindow('Profile')
+												
 													setOpenOverlay([]);
 													setOverlayFor('');
 													window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+													if(currentWindow === 'Profile'){
+														setNeedToReloadProfile(true);
+													}else{
+														setCurrentWindow('Profile')
+													}
 												}}
 												>Follow</button>
 											}
@@ -418,11 +753,15 @@ export default function Main() {
 								</div>
 							))
 						}
+
+
+						</>
 					</div>
 				</div>
 			</div>
 			
-			<div className={`fixed flex gap-2 items-center px-3 pr-7 bg-white py-2 top-2 ${notify ? 'left-2':'-left-[50%]'} z-50 rounded-xl transition-all duration-300 ease-in-out border-gray-300/60 border-[1px]`}>
+			<div className={`fixed flex gap-2 items-center px-3 pr-7 bg-white py-2 top-2 ${notify ? 'left-2':'-left-[50%]'} 
+			bg-gray-50 z-50 rounded-xl transition-all duration-300 ease-in-out border-gray-300/60 border-[1px]`}>
 				<img src={revealNotify?.user?.image}
 				alt=" "
 				className="h-9 w-9 rounded-full"/>

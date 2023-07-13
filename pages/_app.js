@@ -7,7 +7,7 @@ export default function App({ Component, pageProps: { session, ...pageProps} }) 
   return (
   <>
   <Head>
-    <title>xbird</title>
+    <title>TNS-BIRD</title>
   </Head>
   <SessionProvider session={session}>
   	<RecoilRoot>

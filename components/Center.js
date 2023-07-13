@@ -1,11 +1,12 @@
 import {FiChevronDown} from 'react-icons/fi';
-import {useState,useEffect} from 'react';
+import {useState,useEffect,useRef} from 'react';
 import {BsCardImage,BsEmojiSmile,BsGraphUpArrow,BsFillShareFill,BsThreeDots} from 'react-icons/bs';
 import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart} from 'react-icons/ai';
 import {TbGif} from 'react-icons/tb';
 import {FaRegComment} from 'react-icons/fa';
 import {useRecoilState} from 'recoil'
-import {currentChatState,currentUserState,mainFeedState,loaderState} from '../atoms/userAtom'
+import {currentChatState,currentUserState,showLoginNowState,mainFeedState,
+loaderState,sidebarState} from '../atoms/userAtom'
 import {MdSchedule} from 'react-icons/md'
 import {HiOutlineLocationMarker} from 'react-icons/hi';
 import {createTweet,getAllPosts,getPostByIdRoute,updatedPostRoute,
@@ -15,7 +16,10 @@ import {RxCross2} from 'react-icons/rx';
 import millify from 'millify';
 import ImageKit from "imagekit";
 import EmojiPicker from 'emoji-picker-react';
-import DateDiff from 'date-diff'
+import DateDiff from 'date-diff';
+import {socket} from '../service/socket';
+import TweetCard from './TweetCard'
+
 
 let imageUrl = [];
 
@@ -24,15 +28,18 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [home,setHome] = useState('For you');
 	const [currentChat,setCurrentChat] = useRecoilState(currentChatState);
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
+	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
 	const [mainFeed,setMainFeed] = useRecoilState(mainFeedState);
 	const [tweetText,setTweetText] = useState('');	
 	const [path,setPath] = useState('');
 	const [url,setUrl] = useState([]);
 	const [url2,setUrl2] = useState('');
-	// const [imageUrl,setImageUrl] = useState([]);
+	const [refreshPost,setRefreshPost] = useState('');
 	const [loader,setLoader] = useRecoilState(loaderState);
 	const [loading,setLoading] = useState(false);
+	const ref = useRef()
 	const [emojiInput,setEmojiInput] = useState(false);
+	const [openSidebar,setOpenSidebar] = useRecoilState(sidebarState);
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
 	    privateKey : process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE,
@@ -55,17 +62,18 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		const date1 = new Date();
 		const date2 = new Date(date)
 		var diff = new DateDiff(date1, date2);
+		// console.log(date2.toString().split(' '))
 		if(diff.minutes() <= 60){
 			return Math.trunc(diff.minutes()) + 'm'
 		}else if(diff.hours() <= 24){
 			return Math.trunc(diff.hours()) + 'h'
 		}else if(diff.days() <= 30){
 			return Math.trunc(diff.days()) + 'd'
-		}else if(diff.months() <= 12){
-			return Math.trunc(diff.minutes()) + 'M'
-		}else if(diff.years() <= 12){
-			return Math.trunc(diff.years()) + 'y'
-		}
+		}else{
+			const splitres = date2?.toString().split(' ')
+			const res = splitres[1] + ' ' + splitres[2]
+			return res
+		} 
 	}
 
 	const uploadImage = (i=0) => {
@@ -94,6 +102,24 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		});
 	}
 
+	useEffect(()=>{
+		socket.on('refetch-post',(data)=>{
+			// refreshPost(data);
+			setRefreshPost(data)
+		})
+		return ()=>{
+			socket.off('refetch-post')
+		}
+
+	},[])
+
+	useEffect(()=>{
+		if(refreshPost){
+			refetchPost(refreshPost);
+			setRefreshPost('');
+		}
+	},[refreshPost])
+
 
 
 	const removeImage = (i) => {
@@ -121,6 +147,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	useEffect(()=>{
 		fetchTimeLine();
 	},[])
+
 
 	const fetchTimeLine = async() => {
 		const {data} = await axios.get(getAllPosts);
@@ -197,6 +224,25 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		element.classList.add('animate-bounce');
 	}
 
+	const refetchPost = async(data2) => {
+		if(data2){
+			// console.log(data2,mainFeed)
+			const idx = await mainFeed.findIndex(element=>{
+				// console.log(element._id,' ',data2)
+				if(element._id === data2){
+					return true
+				}
+				return false
+			})
+			// console.log(idx)
+			const {data} = await axios.get(`${getPostByIdRoute}/${mainFeed[idx]._id}`);
+			const post = data.post[0];
+			let posts = [...mainFeed];
+			posts[idx] = post;
+			setMainFeed(posts)
+		}
+	}
+
 	const likeThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${mainFeed[j]._id}`);
@@ -260,7 +306,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 				})
 				setCurrentUser(result.data.obj);
 			}
+			socket.emit('refetch-post',mainFeed[j]._id)
 			
+		}else{
+			setShowLoginNow(true)
 		}
 	}
 	// console.log(mainFeed)
@@ -297,7 +346,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 			}
 			const updatedPost = {...post, 'retweetedBy':retweetedBy }
 			const res = await axios.post(`${updatedPostRoute}/${mainFeed[j]._id}`,updatedPost);
-			const main = [...mainFeed];
+			let main = [...mainFeed];
 			main[j] = res.data.obj;
 			setMainFeed(main);
 
@@ -329,10 +378,35 @@ export default function Center({setCurrentWindow,currentWindow}) {
 				})
 				setCurrentUser(result.data.obj);
 			}
-			
+			socket.emit('refetch-post',mainFeed[j]._id)
+		}else{
+			setShowLoginNow(true)
 		}
 	}
 	
+
+	const viewThisTweet = async(j) => {
+		if(currentUser){
+			const {data} = await axios.get(`${getPostByIdRoute}/${mainFeed[j]._id}`);
+			const post = data.post[0];
+			let views = post.views;
+			const check = views.some(element=>{
+				if(element === currentUser._id){
+					return true;
+				}
+				return false
+			})
+			if(!check){
+				views.push(currentUser._id);
+				const updatedPost = {...post, 'views':views}
+				const res = await axios.post(`${updatedPostRoute}/${mainFeed[j]._id}`,updatedPost);
+				let main = [...mainFeed];
+				main[j] = res.data.obj;
+				setMainFeed(main);
+			}
+		}
+	}
+
 	// console.log(currentUser)
 
 	const openEmojiInput = () => setEmojiInput(!emojiInput)
@@ -343,7 +417,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	return (
 		<div className="lg:w-[44.6%] relative md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 scrollbar-none overflow-y-scroll scroll-smooth">
 			<div className={`h-full w-full backdrop-blur-lg bg-white/50 flex items-center justify-center absolute z-50 ${!loading && 'hidden'}`}>
-				<span class="loader4">
+				<span className="loader4">
 					<img src="twitter-icon.png" className="absolute -rotate-[45deg] h-[46px] w-[46px] top-0 bottom-0 left-0 right-0 m-auto" alt=""/>
 				</span>
 			</div>
@@ -355,35 +429,41 @@ export default function Center({setCurrentWindow,currentWindow}) {
 							Home
 						</h1>
 						<div className="w-full xs:hidden flex items-center pt-3 justify-center">
-							<img src="twitter-icon.png" className="left-3 absolute top-3 cursor-pointer left-5 h-8 w-8 rounded-full"/>
+							<img src={currentUser?.image || 'twitter-icon.png'} 
+							onClick={()=>openSidebar(true)}
+							className="left-3 absolute top-3 cursor-pointer left-5 h-8 w-8 rounded-full"/>
 							<center>
-								<img src="twitter-icon.png" className="h-7 cursor-pointer w-7"/>
+								<img src="twitter-icon.png" className="h-9 cursor-pointer w-9"/>
 							</center>
 						</div>
-						<div className="mt-4 flex w-full">
+						<div className="mt-2 xs:hidden block bg-gray-200/40 w-full h-[1px]"/>
+						<div className="xs:mt-4 mt-2 flex w-full">
 							<div 
 							onClick={()=>setHome('For you')}
-							className="w-[50%] cursor-pointer hover:bg-gray-200/80 transition-all duration-200 
-							ease-in-out flex items-center justify-center">
+							className={`${currentUser ? 'w-[50%]' : 'w-[100%]' } cursor-pointer hover:bg-gray-200/80 transition-all duration-200 
+							ease-in-out flex items-center justify-center`}>
 								<div className={`py-3 border-b-[3px] ${home=== 'For you' ? 'border-sky-600' : 'border-transparent'}`}>
 									<h1 className={`text-md select-none font-semibold ${home === 'For you' ? "text-black font-bold" : "text-gray-600"}`}>
 										For you
 									</h1>
 								</div>
 							</div>
-							<div 
-							onClick={()=>setHome('Following')}
-							className="w-[50%] cursor-pointer hover:bg-gray-200/80 transition-all duration-200 
-							ease-in-out flex items-center justify-center">
-								<div className={`py-3 border-b-[3px] ${home=== 'Following' ? 'border-sky-600' : 'border-transparent'}`}>
-									<h1 className={`text-md select-none font-semibold ${home === 'Following' ? "text-black font-bold" : "text-gray-600"}`}>
-										Following
-									</h1>
+							{
+								currentUser &&
+								<div 
+								onClick={()=>setHome('Following')}
+								className="w-[50%] cursor-pointer hover:bg-gray-200/80 transition-all duration-200 
+								ease-in-out flex items-center justify-center">
+									<div className={`py-3 border-b-[3px] ${home=== 'Following' ? 'border-sky-600' : 'border-transparent'}`}>
+										<h1 className={`text-md select-none font-semibold ${home === 'Following' ? "text-black font-bold" : "text-gray-600"}`}>
+											Following
+										</h1>
+									</div>
 								</div>
-							</div>
+							}
 						</div>
 					</div>	
-					<div className="mt-2 md:px-5 px-3 sm:gap-2 md:gap-4 gap-2 w-full flex border-b-[1.3px] border-gray-200">
+					<div className={`mt-2 md:px-5 px-3 sm:gap-2 md:gap-4 gap-2 w-full flex border-b-[1.3px] border-gray-200 ${!currentUser && 'hidden'}`}>
 						
 						<img src={currentUser?.image} alt="" className="h-12 w-12 hidden select-none sm:block rounded-full"/>
 						<div className=" w-full mt-2 flex flex-col">
@@ -468,160 +548,19 @@ export default function Center({setCurrentWindow,currentWindow}) {
 					</div>
 					<div className="flex flex-col w-full mb-10 h-full">
 						{
-							mainFeed.map((main,j)=>(
-								<div key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-								border-gray-300/70 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
-									<img 
-									onClick={()=>{
-										setCurrentWindow('Profile')
-										window.history.replaceState({id:100},'Default',`?profile=${main.user.id}`);
-									}}
-									src={main.user.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
-									<div className="flex flex-col w-full overflow-hidden">
-										<div className='flex gap-1 w-full shrink truncate justify-between' >
-											<div className="flex gap-1 truncate shrink items-center ">
-												<h1 
-												onClick={()=>{
-													setCurrentWindow('Profile')
-													window.history.replaceState({id:100},'Default',`?profile=${main.user.id}`);
-												}}
-												className="text-lg truncate font-semibold text-black select-none hover:cursor-pointer hover:underline">
-													{main.user.name}
-												</h1>
-												<h1 
-												onClick={()=>{
-													setCurrentWindow('Profile')
-													window.history.replaceState({id:100},'Default',`?profile=${main.user.id}`);
-												}}
-												className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
-												<h1 
-												onClick={()=>{
-													window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
-													setCurrentWindow('tweet')
-												}}
-												className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
-													calDate(main.createdAt)
-												}</h1>
-											</div>
-											<div className="p-1 rounded-full md:hover:bg-sky-300/20 transition-all duration-200 ease-in-out group">
-												<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
-											</div>
-										</div>
-										<div 
-										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
-										}}
-										className="w-full text-lg">
-											<h1 className="w-full text-gray-900 select-none break-words">{main.text}</h1>
-										</div>	
-										<div 
-										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
-										}}
-										className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
-											{
-												main.images.length>0 &&
-													main.images.map((ur,i)=>(
-													<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
-														<div className="absolute h-full w-full z-10 transition-all duration-200 
-														ease-in-out group-hover:bg-gray-500/10"/>
-														<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
-													</div>
-													))
+							mainFeed.map((main,j)=>{
+								
+							
+								return (
+								<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} calDate={calDate}
+								BsThreeDots={BsThreeDots} FaRegComment={FaRegComment} millify={millify} AiOutlineRetweet={AiOutlineRetweet}
+								retweetThisTweet={retweetThisTweet} makeMeSpin={makeMeSpin} likeThisTweet={likeThisTweet} makeMePink={makeMePink}
+								AiFillHeart={AiFillHeart} AiOutlineHeart={AiOutlineHeart} currentUser={currentUser}
+								BsGraphUpArrow={BsGraphUpArrow} BsFillShareFill={BsFillShareFill} viewThisTweet={viewThisTweet}
+								/>
 
-											}
-										</div>
-										<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
-											<div 
-											onClick={()=>{
-												window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
-												setCurrentWindow('tweet')
-											}}
-											className="flex group md:gap-[6px] gap-[3px] items-center">
-												<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
-													<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-												</div>
-												<h1 className="text-md text-gray-500 group-hover:text-sky-500">
-													{millify(main.comments.length)}
-												</h1>
-											</div>
-											<div 
-											onClick={()=>{retweetThisTweet(j);makeMeSpin(j)}}
-											className="flex group md:gap-[6px] gap-[3px] items-center">
-												<div className="p-[10px] group-hover:bg-green-300/30 transition-all duration-200 ease-in-out rounded-full">
-													<AiOutlineRetweet id={`retweet-${j}`} className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
-													${main.retweetedBy.some(element=>{
-														if(element.id === currentUser?._id){
-															return true;
-														}
-														return false
-													}) &&  'text-green-500' }
-													`}/>
-												</div>
-												<h1 className={`text-md text-gray-500
-												${main.retweetedBy.some(element=>{
-													if(element.id === currentUser?._id){
-														return true;
-													}
-													return false
-												}) &&  'text-green-500' }
-												group-hover:text-green-500`}>
-													{millify(main.retweetedBy.length)}
-												</h1>
-											</div>
-											<div
-											onClick={()=>{likeThisTweet(j);makeMePink(j)}}
-											className="flex group md:gap-[6px] gap-[3px] items-center">
-												<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
-													{
-														main.likes.some(element=>{
-															if(element.id === currentUser?._id){
-																return true;
-															}
-															return false
-														}) ? 
-														<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600"/>
-														:
-														<AiOutlineHeart 
-														id={`like-${j}`}
-														className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600"/>
-													}
-												</div>
-												<h1 className={`text-md text-gray-500 group-hover:text-pink-500 
-												${main.likes.some(element=>{
-													if(element.id === currentUser?._id){
-														return true;
-													}
-													return false
-												}) &&  'text-pink-500' }
-												`}>
-													{millify(main.likes.length)}
-												</h1>
-											</div>
-											<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
-												<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
-													<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-												</div>
-												<h1 className="text-md text-gray-500 group-hover:text-sky-500">
-													{millify(main.views.length)}
-												</h1>
-											</div>
-											<div 
-											onClick={()=>{
-
-											}}
-											className="flex group md:gap-[6px] gap-[3px] items-center">
-												<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
-													<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-												</div>
-											</div>
-										</div>
-
-
-									</div>	
-								</div>
-
-							))
+							)}
+							)
 						}
 					</div>
 				</div>

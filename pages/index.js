@@ -20,15 +20,21 @@ export default function Home({providers,session2}) {
 			if(session2){
 				handleValidation()
 				console.log("having session")
-			}else if(localStorage.getItem('xbird')){
-				console.log("having storage")
-				handleLogin(localStorage.getItem('xbird'));
 			}else{
-				router.push('./signIn')
-				console.log("routing")
-
+				setLoading(false)
 			}
-		}	
+			// else if(localStorage.getItem('xbird')){
+			// 	console.log("having storage")
+			// 	handleLogin(localStorage.getItem('xbird'));
+			// }
+			// else{
+			// 	router.push('./signIn')
+			// 	console.log("routing")
+
+			// }
+		}else{
+			setLoading(false)
+		}
 	},[])
 
 
@@ -36,19 +42,23 @@ export default function Home({providers,session2}) {
 		if(!currentUser){
 			if(session2){
 				handleValidation()
-			}else if(localStorage.getItem('xbird')){
-				handleLogin(JSON.parse(localStorage.getItem('xbird')));
 			}else{
-				router.push('./signIn')
+				setLoading(false)
 			}
-		}	
+			// else if(localStorage.getItem('xbird')){
+			// 	handleLogin(JSON.parse(localStorage.getItem('xbird')));
+			// }else{
+			// 	router.push('./signIn')
+			// }
+		}	else{
+			setLoading(false)
+		}
 	},[currentUser])
 
 	const handleLogin = async(email) =>{
     	const {data} = await axios.post(loginRoute,{
 	      email
 	    });	
-	    console.log(data)
 	    setCurrentUser(data?.user)
 	    setLoading(false);
 	}

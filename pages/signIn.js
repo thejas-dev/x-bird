@@ -9,14 +9,14 @@ import axios from 'axios';
 
 export default function Home({providers,session2}) {
 	// body...
-	console.log(session2,providers)
+	// console.log(session2,providers)
 	const router = useRouter();
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const {data:session} = useSession();
 
 	useEffect(()=>{
 		if(session){
-			console.log(session)
+			// console.log(session)
 			handleValidation();
 		}
 	},[session])

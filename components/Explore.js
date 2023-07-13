@@ -32,7 +32,7 @@ export default function Explore() {
 
 	return (
 		<div className="lg:w-[44.6%] md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 scrollbar-none overflow-y-scroll scroll-smooth">
-			<div className="flex items-center w-full px-5 gap-7 mt-2">
+			<div className="flex items-center w-full md:px-5 px-3 lg:gap-7 md:gap-4 gap-3 mt-2">
 				<div className="rounded-full overflow-hidden bg-gray-200/80 w-full flex items-center p-[10px] px-4 gap-3">
 					<RiSearchLine className="h-5 w-5 text-gray-500"/>
 					<input type="text" className="w-full placeholder:font-normal placeholder:text-gray-400 outline-none 

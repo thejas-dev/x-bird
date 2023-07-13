@@ -1,4 +1,4 @@
-export const host = "http://localhost:3333";
+export const host = "https://x-bird-server.vercel.app";
 
 export const registerRoute = `${host}/api/auth/register`;
 export const loginRoute = `${host}/api/auth/login`;
@@ -22,3 +22,5 @@ export const getGroupMessage = `${host}/api/auth/getGroupMessage`;
 export const addGroupMessage = `${host}/api/auth/addGroupMessage`;
 export const updateMsg = `${host}/api/auth/updateMsg`;
 export const updateGroupMsg = `${host}/api/auth/updateGroupMsg`;
+export const updateUserProfile = `${host}/api/auth/updateUserProfile`;
+export const updateUserLists = `${host}/api/auth/updateUserLists`;

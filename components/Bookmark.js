@@ -31,17 +31,18 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 		const date1 = new Date();
 		const date2 = new Date(date)
 		var diff = new DateDiff(date1, date2);
+		// console.log(date2.toString().split(' '))
 		if(diff.minutes() <= 60){
 			return Math.trunc(diff.minutes()) + 'm'
 		}else if(diff.hours() <= 24){
 			return Math.trunc(diff.hours()) + 'h'
 		}else if(diff.days() <= 30){
 			return Math.trunc(diff.days()) + 'd'
-		}else if(diff.months() <= 12){
-			return Math.trunc(diff.minutes()) + 'M'
-		}else if(diff.years() <= 12){
-			return Math.trunc(diff.years()) + 'y'
-		}
+		}else{
+			const splitres = date2?.toString().split(' ')
+			const res = splitres[1] + " " + splitres[2]
+			return res
+		} 
 	}
 
 	const fetchBookmarks = async() => {

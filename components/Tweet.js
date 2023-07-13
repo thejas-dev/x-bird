@@ -10,13 +10,15 @@ import {findPostRoute} from '../utils/ApiRoutes';
 import {FaRegComment} from 'react-icons/fa';
 import axios from 'axios'
 import millify from 'millify';
-import {currentUserState,loaderState} from '../atoms/userAtom';
+import {currentUserState,loaderState,showLoginNowState,showClipboardState} from '../atoms/userAtom';
 import {useRecoilState} from 'recoil'
 import {getPostByIdRoute,updateUser,updatedPostRoute,updateUserRetweets,updateUserBookmarks} from '../utils/ApiRoutes';
 import EmojiPicker from 'emoji-picker-react';
 import {MdSchedule} from 'react-icons/md';
 import ImageKit from "imagekit";
-import DateDiff from 'date-diff'
+import DateDiff from 'date-diff';
+import CommentCard from './CommentCard';
+import GifPicker from 'gif-picker-react';
 
 let imageUrl = [];
 
@@ -32,12 +34,36 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 	const [path,setPath] = useState('');
 	const [emojiInput,setEmojiInput] = useState(false);
 	const [loader,setLoader] = useRecoilState(loaderState);
+	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
+	const [gifInput,setGifInput] = useState(false);
+	const [gifWidth,setGifWidth] = useState('31em');	
+	const [showClipboard,setShowClipboard] = useRecoilState(showClipboardState);
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
 	    privateKey : process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE,
 	    urlEndpoint : process.env.NEXT_PUBLIC_IMAGEKIT_ENDPOINT
 	});
 
+	useEffect(()=>{
+		if(window.innerWidth){
+			setInterval(()=>{
+				// console.log(window.innerWidth)
+				if(window.innerWidth < 500 && window.innerWidth >= 400){
+					setGifWidth('24em')
+				}else if(window.innerWidth < 400 && window.innerWidth >= 360){
+					setGifWidth('20em')
+				}else if(window.innerWidth < 359 && window.innerWidth >= 300){
+					setGifWidth('19em')
+				}else if(window.innerWidth < 299 && window.innerWidth >= 260){
+					setGifWidth('15em')
+				}else if(window.innerWidth < 259){
+					setGifWidth('10em')
+				}else{
+					setGifWidth('31em')
+				}
+			},1000)
+		}
+	},[])
 
 	useEffect(()=>{
 		function autoResize() {
@@ -61,10 +87,10 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 			return Math.trunc(diff.hours()) + 'h'
 		}else if(diff.days() <= 30){
 			return Math.trunc(diff.days()) + 'd'
-		}else if(diff.months() <= 12){
-			return Math.trunc(diff.minutes()) + 'M'
-		}else if(diff.years() <= 12){
-			return Math.trunc(diff.years()) + 'y'
+		}else{
+			const splitres = date2?.toString().split(' ')
+			const res = splitres[1] + ' ' + splitres[2]
+			return res
 		}
 	}
 
@@ -109,11 +135,11 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				username:currentUser.username,
 				image:currentUser.image
 			}
-			console.log(comments)
+			// console.log(comments)
 			const images = url.length>0 ? imageArray : [];
 			const text = replyText || '';
 			const likes = [];
-			const views = [user];
+			const views = [currentUser._id];
 			const randomNumber = Math.floor(Math.random() * 9000000000) + 1000000000;
 			const id = randomNumber.toString();
 			const createdAt = new Date();
@@ -122,6 +148,39 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 			}
 			setUrl([]);
 			imageUrl = []
+			setReplyText('');
+			comments = [newComment,...comments]
+			const updatedPost = {...post, 'comments':comments }
+			const res = await axios.post(`${updatedPostRoute}/${currentPost._id}`,updatedPost);
+			setCurrentPost(res.data.obj);
+			setLoader(false);
+		}
+	}
+
+	const sendGifMessage = async(e) => {
+		if(currentUser){
+			const {data} = await axios.get(`${getPostByIdRoute}/${currentPost._id}`);
+			const post = data.post[0];
+			let comments = post.comments;
+			const user = {
+				name:currentUser.name,
+				id:currentUser._id,
+				username:currentUser.username,
+				image:currentUser.image
+			}
+			// console.log(comments)
+			const images = url.length>0 ? imageArray : [];
+			const text = e || '';
+			const likes = [];
+			const views = [currentUser._id];
+			const randomNumber = Math.floor(Math.random() * 9000000000) + 1000000000;
+			const id = randomNumber.toString();
+			const createdAt = new Date();
+			const newComment = {
+				user,images,likes,views,createdAt,text,id
+			}
+			setUrl([]);
+			imageUrl = [];
 			setReplyText('');
 			comments = [newComment,...comments]
 			const updatedPost = {...post, 'comments':comments }
@@ -217,6 +276,8 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				})
 				setCurrentUser(result.data.obj);
 			}
+		}else{
+			setShowLoginNow(true)
 		}
 	}
 
@@ -281,6 +342,8 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				setCurrentUser(result.data.obj);
 			}
 			
+		}else{
+			setShowLoginNow(true)
 		}
 	}
 
@@ -357,9 +420,11 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				})
 				setCurrentUser(result.data.obj);
 			}
+		}else{
+			setShowLoginNow(true)
 		}
 	}
-// console.log(currentUser)
+
 	const bookmarkThisTweet = async() => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${currentPost._id}`);
@@ -421,9 +486,44 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				setCurrentUser(result.data.obj);
 			}
 
+		}else{
+			setShowLoginNow(true)
 		}
 	}
-// console.log(currentPost)
+
+	const viewThisComment = async(ID) => {
+		if(currentUser){
+			const {data} = await axios.get(`${getPostByIdRoute}/${currentPost?._id}`);
+			const post = data.post[0];
+			let comments = post.comments;
+		
+			const idx = comments?.findIndex(element=>{
+				if(element.id === ID){
+					return true
+				}
+				return false
+			})
+
+			const check = comments[idx]?.views?.some(element=>{
+				if(element === currentUser._id){
+					return true;
+				}
+				return false
+			})
+
+			// console.log(check)
+
+			if(!check){
+				comments[idx].views = [currentUser._id,...comments[idx].views]; 
+				const updatedPost = {...post, 'comments':comments }
+				const res = await axios.post(`${updatedPostRoute}/${currentPost?._id}`,updatedPost);
+				setCurrentPost(res.data.obj)
+			}			
+		}
+
+	}
+
+
 	function tConvert(i) {
 		let split = i.split('T');
 		const date = split[0];
@@ -503,7 +603,6 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 
 	const openEmojiInput = () => setEmojiInput(!emojiInput)
 	
-	// console.log(currentPost.comments)
 
 	return (
 		<div className="lg:w-[44.6%] relative md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 scrollbar-none overflow-y-scroll">
@@ -554,7 +653,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 					<h1 
 					onClick={()=>{setOpenOverlay(currentPost.retweetedBy);setOverlayFor('Retweeted By')}}
 					className="text-black text-md font-semib?old cursor-pointer whitespace-nowrap">
-						{currentPost && millify(currentPost?.retweetedBy.length)} <span className="hover:underline text-gray-500">Retweets</span>
+						{currentPost && millify(currentPost?.retweetedBy?.length)} <span className="hover:underline text-gray-500">Retweets</span>
 					</h1>
 					<h1 
 					onClick={()=>{setOpenOverlay(currentPost?.likes);setOverlayFor('Liked By')}}
@@ -587,7 +686,12 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						</div>
 					</div>
 					<div
-					onClick={()=>{likeThisTweet();makeMePink2()}}
+					onClick={()=>{
+						likeThisTweet();
+						if(currentUser){
+							makeMePink2()
+						}
+					}}
 					className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
 						<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
 							{
@@ -608,7 +712,10 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 					</div>
 					<div 
 					onClick={()=>{
-						bookmarkThisTweet();makeMePink3();
+						bookmarkThisTweet();
+						if(currentUser){
+							makeMePink3();
+						}
 					}}
 					className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
 						<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
@@ -629,7 +736,9 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 					</div>
 					<div 
 					onClick={()=>{
-
+						// console.log(location.toString() + '?tweet=' + main._id)
+						navigator.clipboard.writeText(location.toString())
+						setShowClipboard(true)
 					}}
 					className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
 						<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
@@ -637,8 +746,8 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						</div>
 					</div>
 				</div>
-				<div className="h-[1px] w-[99%] mx-auto bg-gray-300/50 w-full mt-2"/>
-				<div className={`mt-4 flex flex-col w-full`}>
+				<div className={`h-[1px] w-[99%] mx-auto bg-gray-300/50 ${!currentUser && 'hidden'} w-full mt-2`}/>
+				<div className={`mt-4 flex flex-col ${!currentUser && 'hidden'} w-full`}>
 					{
 						loader && <div class="loader h-[3px] w-full mb-2"></div>
 					}
@@ -687,8 +796,15 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 									hidden
 									/>
 								</div>
-								<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 transition-all duration-200 ease-in-out">
-									<TbGif className="h-5 w-5 text-sky-500"/>
+								<div className="hover:bg-sky-200/80 relative transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
+									<TbGif onClick={()=>setGifInput(!gifInput)} className="text-sky-500 h-[18px] w-[18px]"/>
+									<div className={`absolute z-50 ${gifInput ? '-left-10' : '-left-[1000px]'} bottom-12 transition-all duration-200 ease-in-out`} >
+								      <GifPicker tenorApiKey={process.env.NEXT_PUBLIC_TERNOR} height="250px" width={gifWidth} 
+								      autoFocusSearch="true" theme="dark"  onGifClick={(e)=>{
+								      		setGifInput(false);
+								      		sendGifMessage(e?.url)
+								      }} />
+								    </div>							
 								</div>
 								<div onClick={openEmojiInput}  className="relative cursor-pointer hidden sm:block rounded-full p-2 hover:bg-sky-200/60 transition-all duration-200 ease-in-out">
 									<BsEmojiSmile className="h-5 w-5 text-sky-500 z-30"/>
@@ -717,91 +833,13 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				<div className="pb-14 flex flex-col w-full">
 					{
 						currentPost?.comments?.map((comment,i)=>(
-							<div className="flex gap-2 border-b-[1px] border-gray-200 mt-3">
-								<img src={comment?.user?.image} alt="" className="h-12 w-12 rounded-full"/>
-								<div className="w-full flex flex-col">
-									<div className='flex gap-1 w-full shrink truncate justify-between' >
-										<div className="flex gap-1 truncate shrink items-center ">
-											<h1 className="text-lg truncate font-semibold text-black select-none hover:cursor-pointer hover:underline">
-												{comment?.user?.name}
-											</h1>
-											<h1 
-											onClick={()=>{
-												
-											}}
-											className="text-gray-500 text-md truncate select-none hidden sm:block">@{comment?.user?.username}</h1>
-											<h1 
-											onClick={()=>{
-												
-											}}
-											className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
-												calDate(comment?.createdAt)
-											}</h1>
-										</div>
-										<div className="p-1 rounded-full md:hover:bg-sky-300/20 transition-all duration-200 ease-in-out group">
-											<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
-										</div>
-									</div>
-									<div className="pt-3 w-full">
-										<h1 className="w-full break-words text-lg text-black">{comment?.text}</h1>
-									</div>
-									<div className={`rounded-2xl grid ${comment.images.length > 0 && 'mt-3'} rounded-2xl ${comment?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
-										{
-											comment?.images?.length>0 &&
-											comment?.images?.map((ur,i)=>(
-											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
-												<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
-											</div>
-											))
-
-										}
-									</div>
-									<div className="mt-2 lg:pr-10 md:pr-2 pr-0 gap-9 w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
-										<div
-										onClick={()=>{
-											likeThisComment(comment.id);
-											makeMePink(i)
-										}}
-										className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
-											<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
-												{
-													comment?.likes?.some(element=>{
-														if(element.id === currentUser?._id){
-															return true;
-														}
-														return false
-													}) ? 
-													<AiFillHeart id={`commentlike-${i}`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600"/>
-													:
-													<AiOutlineHeart 
-													id={`commentlike-${i}`}
-													className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600"/>
-												}	
-											</div>
-											<h1 className={`text-md select-none text-gray-500 group-hover:text-pink-500
-											${comment?.likes?.some(element=>{
-												if(element.id === currentUser?._id){
-													return true;
-												}
-												return false
-											}) &&  'text-pink-500' }
-											`}>
-												{millify(comment.likes.length)}
-											</h1>
-											
-										</div>
-										<div className="flex group md:gap-[6px] gap-[3px] items-center">
-											<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
-												<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-											</div>
-											<h1 className="text-md select-none text-gray-500 group-hover:text-sky-500">
-												{millify(comment?.views?.length)}
-											</h1>
-										</div>
-
-									</div>
-								</div>
-							</div>
+							<CommentCard
+							comment={comment} i={i} calDate={calDate} BsThreeDots={BsThreeDots}
+							likeThisComment={likeThisComment} makeMePink={makeMePink} currentUser={currentUser}
+							millify={millify} BsGraphUpArrow={BsGraphUpArrow} AiOutlineHeart={AiOutlineHeart} 
+							AiFillHeart={AiFillHeart} viewThisComment={viewThisComment} currentWindow={currentWindow}
+							setCurrentWindow={setCurrentWindow}
+							/>
 						))
 					}
 				</div>

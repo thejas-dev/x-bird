@@ -1,12 +1,13 @@
 import {useState,useEffect} from 'react';
 import {useRecoilState} from 'recoil'
-import {currentUserState} from '../atoms/userAtom'
+import {currentUserState,displayUserState,showLoginNowState} from '../atoms/userAtom'
 import {HiOutlineArrowLeft} from 'react-icons/hi';
-import {AiOutlineLink} from 'react-icons/ai';
+import {AiOutlineLink,AiOutlineCalendar} from 'react-icons/ai';
 import {FaRegComment} from 'react-icons/fa';
 import millify from 'millify';
 import {BsGraphUpArrow,BsFillShareFill,BsThreeDots} from 'react-icons/bs';
 import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart} from 'react-icons/ai';
+import {MdOutlineLocationOn} from 'react-icons/md';
 import {getPostByIdRoute,updatedPostRoute,getUserByIdRoute,updateUser,updateUserRetweets,
 	updateUserFollowing,updateUserFollowers} from '../utils/ApiRoutes';
 import DateDiff from 'date-diff';
@@ -16,9 +17,9 @@ import {socket} from '../service/socket';
 let userTweets = [];
 
 export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,openOverlay,
-	overlayFor,setOverlayFor,needToReloadProfile,setNeedToReloadProfile}) {
+	overlayFor,setOverlayFor,needToReloadProfile,setNeedToReloadProfile,editProfile}) {
 	// body...
-	const [displayUser,setDisplayUser] = useState('');
+	const [displayUser,setDisplayUser] = useRecoilState(displayUserState);
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const [currentUserTweets,setCurrentUserTweets] = useState([]);
 	const [currentUserLikes,setCurrentUserLikes] = useState([]);
@@ -30,6 +31,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	const [userFollowing,setUserFollowing] = useState(false);
 	const [tweetFetched,setTweetFetched] = useState(false);	
 	const [loading,setLoading] = useState(true);
+	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
+	
 
 	const fetchTweets = async() => {
 		if(displayUser){
@@ -80,6 +83,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		}else{
 			setAccountFound(true);
 			setDisplayUser(currentUser);
+			console.log("i ran")
 			setOwnAccount(true);
 			setLoading(false)
 		}
@@ -129,6 +133,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			}
 			if(displayUser._id === currentUser._id){
 				setOwnAccount(true);
+			}else{
+				setOwnAccount(false)
 			}
 			if(currentHeading === 'Tweets'){
 				fetchTweets();
@@ -146,17 +152,18 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		const date1 = new Date();
 		const date2 = new Date(date)
 		var diff = new DateDiff(date1, date2);
+		// console.log(date2.toString().split(' '))
 		if(diff.minutes() <= 60){
 			return Math.trunc(diff.minutes()) + 'm'
 		}else if(diff.hours() <= 24){
 			return Math.trunc(diff.hours()) + 'h'
 		}else if(diff.days() <= 30){
 			return Math.trunc(diff.days()) + 'd'
-		}else if(diff.months() <= 12){
-			return Math.trunc(diff.minutes()) + 'M'
-		}else if(diff.years() <= 12){
-			return Math.trunc(diff.years()) + 'y'
-		}
+		}else{
+			const splitres = date2?.toString().split(' ')
+			const res = splitres[1] + ' ' + splitres[2]
+			return res
+		} 
 	}
 
 	useEffect(()=>{
@@ -249,11 +256,12 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				})
 				setCurrentUser(result.data.obj);
 			}
+			socket.emit('refetch-post',currentUserLikes[j]._id)
 		}
 	}
 
 	const likeThisTweet = async(j) => {
-		if(displayUser){
+		if(displayUser && currentUser){
 			let tweets = currentUserTweets;
 			const {data} = await axios.get(`${getPostByIdRoute}/${currentUserTweets[j]._id}`);
 			const post = data.post[0];
@@ -315,6 +323,9 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				})
 				setCurrentUser(result.data.obj);
 			}
+			socket.emit('refetch-post',currentUserTweets[j]._id)
+		}else{
+			setShowLoginNow(true)
 		}
 	}
 
@@ -382,6 +393,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				})
 				setCurrentUser(result.data.obj);
 			}
+			socket.emit('refetch-post',currentUserRetweets[j]._id)
 		}
 	}
 
@@ -458,7 +470,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				})
 				setCurrentUser(result.data.obj);
 			}
-			
+			socket.emit('refetch-post',currentUserRetweets[j]._id)			
 		}
 	}
 	// console.log(currentUser)
@@ -526,7 +538,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				})
 				setCurrentUser(result.data.obj);
 			}
-			
+			socket.emit('refetch-post',currentUserLikes[j]._id)	
 		}
 	}
 
@@ -593,7 +605,9 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				})
 				setCurrentUser(result.data.obj);
 			}
-			
+			socket.emit('refetch-post',currentUserTweets[j]._id)
+		}else{
+			setShowLoginNow(true)
 		}
 	}
 
@@ -677,12 +691,12 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				onClick={()=>{setCurrentWindow('Home');setDisplayUser('')}}
 				className="h-[18px] cursor-pointer w-[18px] text-black"/>
 				<div className={`flex select-none flex-col ${!accountFound && 'hidden'}`}>
-					<h1 className="text-xl text-black font-semibold">{displayUser?.name}</h1>
+					<h1 className="md:text-xl text-lg text-black font-semibold">{displayUser?.name}</h1>
 					<h1 className="text-md text-gray-500 ">{displayUser?.tweets?.length} Tweets</h1>
 				</div>
 			</div>
 			<div className={`h-full w-full backdrop-blur-lg bg-white flex items-center justify-center absolute z-50 ${!loading && 'hidden'}`}>
-				<span class="loader3"></span>
+				<span className="loader3"></span>
 			</div>
 			<div className="relative w-full lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] bg-blue-200/50">
 				{
@@ -692,15 +706,17 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					<div className="lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] w-full"/>
 
 				}
-				<div className="p-1 cursor-pointer absolute lg:-bottom-[36%] md:-bottom-[40%] -bottom-[50%] bg-white rounded-full left-5">
-					<img src={displayUser?.image} alt="" className="h-[150px] z-10 w-[150px] rounded-full"/>
+				<div className="p-1 cursor-pointer absolute lg:-bottom-[36%] md:-bottom-[40%] -bottom-[35%] bg-white rounded-full left-3 md:left-5">
+					<img src={displayUser?.image} alt="" className="md:h-[150px] h-[100px] z-10 md:w-[150px] w-[100px] rounded-full"/>
 				</div>
 			</div>	
 			<div className="w-full flex flex-col px-2 md:px-4">
-				<div className="flex mt-6 justify-end w-full">
+				<div className="flex md:mt-6 mt-3 justify-end w-full">
 					{
 						ownAccount?
-						<button className="px-4 py-[6px] rounded-full text-black font-semibold hover:bg-gray-200/70 transition-all 
+						<button 
+						onClick={editProfile}
+						className="px-4 py-[6px] rounded-full text-black font-semibold hover:bg-gray-200/70 transition-all 
 						duration-200 ease-in-out border-[1.5px] border-gray-400/60">
 							Edit profile
 						</button>
@@ -728,10 +744,38 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						{displayUser?.name}
 					</h1>
 					<h1 className="text-gray-500 text-md truncate">@{displayUser?.username}</h1>
-					<h1 className={`text-black text-md truncate ${displayUser?.bio && 'mt-[14px]' }`}>{displayUser?.bio}</h1>
-					<div className="mt-[14px] flex gap-[3px]">
-						<AiOutlineLink className="h-6 w-6 text-gray-600"/>
-						<h1 className="text-sky-600 hover:underline text-md"><a href={displayUser?.website}>the-xai.vercel.app</a></h1>
+					<h1 className={`text-black text-md ${displayUser?.bio && 'mt-[10px]' }`}>{displayUser?.bio}</h1>
+					{
+						displayUser?.website &&
+						<div className="mt-[7px] flex flex-col gap-[3px]">
+							{
+								displayUser?.website?.includes(',') ?
+								displayUser?.website?.split(',')?.map((web)=>(
+									<div className="flex items-center gap-[3px]">
+										<AiOutlineLink className="h-5 w-5 text-gray-600"/>
+										<h1 className="text-sky-600 hover:underline text-md"><a href={web}>{web}</a></h1>
+									</div>
+								))
+								:
+								<div className="flex items-center gap-[3px]">
+									<AiOutlineLink className="h-5 w-5 text-gray-600"/>
+									<h1 className="text-sky-600 hover:underline text-md"><a href={displayUser?.website}>{displayUser?.website}</a></h1>
+								</div>
+							}
+						</div>
+					}
+					<div className="mt-[7px] flex items-center gap-[8px]">
+						{
+							displayUser?.location && 
+							<div className="flex items-center gap-[3px]">
+								<MdOutlineLocationOn className="h-5 w-5 text-gray-600"/>
+								<h1 className="text-gray-500 hover:cursor-pointer text-[16px]">{displayUser?.location}</h1>
+							</div>	
+						}
+						<div className="flex items-center gap-[3px]">
+							<AiOutlineCalendar className="h-5 w-5 text-gray-600"/>
+							<h1 className="text-gray-500 hover:cursor-pointer text-[16px]">Joined {new Date(displayUser?.createdAt).toDateString().split(' ')[1]} {new Date(displayUser?.createdAt).toDateString().split(' ')[3]}</h1>
+						</div>
 					</div>
 					<div className="flex mt-[14px] md:gap-6 gap-4">
 						<h1 
@@ -753,10 +797,16 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				{
 					headings.map((head,i)=>(
 						<div key={i}
-						onClick={()=>setCurrentHeading(head.title)}
+						onClick={()=>{
+							if(currentUser){
+								setCurrentHeading(head.title)
+							}else{
+								setShowLoginNow(true)
+							}
+						}}
 						className={`relative whitespace-nowrap w-[100%] px-7 flex items-center justify-center 
 						${currentHeading === head.title ? 'text-black':'text-gray-500'} py-3 hover:bg-gray-200/70 
-						transition-bg duration-200 font-semibold select-none cursor-pointer ease-in-out `}>
+						transition-bg duration-200 font-semibold select-none cursor-pointer  ease-in-out `}>
 							{head.title}
 							<div className={`absolute bottom-0 w-[50%] rounded-full h-[4px] ${currentHeading === head.title ? 'bg-sky-500':'bg-transparent'}`}/>
 						</div>
@@ -845,7 +895,11 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</h1>
 									</div>
 									<div 
-									onClick={()=>{retweetThisOwnTweet(j);makeMeSpin(j)}}
+									onClick={()=>{retweetThisOwnTweet(j);
+										if(currentUser){
+											makeMeSpin(j)
+										}
+									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
 										<div className="p-[10px] group-hover:bg-green-300/30 transition-all duration-200 ease-in-out rounded-full">
 											<AiOutlineRetweet id={`retweet-${j}`} className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
@@ -869,11 +923,16 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</h1>
 									</div>
 									<div
-									onClick={()=>{likeThisTweet(j);makeMePink(j)}}
+									onClick={()=>{
+										likeThisTweet(j);
+										if(currentUser)
+											{makeMePink(j)
+										}
+									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
 										<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
 											{
-												main.likes.some(element=>{
+												main?.likes?.some(element=>{
 													if(element.id === currentUser?._id){
 														return true;
 													}

@@ -37,20 +37,23 @@ export default function Left({setCurrentWindow,currentWindow}) {
 					}
 					<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Home' ? 'font-semibold' : ''} `}>Home</h1>
 				</div>
-				<div 
-				onClick={()=>{
-					setCurrentWindow('Explore');
-					window.history.replaceState({id:100},'Default',`/`);
-				}}
-				className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
-					{
-						currentWindow === 'Explore'?
-						<FiHash className={`h-7 w-7 text-black} `}/>
-						:
-						<CiHashtag className="h-7 w-7 text-black"/>
-					}
-					<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Explore' ? 'font-semibold' : ''} `}>Explore</h1>
-				</div>
+				{
+					currentUser &&
+					<div 
+					onClick={()=>{
+						setCurrentWindow('Explore');
+						window.history.replaceState({id:100},'Default',`/`);
+					}}
+					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+						{
+							currentWindow === 'Explore'?
+							<FiHash className={`h-7 w-7 text-black} `}/>
+							:
+							<CiHashtag className="h-7 w-7 text-black"/>
+						}
+						<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Explore' ? 'font-semibold' : ''} `}>Explore</h1>
+					</div>
+				}
 				{
 					currentUser &&
 					<div 
@@ -130,6 +133,12 @@ export default function Left({setCurrentWindow,currentWindow}) {
 						Tweet
 					</button>
 				}
+				{
+					!currentUser &&
+					<button className="mt-2 hidden xl:block rounded-full text-xl p-3 font-semibold w-full flex items-center justify-center text-white bg-sky-500">
+						Login
+					</button>
+				}
 			</div>		
 			{
 				currentUser &&
@@ -160,6 +169,7 @@ export default function Left({setCurrentWindow,currentWindow}) {
 					<BsThreeDots className="h-5 w-5 text-black"/>
 				</div>
 			}
+
 		</div>
 
 	)

@@ -10,7 +10,7 @@ export default function SignInComponent({id}) {
 	return (
 		<div className="h-[100%] flex w-full items-center justify-center ">
 			<div className="rounded-2xl flex flex-col border-[1px] border-gray-200/80 shadow-md px-4 py-3 pb-5">
-				<h1 className="text-2xl font-bold text-black">New to X-Bird?</h1>
+				<h1 className="text-2xl font-bold text-black">New to TNS-Bird?</h1>
 				<h1 className="text-md text-gray-500 mt-5 ">Login now to get your own personalized timeline!</h1>
 				<div 
 				onClick={()=>{signIn(id)}}
