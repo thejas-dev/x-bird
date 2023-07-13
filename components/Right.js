@@ -1425,8 +1425,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							}
 							</h1>
 							{
-								searchResult?.map((res)=>(
-									<div 
+								searchResult?.map((res,i)=>(
+									<div key={i}
 									onClick={()=>{
 										setCurrentWindow('Profile')
 										window.history.replaceState({id:100},'Default',`?profile=${res._id}`);

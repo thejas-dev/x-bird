@@ -833,7 +833,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				<div className="pb-14 flex flex-col w-full">
 					{
 						currentPost?.comments?.map((comment,i)=>(
-							<CommentCard
+							<CommentCard key={i}
 							comment={comment} i={i} calDate={calDate} BsThreeDots={BsThreeDots}
 							likeThisComment={likeThisComment} makeMePink={makeMePink} currentUser={currentUser}
 							millify={millify} BsGraphUpArrow={BsGraphUpArrow} AiOutlineHeart={AiOutlineHeart} 
