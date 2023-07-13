@@ -526,7 +526,7 @@ export default function Main() {
 						px-4 flex items-center flex-wrap overflow-hidden gap-1`}>
 							{
 								selectedUsers.map((user,i)=>(
-									<div className='flex items-center p-[2px] px-[5px] hover:bg-gray-200/70 transition-all duration-200 ease-in-out
+									<div key={i} className='flex items-center p-[2px] px-[5px] hover:bg-gray-200/70 transition-all duration-200 ease-in-out
 									cursor-pointer rounded-full gap-2 border-[1px] border-gray-300/80'>
 										{
 											user?.group ? 
@@ -536,13 +536,13 @@ export default function Main() {
 														if(user.image.length === 3){
 															if(j<2){
 																return (
-																	<img src={img} className="object-cover w-full h-full" alt=""/>
+																	<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 																)
 															}
 														}else{
 															if(j<4){
 																return (
-																	<img src={img} className="object-cover w-full h-full" alt=""/>
+																	<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 																)
 															}	
 														}
@@ -567,8 +567,9 @@ export default function Main() {
 								searchResult?.length>0?
 									<>
 									{
-										searchResult?.map((res)=>(
+										searchResult?.map((res,k)=>(
 											<div 
+											key={k}
 											onClick={()=>{
 												modifySelectedUsers(res)
 											}}
@@ -588,8 +589,8 @@ export default function Main() {
 									
 									</>
 									:
-									currentUser.chats.map((res)=>(
-										<div 
+									currentUser.chats.map((res,i)=>(
+										<div key={i}
 										onClick={()=>{
 											modifySelectedUsers(res);
 										}}
@@ -602,13 +603,13 @@ export default function Main() {
 															if(res.image.length === 3){
 																if(j<2){
 																	return (
-																		<img src={img} className="object-cover w-full h-full" alt=""/>
+																		<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 																	)
 																}
 															}else{
 																if(j<4){
 																	return (
-																		<img src={img} className="object-cover w-full h-full" alt=""/>
+																		<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 																	)
 																}	
 															}

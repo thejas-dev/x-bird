@@ -1213,13 +1213,13 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 												if(currentChat.image.length === 3){
 													if(j<2){
 														return (
-															<img src={img} className="object-cover w-full h-full" alt=""/>
+															<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 														)
 													}
 												}else{
 													if(j<4){
 														return (
-															<img src={img} className="object-cover w-full h-full" alt=""/>
+															<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 														)
 													}	
 												}
@@ -1235,7 +1235,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 								<h1 className="text-gray-600 mt-2 select-none text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]} {!currentChat?.group && <span> - {currentChat?.followers?.length} Followers</span>}</h1>
 								{
 								!currentChat?.group &&
-								<h1 className="text-gray-600 text-sm select-none mt-2 text-center mx-auto">Not followed by anyone you're following</h1>
+								<h1 className="text-gray-600 text-sm select-none mt-2 text-center mx-auto">Not followed by anyone you are following</h1>
 								}
 							</div>
 						</div>
@@ -1445,7 +1445,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						</div>
 					</div>
 					<div className={`mt-5 rounded-2xl bg-gray-300/20 flex flex-col overflow-hidden ${currentWindow === 'Explore' && 'hidden'}`}>
-						<h1 className="my-3 mx-4 text-xl text-black font-bold">What's happening</h1>
+						<h1 className="my-3 mx-4 text-xl text-black font-bold">What is happening</h1>
 						{
 							tempEventData.map((event,i)=>(
 								<div key={i} className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
@@ -1590,13 +1590,13 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 														if(currentChat.image.length === 3){
 															if(j<2){
 																return (
-																	<img src={img} className="object-cover w-full h-full" alt=""/>
+																	<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 																)
 															}
 														}else{
 															if(j<4){
 																return (
-																	<img src={img} className="object-cover w-full h-full" alt=""/>
+																	<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 																)
 															}	
 														}
@@ -1612,7 +1612,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 										<h1 className="text-gray-600 mt-2 select-none text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]} {!currentChat?.group && <span> - {currentChat?.followers?.length} Followers</span>}</h1>
 										{
 										!currentChat?.group &&
-										<h1 className="text-gray-600 text-sm select-none mt-2 text-center mx-auto">Not followed by anyone you're following</h1>
+										<h1 className="text-gray-600 text-sm select-none mt-2 text-center mx-auto">Not followed by anyone you are following</h1>
 										}
 									</div>
 									<div className={`flex flex-col h-auto gap-3 md:px-3 px-2 py-2 w-full ${!currentChat && 'hidden'}`}>
@@ -1760,13 +1760,13 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 													if(chat.image.length === 3){
 														if(j<2){
 															return (
-																<img src={img} className="object-cover w-full h-full" alt=""/>
+																<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 															)
 														}
 													}else{
 														if(j<4){
 															return (
-																<img src={img} className="object-cover w-full h-full" alt=""/>
+																<img src={img} key={j} className="object-cover w-full h-full" alt=""/>
 															)
 														}	
 													}

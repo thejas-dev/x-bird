@@ -750,8 +750,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						<div className="mt-[7px] flex flex-col gap-[3px]">
 							{
 								displayUser?.website?.includes(',') ?
-								displayUser?.website?.split(',')?.map((web)=>(
-									<div className="flex items-center gap-[3px]">
+								displayUser?.website?.split(',')?.map((web,j)=>(
+									<div className="flex items-center gap-[3px]" key={j}>
 										<AiOutlineLink className="h-5 w-5 text-gray-600"/>
 										<h1 className="text-sky-600 hover:underline text-md"><a href={web}>{web}</a></h1>
 									</div>
