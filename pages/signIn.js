@@ -29,7 +29,7 @@ export default function Home({providers,session2}) {
 	    if(data.status === false){
 	      const name = session?.user.name;
 	      const username = session?.user.name;
-	      const image = session?.user.image;
+	      const image = session?.user.image
 	      const {data} = await axios.post(registerRoute,{
 	        email,name,username,image
 	      })
