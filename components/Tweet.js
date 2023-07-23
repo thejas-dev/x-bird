@@ -38,6 +38,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 	const [gifInput,setGifInput] = useState(false);
 	const [gifWidth,setGifWidth] = useState('31em');	
 	const [showClipboard,setShowClipboard] = useRecoilState(showClipboardState);
+	const [liked,setLiked] = useState(false);
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
 	    privateKey : process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE,
@@ -104,13 +105,11 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 	},[])
 
 	const makeMePink = (j) => {
-		const element = document.getElementById(`commentlike-${j}`)
-		element.classList.add('text-pink-500','animate-bounce')		
+		const element = document.getElementById(`commentlike-${j}`)	
 	}
 
 	const makeMePink2 = () => {
-		const element = document.getElementById(`like`)
-		element.classList.add('text-pink-500','animate-bounce')		
+		const element = document.getElementById(`like`)	
 	}
 
 	const makeMePink3 = () => {
@@ -123,6 +122,22 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 		newArr.splice(i,1);
 		setUrl(newArr);
 	}
+
+	useEffect(()=>{
+		if(currentPost){
+			if(currentPost?.likes?.some(element=>{
+				if(element.id === currentUser?._id){
+					return true;
+				}
+				return false
+			})){
+				setLiked(true)
+			}else{
+				setLiked(false)
+			}
+		}
+
+	},[currentPost])
 
 	const commentThisTweet = async(imageArray) => {
 		if(currentUser){
@@ -605,12 +620,12 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 	
 
 	return (
-		<div className="lg:w-[44.6%] relative md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 scrollbar-none overflow-y-scroll">
-			<div className="sticky top-0 gap-6 w-full backdrop-blur-lg z-30 flex items-center md:px-4 px-2 py-3 bg-white/50">
+		<div className="lg:w-[44.6%] relative md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 scrollbar-none overflow-y-scroll">
+			<div className="sticky top-0 gap-6 w-full backdrop-blur-lg z-30 flex items-center md:px-4 px-2 py-3 bg-white/50 dark:bg-[#100C08]/50">
 				<HiOutlineArrowLeft 
 				onClick={()=>{setCurrentPost('');setCurrentWindow('Home');}}
-				className="h-[18px] cursor-pointer w-[18px] text-black"/>
-				<h1 className="select-none text-xl text-black font-semibold">Tweet</h1>
+				className="h-[18px] cursor-pointer w-[18px] text-black dark:text-gray-200"/>
+				<h1 className="select-none text-xl text-black font-semibold dark:text-gray-200">Tweet</h1>
 			</div>
 			<div className="pt-4 flex flex-col w-full md:px-4 px-2">
 				<div 
@@ -621,14 +636,14 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				className="flex items-center gap-3">
 					<img src={currentPost?.user?.image} alt="" className="h-12 w-12 rounded-xl"/> 
 					<div className="flex flex-col">
-						<h1 className="text-lg truncate font-semibold text-black select-none hover:cursor-pointer hover:underline">
+						<h1 className="text-lg truncate font-semibold text-black dark:text-gray-100 select-none hover:cursor-pointer hover:underline">
 							{currentPost?.user?.name}
 						</h1>
 						<h1 className="text-gray-500 text-md truncate select-none">@{currentPost?.user?.username}</h1>
 					</div>
 				</div>
 				<div className="pt-3 w-full">
-					<h1 className="w-full break-words text-lg text-black">{currentPost?.text}</h1>
+					<h1 className="w-full break-words text-lg text-black dark:text-gray-200">{currentPost?.text}</h1>
 				</div>
 				<div className={`rounded-2xl mt-3 grid rounded-2xl ${currentPost?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
 					{
@@ -644,37 +659,37 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 					}
 				</div>
 				<div className="mt-2 flex">
-					<h1 className="hover:underline text-gray-600 text-md cursor-pointer whitespace-nowrap">
-						{currentPost && tConvert(currentPost?.createdAt)} - {currentPost && dConvert(currentPost?.createdAt)} - <span className="text-black">{currentPost && millify(currentPost?.views?.length)}</span> views
+					<h1 className="hover:underline text-gray-600 dark:text-gray-400 text-md cursor-pointer whitespace-nowrap">
+						{currentPost && tConvert(currentPost?.createdAt)} - {currentPost && dConvert(currentPost?.createdAt)} - <span className="text-black dark:text-gray-200">{currentPost && millify(currentPost?.views?.length)}</span> views
 					</h1>
 				</div>
-				<div className="h-[1px] w-[99%] mx-auto bg-gray-300/50 w-full mt-4"/>
+				<div className="h-[1px] w-[99%] mx-auto bg-gray-300/50 dark:bg-gray-700/50 w-full mt-4"/>
 				<div className="mt-4 flex md:gap-5 gap-3">
 					<h1 
 					onClick={()=>{setOpenOverlay(currentPost.retweetedBy);setOverlayFor('Retweeted By')}}
-					className="text-black text-md font-semib?old cursor-pointer whitespace-nowrap">
+					className="text-black dark:text-gray-200 text-md font-semib?old cursor-pointer whitespace-nowrap">
 						{currentPost && millify(currentPost?.retweetedBy?.length)} <span className="hover:underline text-gray-500">Retweets</span>
 					</h1>
 					<h1 
 					onClick={()=>{setOpenOverlay(currentPost?.likes);setOverlayFor('Liked By')}}
-					className="text-black text-md font-semibold cursor-pointer whitespace-nowrap">
+					className="text-black dark:text-gray-200 text-md font-semibold cursor-pointer whitespace-nowrap">
 						{currentPost && millify(currentPost?.likes?.length)} <span className="hover:underline text-gray-500">Likes</span>
 					</h1>
-					<h1 className="text-black text-md font-semibold cursor-pointer whitespace-nowrap">
+					<h1 className="text-black dark:text-gray-200 text-md font-semibold cursor-pointer whitespace-nowrap">
 						{currentPost && millify(currentPost?.bookmarks?.length)} <span className="hover:underline text-gray-500">Bookmarks</span>
 					</h1>
 				</div>
-				<div className="h-[1px] w-[99%] mx-auto bg-gray-300/50 w-full mt-4"/>
+				<div className="h-[1px] w-[99%] mx-auto bg-gray-300/50 dark:bg-gray-700/50 w-full mt-4"/>
 				<div className="mt-2 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
 					<div className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 							<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 						</div>
 					</div>
 					<div 
 					onClick={()=>{retweetThisTweet()}}
 					className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-green-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-700/30 transition-all duration-200 ease-in-out rounded-full">
 							<AiOutlineRetweet className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
 							${currentPost?.retweetedBy?.some(element=>{
 								if(element.id === currentUser?._id){
@@ -691,21 +706,19 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						if(currentUser){
 							makeMePink2()
 						}
+						setLiked(!liked)
 					}}
 					className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
 							{
-								currentPost?.likes?.some(element=>{
-									if(element.id === currentUser?._id){
-										return true;
-									}
-									return false
-								}) ? 
-								<AiFillHeart id={`like`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600"/>
+								liked ? 
+								<AiFillHeart id={`like`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600
+								focus:scale-75 transition-all duration-800 ease-in-out"/>
 								:
 								<AiOutlineHeart 
 								id={`like`}
-								className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600"/>
+								className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600
+								focus:scale-75 transition-all duration-800 ease-in-out"/>
 							}	
 						</div>
 						
@@ -718,7 +731,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						}
 					}}
 					className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 							{
 								currentUser?.bookmarks?.some(element=>{
 									if(element === currentPost?._id){
@@ -741,12 +754,12 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						setShowClipboard(true)
 					}}
 					className="flex cursor-pointer group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 							<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 						</div>
 					</div>
 				</div>
-				<div className={`h-[1px] w-[99%] mx-auto bg-gray-300/50 ${!currentUser && 'hidden'} w-full mt-2`}/>
+				<div className={`h-[1px] w-[99%] mx-auto bg-gray-300/50 dark:bg-gray-700/50 ${!currentUser && 'hidden'} w-full mt-2`}/>
 				<div className={`mt-4 flex flex-col ${!currentUser && 'hidden'} w-full`}>
 					{
 						loader && <div class="loader h-[3px] w-full mb-2"></div>
@@ -757,10 +770,10 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						onClick={()=>{setReveal(true)}} 
 						onChange={(e)=>setReplyText(e.target.value)}
 						placeholder="Tweet your reply!"
-						className={`text-xl resize-none h-7 overflow-hidden placeholder:text-gray-500 text-black w-full outline-none bg-transparent  ${loader && 'select-none'} `}/>
+						className={`text-xl resize-none h-7 overflow-hidden placeholder:text-gray-500 dark:text-gray-200 text-black w-full outline-none bg-transparent ${loader && 'select-none'} `}/>
 						<button 
 						onClick={replyTweet}
-						className={`px-5 py-2 ${reveal && 'hidden'} ${replyText ? 'bg-sky-500':'bg-sky-300/70'} text-white rounded-full`}>Reply</button>
+						className={`px-5 py-2 ${reveal && 'hidden'} ${replyText ? 'bg-sky-500':'bg-sky-300/70 dark:bg-sky-700/70'} text-white rounded-full`}>Reply</button>
 					</div>
 					{
 						url.length>0 &&
@@ -780,7 +793,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 								</div>
 								))
 							}
-							{loader &&  <div className="absolute z-5 bg-gray-500/60 h-full w-full animate-pulse"/> }									
+							{loader &&  <div className="absolute z-5 bg-gray-500/60 dark:bg-gray-400/60 h-full w-full animate-pulse"/> }									
 						</div>
 
 					}
@@ -788,7 +801,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						reveal &&
 						<div className={`${loader && 'select-none'} flex items-center pl-14 mt-3 justify-between pr-2`}>
 							<div className="flex items-center gap-1">
-								<div onClick={openFileInput} className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 transition-all duration-200 ease-in-out">
+								<div onClick={openFileInput} className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/30 transition-all duration-200 ease-in-out">
 									<BsCardImage className={`h-5 ${loader && 'select-none'} w-5 ${url.length<2 ? 'text-sky-500':'text-gray-500'} `}/>
 									<input type="file" id="file1" accept="image/*" 
 									value={path}
@@ -796,7 +809,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 									hidden
 									/>
 								</div>
-								<div className="hover:bg-sky-200/80 relative transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
+								<div className="hover:bg-sky-200/80 dark:hover:bg-sky-800/30 relative transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
 									<TbGif onClick={()=>setGifInput(!gifInput)} className="text-sky-500 h-[18px] w-[18px]"/>
 									<div className={`absolute z-50 ${gifInput ? '-left-10' : '-left-[1000px]'} bottom-12 transition-all duration-200 ease-in-out`} >
 								      <GifPicker tenorApiKey={process.env.NEXT_PUBLIC_TERNOR} height="250px" width={gifWidth} 
@@ -806,30 +819,30 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 								      }} />
 								    </div>							
 								</div>
-								<div onClick={openEmojiInput}  className="relative cursor-pointer hidden sm:block rounded-full p-2 hover:bg-sky-200/60 transition-all duration-200 ease-in-out">
-									<BsEmojiSmile className="h-5 w-5 text-sky-500 z-30"/>
+								<div className="relative cursor-pointer hidden sm:block rounded-full p-2 hover:bg-sky-200/30 dark:hover:bg-sky-800/30 transition-all duration-200 ease-in-out">
+									<BsEmojiSmile onClick={openEmojiInput} className="h-5 w-5 text-sky-500 z-30"/>
 									{
 										emojiInput &&
 										<div className="absolute top-10 -left-[75px] z-30">
-											<EmojiPicker Theme="dark" onEmojiClick={(emoji)=>{
+											<EmojiPicker theme="dark" onEmojiClick={(emoji)=>{
 												setReplyText((replyText)=>{return replyText+' '+emoji.emoji})
 											}}/>
 										</div>											
 									}
 								</div>
-								<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 transition-all duration-200 ease-in-out">
+								<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/30 transition-all duration-200 ease-in-out">
 									<HiOutlineLocationMarker className="h-5 w-5 text-sky-500"/>
 								</div>
 							</div>
 							<div className={`${loader && 'select-none'}`}>
 								<button 
 								onClick={replyTweet}
-								className={`px-5 py-2 ${replyText || url.length>0 ? 'bg-sky-500':'bg-sky-300/70'} ${loader && 'bg-sky-300/70'} text-white rounded-full`}>Reply</button>
+								className={`px-5 py-2 ${replyText || url.length>0 ? 'bg-sky-500':'bg-sky-300/70 dark:bg-sky-700/70'} ${loader && 'bg-sky-300/70 dark:bg-sky-700/70'} text-white rounded-full`}>Reply</button>
 							</div>
 						</div>
 					}
 				</div>
-				<div className="h-[1px] w-[99%] mx-auto bg-gray-300/50 w-full mt-3"/>
+				<div className="h-[1px] w-[99%] mx-auto bg-gray-300/50 dark:bg-gray-700/50 w-full mt-3"/>
 				<div className="pb-14 flex flex-col w-full">
 					{
 						currentPost?.comments?.map((comment,i)=>(

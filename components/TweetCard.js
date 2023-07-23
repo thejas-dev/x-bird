@@ -1,6 +1,6 @@
 import {useRef,useState,useEffect} from 'react'
 import {useIsVisible} from '../hooks/useIsVisible';
-import {showClipboardState} from '../atoms/userAtom';
+import {showClipboardState,searchTextState} from '../atoms/userAtom';
 import {useRecoilState} from 'recoil'
 
 export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,FaRegComment,millify,
@@ -11,6 +11,21 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const ref = useRef()
 	const isIntersecting = useIsVisible(ref)
 	const [showClipboard,setShowClipboard] = useRecoilState(showClipboardState);
+	const [searchText,setSearchText] = useRecoilState(searchTextState)
+	const [liked,setLiked] = useState(false);
+
+	useEffect(()=>{
+		if(main?.likes?.some(element=>{
+			if(element.id === currentUser?._id){
+				return true;
+			}
+			return false
+		})){
+			setLiked(true)
+		}else{
+			setLiked(false)
+		}
+	},[main])
 
 	useEffect(()=>{
 		if(isIntersecting){
@@ -21,7 +36,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 
 	return(
 		<div ref={ref} key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-		border-gray-300/70 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+		border-gray-300/70 dark:border-gray-800/70 hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
 			<img 
 			onClick={()=>{
 				setCurrentWindow('Profile')
@@ -36,7 +51,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							setCurrentWindow('Profile')
 							window.history.replaceState({id:100},'Default',`?profile=${main?.user?.id}`);
 						}}
-						className="text-lg truncate font-semibold text-black select-none hover:cursor-pointer hover:underline">
+						className="text-lg truncate font-semibold text-black dark:text-gray-100 select-none hover:cursor-pointer hover:underline">
 							{main?.user?.name}
 						</h1>
 						<h1 
@@ -44,7 +59,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							setCurrentWindow('Profile')
 							window.history.replaceState({id:100},'Default',`?profile=${main.user.id}`);
 						}}
-						className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
+						className="text-gray-500 text-md truncate select-none hidden sm:block">@{main?.user?.username}</h1>
 						<h1 
 						onClick={()=>{
 							window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
@@ -58,12 +73,29 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
 					</div>
 				</div>
-				<div 
-				onClick={()=>{
-					window.history.replaceState({id:100},'Tweet',`?tweet=${main?._id}`);setCurrentWindow('tweet')
-				}}
+				<div
 				className="w-full text-lg">
-					<h1 className="w-full text-gray-900 select-none break-words">{main?.text}</h1>
+					<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 select-none break-words">{
+
+						main?.text?.split(' ')?.map((txt,j)=>{
+						if(txt[0] === '#'){
+							return <span> <a 
+							onClick={()=>{
+								window.history.replaceState({id:100},'Explore');
+								setSearchText(txt);
+								setCurrentWindow('Explore')
+							}}
+								
+							className="text-sky-500 hover:underline" key={j} > {txt}</a></span>
+						}else{
+							return <span> <a 
+							onClick={()=>{
+								window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+								setCurrentWindow('tweet')
+							}} key={j} > {txt}</a></span>
+							
+						}
+					})}</h1>
 				</div>	
 				<div 
 				onClick={()=>{
@@ -89,24 +121,25 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						setCurrentWindow('tweet')
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 							<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 						</div>
 						<h1 className="text-md text-gray-500 group-hover:text-sky-500">
-							{millify(main.comments.length)}
+							{millify(main?.comments?.length)}
 						</h1>
 					</div>
 					<div 
-					onClick={()=>{retweetThisTweet(j);
+					onClick={()=>{
+						retweetThisTweet(j);
 						if(currentUser){
 							makeMeSpin(j)
 						}
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-green-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-700/30 transition-all duration-200 ease-in-out rounded-full">
 							<AiOutlineRetweet id={`retweet-${j}`} className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
-							${main.retweetedBy.some(element=>{
-								if(element.id === currentUser?._id){
+							${main?.retweetedBy?.some(element=>{
+								if(element?.id === currentUser?._id){
 									return true;
 								}
 								return false
@@ -115,13 +148,13 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						</div>
 						<h1 className={`text-md text-gray-500
 						${main?.retweetedBy?.some(element=>{
-							if(element.id === currentUser?._id){
+							if(element?.id === currentUser?._id){
 								return true;
 							}
 							return false
 						}) &&  'text-green-500' }
 						group-hover:text-green-500`}>
-							{millify(main.retweetedBy.length)}
+							{millify(main?.retweetedBy?.length)}
 						</h1>
 					</div>
 					<div
@@ -129,25 +162,25 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						likeThisTweet(j);
 						if(currentUser){
 							makeMePink(j)
+							setLiked(!liked)
 						}
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
 							{
-								main?.likes?.some(element=>{
-									if(element.id === currentUser?._id){
-										return true;
-									}
-									return false
-								}) ? 
-								<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600"/>
+								liked ? 
+								<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 dark:group-hover:text-pink-600 transition-all duration-200 ease-in-out w-5 text-pink-600
+								focus:scale-75 transition-all duration-800 ease-in-out
+								"/>
 								:
 								<AiOutlineHeart 
 								id={`like-${j}`}
-								className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600"/>
+								className="h-5 group-hover:text-pink-500 dark:group-hover:text-pink-600 transition-all duration-200 ease-in-out w-5 text-gray-600
+								focus:scale-75 transition-all duration-800 ease-in-out
+								"/>
 							}
 						</div>
-						<h1 className={`text-md text-gray-500 group-hover:text-pink-500 
+						<h1 className={`text-md text-gray-500 group-hover:text-pink-500 select-none
 						${main?.likes?.some(element=>{
 							if(element?.id === currentUser?._id){
 								return true;
@@ -155,25 +188,24 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							return false
 						}) &&  'text-pink-500' }
 						`}>
-							{millify(main.likes.length)}
+							{millify(main?.likes?.length)}
 						</h1>
 					</div>
 					<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
-						<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 							<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 						</div>
 						<h1 className="text-md text-gray-500 group-hover:text-sky-500">
-							{millify(main.views.length)}
+							{millify(main?.views?.length)}
 						</h1>
 					</div>
 					<div 
 					onClick={()=>{
-						// console.log(location.toString() + '?tweet=' + main._id)
 						navigator.clipboard.writeText(location.toString() + '?tweet=' + main._id)
 						setShowClipboard(true)
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">
-						<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+						<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 							<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 						</div>
 					</div>

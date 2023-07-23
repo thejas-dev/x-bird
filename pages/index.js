@@ -1,37 +1,55 @@
 import Image from 'next/image'
 import Main from '../components/Main';
-import {useState} from 'react'
+import {useEffect,useState} from 'react'
 import {useRouter} from 'next/navigation'
 import {useRecoilState} from 'recoil'
 import {loginRoute,registerRoute} from '../utils/ApiRoutes';
 import axios from 'axios';
 import {currentUserState} from '../atoms/userAtom'
-import {useEffect} from 'react';
 import {getProviders,getSession,useSession} from 'next-auth/react'
+import {themeState} from '../atoms/userAtom'
 
 export default function Home({providers,session2}) {
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const router = useRouter();
 	const {data:session} = useSession();
 	const [loading,setLoading] = useState(true);
+	const [theme,setTheme] = useRecoilState(themeState);
+	const [mediaStream,setMediaStream] = useState('');
+
+	useEffect(()=>{
+		if(localStorage.getItem('x-bird-theme')){
+			setTheme(localStorage.getItem('x-bird-theme'))
+		}
+	},[])
+
+// 	useEffect(() => {
+ //     const enableVideoStream = async () => {
+ //         try {
+ //             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+ //             setMediaStream(stream);
+ //             // alert('obtained')
+ //         } catch (error) {
+ //             console.error('Error accessing webcam', error);
+ //             // alert('not obtained')
+
+ //         }
+ //     };
+
+ //     enableVideoStream();
+ // }, []);
+
+
+
+
 
 	useEffect(()=>{
 		if(!currentUser){
 			if(session2){
 				handleValidation()
-				console.log("having session")
 			}else{
 				setLoading(false)
 			}
-			// else if(localStorage.getItem('xbird')){
-			// 	console.log("having storage")
-			// 	handleLogin(localStorage.getItem('xbird'));
-			// }
-			// else{
-			// 	router.push('./signIn')
-			// 	console.log("routing")
-
-			// }
 		}else{
 			setLoading(false)
 		}
@@ -45,11 +63,6 @@ export default function Home({providers,session2}) {
 			}else{
 				setLoading(false)
 			}
-			// else if(localStorage.getItem('xbird')){
-			// 	handleLogin(JSON.parse(localStorage.getItem('xbird')));
-			// }else{
-			// 	router.push('./signIn')
-			// }
 		}	else{
 			setLoading(false)
 		}
@@ -63,8 +76,8 @@ export default function Home({providers,session2}) {
 	    setLoading(false);
 	}
 
-	const handleValidation = async() =>{
-	    let email = session2?.user.email
+	const handleValidation = async(email) =>{
+	    // let email = session2?.user.email
 	    const {data} = await axios.post(loginRoute,{
 	      email,
 	    });
@@ -91,20 +104,22 @@ export default function Home({providers,session2}) {
 
 	  if(loading){
 	  	return (
-		  	<div className="fixed z-50 h-full backdrop-blur-lg w-full flex items-center justify-center">
+	  		<div className={`${theme}`}>
+		  	<main className="fixed dark:bg-[#100C08] z-50 h-full backdrop-blur-lg w-full flex items-center justify-center">
 	  			
 	  			<span className="loader2">
 	  				<img src="twitter-icon.png" className="absolute h-10 w-10 top-0 bottom-0 left-0 right-0 m-auto" alt=""/>
 	  			</span>
 	  			
+	  		</main>
 	  		</div>
 
 	  	)
 	  }
 
   return (
-    <div className="h-screen w-full">
-      <Main/>
+    <div className={`h-screen ${theme} w-full`}>
+      <Main handleValidation={handleValidation}/>
     </div>
   )
 }

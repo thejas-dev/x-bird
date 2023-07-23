@@ -8,10 +8,12 @@ import {BiSearchAlt2} from 'react-icons/bi';
 import {useState,useEffect,useRef} from 'react'
 import {BsThreeDots} from 'react-icons/bs';
 import {AiOutlineInfoCircle,AiOutlineSend,AiOutlineRight} from 'react-icons/ai';
+import {MdOutlineVideoCall} from 'react-icons/md';
 import {BsCardImage,BsEmojiSmile,BsArrowLeft} from 'react-icons/bs';
 import {TbGif} from 'react-icons/tb';
 import {searchProfile,sendMsgRoute,updateUserChats,getAllMsgRoute,host,getUserByIdRoute,
-	updateMsg,getGroupMessage,addGroupMessage,updateGroupMsg,getPostByIdRoute,getAllPosts} from '../utils/ApiRoutes';
+	updateMsg,getGroupMessage,addGroupMessage,updateGroupMsg,getPostByIdRoute,getAllPosts,
+	whoToFollowRoute,getAllTrendUsers} from '../utils/ApiRoutes';
 import axios from 'axios';
 import EmojiPicker from 'emoji-picker-react';
 import {io} from 'socket.io-client';
@@ -25,7 +27,8 @@ let currentChatVar = undefined
 export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	setNewMessageSearch,setRevealNotify,revealNotify,msgReveal,setMsgReveal,
 	notify,setNotify,setFullScreenLoader,fullScreenLoader,openOverlay,setOpenOverlay,
-	overlayFor,setOverlayFor,setNeedToReloadProfile,needToReloadProfile}) {
+	overlayFor,setOverlayFor,setNeedToReloadProfile,needToReloadProfile,setCallerId,callerId,
+	callNow,setCallNow,currentCaller,setCurrentCaller}) {
 
 	const [currentChat,setCurrentChat] = useRecoilState(currentChatState);
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
@@ -57,6 +60,25 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	const [uploadArray,setUploadArray] = useState([]);
 	const [uploading,setUploading] = useState(false);
 	const [addThisImage,setAddThisImage] = useState('');
+	const [allTrendUsersLoading,setAllTrendUsersLoading] = useState(false);
+	const [whoToFollow,setWhoToFollow] = useState([
+		{
+			name:'The Babylon Bee',
+			username:'TheBabylonBee',
+			image:'https://pbs.twimg.com/profile_images/1400100770624720898/-HC7kL5x_400x400.jpg'
+		},
+		{
+			name:'Johns',
+			username:'CricCrazyJohns',
+			image:'https://pbs.twimg.com/profile_images/1570500099373170688/VVVytBl2_400x400.jpg'
+		},
+		{
+			name:'Qatar Airways',
+			username:'qatarairways',
+			image:'https://pbs.twimg.com/profile_images/1572570090226302976/iT4rPjOL_400x400.png'
+		}
+	])
+
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
 	    privateKey : process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE,
@@ -109,24 +131,6 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 			head:'Trending in India',
 			text:'WE STAND BY MUNAWAR',
 			tweets:28000
-		}
-	]
-
-	const whoToFollow = [
-		{
-			name:'The Babylon Bee',
-			username:'TheBabylonBee',
-			image:'https://pbs.twimg.com/profile_images/1400100770624720898/-HC7kL5x_400x400.jpg'
-		},
-		{
-			name:'Johns',
-			username:'CricCrazyJohns',
-			image:'https://pbs.twimg.com/profile_images/1570500099373170688/VVVytBl2_400x400.jpg'
-		},
-		{
-			name:'Qatar Airways',
-			username:'qatarairways',
-			image:'https://pbs.twimg.com/profile_images/1572570090226302976/iT4rPjOL_400x400.png'
 		}
 	]
 
@@ -233,11 +237,23 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 
 	useEffect(()=>{
 		fetchTimeLine();
+		fetchWhoToFollow()
 	},[])
 
+	const fetchWhoToFollow = async() => {
+		const {data} = await axios.get(whoToFollowRoute);
+		setWhoToFollow(data.whoToFollow);
+	}
+
 	const fetchTimeLine = async() => {
-		const {data} = await axios.get(getAllPosts);
-		setMainFeed(data.data.reverse())
+		const {data} = await axios.post(getAllPosts,{
+			categories:currentUser?.categories
+		});
+		if(data?.postsWithData){
+			setMainFeed(data.postsWithData)
+		}else{
+			setMainFeed(data.data.reverse())
+		}
 	}
 
 	useEffect(()=>{
@@ -1076,11 +1092,28 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 		});
 	}
 
+	// console.log(currentChat)
+
+	const fetchAllTrendingUsers = async() => {
+		setAllTrendUsersLoading(true);
+		const {data} = await axios.get(getAllTrendUsers);
+		setWhoToFollow(data?.whoToFollowUpto20);
+		setAllTrendUsersLoading(false);
+	}
+
+	const videoCallToUser = async() => {
+		if(currentChat){
+			setCurrentCaller(currentChat);
+			setCallerId(currentChat._id);
+			setCallNow(true);
+		}
+	}
+
 	if(currentWindow === 'Messages'){
 		return (
-			<div className={`lg:w-[50.6%] md:w-[80%] xs:w-[90%] w-[100%] ${currentChat ? 'relative':'hidden lg:block'} relative  overflow-hidden`}>
-				<div className={`h-full w-full backdrop-blur-lg px-3 bg-black/30 left-0 flex items-center justify-center fixed z-50 ${uploadArray.length>0  ? 'block' : 'hidden'} bg-black/40`}>
-					<div className={`max-w-3xl mx-auto md:h-[85%] h-[93%] bg-white px-2 rounded-xl border-[2px] border-gray-400/60 shadow-xl overflow-y-scroll 
+			<div className={`lg:w-[50.6%] md:w-[80%] h-screen xs:w-[90%] w-[100%] ${currentChat ? 'relative':'hidden lg:block'} relative overflow-hidden`}>
+				<div className={`h-full w-full backdrop-blur-lg px-3 bg-black/30 left-0 flex items-center justify-center fixed z-50 ${uploadArray.length>0  ? 'block' : 'hidden'} bg-black/40 dark:backdrop-blur-md`}>
+					<div className={`max-w-3xl mx-auto md:h-[85%] h-[93%] bg-white dark:bg-[#100C08] dark:border-gray-700/60 px-2 rounded-xl border-[2px] border-gray-400/60 shadow-xl overflow-y-scroll 
 					scrollbar-none relative`}>
 						<div className="grid grid-cols-1 md:grid-cols-2 md:gap-2 pb-12">
 							<div className="w-full flex flex-col md:gap-3 gap-2 py-4 pl-2 pr-1">
@@ -1101,27 +1134,27 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							</div>
 						</div>
 						<div className="fixed border-t-[1px] border-l-[1px] border-r-[1px] border-gray-400/50 rounded-t-xl overflow-hidden 
-						bg-white md:h-14 h-12 flex items-center w-full md:bottom-[8%] bottom-[0%] md:max-w-2xl sm:max-w-lg xs:max-w-md max-w-sm right-0 mx-auto left-0 ">
+						bg-white dark:bg-[#100C08] md:h-14 h-12 flex items-center w-full md:bottom-[8%] bottom-[0%] md:max-w-2xl sm:max-w-lg xs:max-w-md max-w-sm right-0 mx-auto left-0 ">
 							<div 
 							onClick={()=>{setUploadArray([]);setPath('')}}
 							className="w-[50%] h-full cursor-pointer rounded-t-md hover:bg-gray-200 transition-all duration-200 ease-in-out
-							flex items-center justify-center">
+							flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-900">
 								<button className="text-xl text-red-600 font-semibold">Cancel</button>
 							</div>
 							<div 
 							onClick={startUploadingImage}
 							className="w-[50%] h-full cursor-pointer rounded-t-md hover:bg-gray-200 transition-all duration-200 ease-in-out
-							flex items-center justify-center">
+							flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-900">
 								<button className="text-xl text-green-600 font-semibold">Confirm</button>
 							</div>
 						</div>
 						
 					</div>
 				</div>
-				<div className={`h-full w-full backdrop-blur-lg bg-white flex items-center justify-center absolute z-40 ${loading && 'hidden'}`}>
+				<div className={`h-[100vh] w-full top-0 left-0 backdrop-blur-lg bg-white dark:bg-[#100C08] flex items-center justify-center absolute z-40 ${loading && 'hidden'}`}>
 					<span className="loader3"></span>
 				</div>
-				<div className={`w-full ${!currentChat && 'hidden'} overflow-hidden px-5 sticky top-0 backdrop-blur-lg bg-white/50 flex justify-between p-2`}>
+				<div className={`w-full ${!currentChat && 'hidden'} overflow-hidden px-5 sticky top-0 backdrop-blur-lg left-0 bg-white/50 dark:bg-[#100C08]/50 flex justify-between p-2`}>
 					<div 
 					onClick={()=>{
 						if(!currentChat?.group){
@@ -1157,31 +1190,43 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							</div>
 
 						}
-						<h1 className="text-md text-black font-semibold truncate">{currentChat.name}</h1>
+						<h1 className="text-md text-black dark:text-gray-200 font-semibold truncate">{currentChat.name}</h1>
 					</div>
-					<div 
-					onClick={()=>{
-						if(!currentChat?.group){
-							setCurrentWindow('Profile')
-							window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
-							setCurrentChat('')													
-						}
-					}}
-					className="p-2 cursor-pointer rounded-full md:hover:bg-gray-600/10 transition-all duration-200 ease-in-out">
-						<AiOutlineInfoCircle className="h-5 w-5 text-gray-800"/>
+					<div className="flex items-center gap-2">
+						<div 
+						onClick={()=>{
+							if(!currentChat?.group){
+								videoCallToUser(currentChat._id)													
+							}
+						}}
+						className="p-0 cursor-pointer rounded-full transition-all duration-200 ease-in-out">
+							<MdOutlineVideoCall className="h-7 w-7 text-gray-800 hover:text-sky-500 dark:hover:text-sky-500 transition-all 
+							duration-200 ease-in-out dark:text-gray-300"/>
+						</div>
+						<div 
+						onClick={()=>{
+							if(!currentChat?.group){
+								setCurrentWindow('Profile')
+								window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
+								setCurrentChat('')													
+							}
+						}}
+						className="p-2 cursor-pointer rounded-full md:hover:bg-gray-600/10 dark:md:hover:bg-gray-800/10 transition-all duration-200 ease-in-out">
+							<AiOutlineInfoCircle className="h-5 w-5 text-gray-800 dark:text-gray-300"/>
+						</div>
 					</div>
 				</div>
 				<div 
 				onClick={()=>{setCurrentChat('');setMessages([])}}
-				className="sticky w-8 h-8 flex items-center justify-center rounded-full z-45 left-2 lg:hidden top-2 cursor-pointer p-1 hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
-					<BsArrowLeft className="h-6 w-5 text-gray-800"/>
+				className="sticky w-8 h-8 flex items-center justify-center rounded-full z-45 left-2 lg:hidden top-2 cursor-pointer p-1 hover:bg-gray-200/70 dark:hover:bg-gray-900/40 transition-all duration-200 ease-in-out">
+					<BsArrowLeft className="h-6 w-5 text-gray-800 dark:text-gray-200"/>
 				</div>
-				<div className="h-full pt-[115px] w-full scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-200/50 overflow-y-scroll scroll-smooth">
+				<div className="h-full pt-[115px] w-full scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-200/50 dark:scrollbar-track-gray-900/50 overflow-y-scroll scroll-smooth">
 					{
 						!currentChat ? 
 						<div className="h-full w-full flex items-center justify-center">
 							<div className="lg:w-[60%] w-full px-4 flex flex-col gap-1">
-								<h1 className="md:text-3xl text-2xl font-bold text-black">
+								<h1 className="md:text-3xl text-2xl font-bold text-black dark:text-gray-200">
 									Select a message
 								</h1>
 								<h1 className="text-md text-gray-500">
@@ -1203,8 +1248,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 									window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);																
 								}
 							}}
-							className="w-full hover:bg-gray-100 rounded-md transition-all duration-200 ease-in-out 
-							cursor-pointer px-4 py-6 pb-14 border-gray-200/70 border-b-[1px] flex flex-col">
+							className="w-full hover:bg-gray-100 dark:hover:bg-gray-900 rounded-md transition-all duration-200 ease-in-out 
+							cursor-pointer px-4 py-6 pb-14 border-gray-200/70 dark:border-gray-800/70 border-b-[1px] flex flex-col">
 								{
 									currentChat.group ? 
 									<div className="h-[70px] w-[70px] rounded-full overflow-hidden mx-auto grid grid-cols-2">
@@ -1229,10 +1274,10 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 									:
 									<img src={currentChat.image} alt="" className="h-[70px] w-[70px] rounded-full mx-auto"/>
 								}
-								<h1 className="text-black text-lg font-bold select-none text-center mx-auto">{currentChat?.name}</h1>
-								<h1 className="text-gray-600 text-md select-none text-center mx-auto">@{currentChat?.username}</h1>
-								<h1 className="text-gray-900 mt-5 select-none text-center mx-auto">{currentChat?.description}</h1>
-								<h1 className="text-gray-600 mt-2 select-none text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]} {!currentChat?.group && <span> - {currentChat?.followers?.length} Followers</span>}</h1>
+								<h1 className="text-black dark:text-gray-200 text-lg font-bold select-none text-center mx-auto">{currentChat?.name}</h1>
+								<h1 className="text-gray-600 dark:text-gray-400 text-md select-none text-center mx-auto">@{currentChat?.username}</h1>
+								<h1 className="text-gray-900 dark:text-gray-100 mt-5 select-none text-center mx-auto">{currentChat?.description}</h1>
+								<h1 className="text-gray-600 dark:text-gray-400 mt-2 select-none text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]}</h1>
 								{
 								!currentChat?.group &&
 								<h1 className="text-gray-600 text-sm select-none mt-2 text-center mx-auto">Not followed by anyone you are following</h1>
@@ -1250,7 +1295,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 									}
 									<div className={`flex flex-col gap-1  ${msg.fromSelf ? 'justify-end':'justify-start'} max-w-[80%]`}>
 										<div className={`rounded-2xl ${msg.fromSelf ? 'ml-auto' : 'mr-auto'}  flex ${( msg.message.includes('media.tenor.com') || msg.message.includes('ik.imagekit.io/d3kzbpbila/Images') ) ? 'p-0	': 'px-[14px] py-2 '} 
-										${msg.fromSelf ? 'bg-sky-500 hover:bg-sky-600' : 'bg-gray-300/50 hover:bg-gray-300/70'} hover:scale-[102%] transition-all 
+										${msg.fromSelf ? 'bg-sky-500 hover:bg-sky-600 dark:hover:bg-sky-700 dark:bg-sky-600' : 'bg-gray-300/50 dark:bg-gray-600/50 hover:bg-gray-300/70 dark:hover:bg-gray-500/70'} hover:scale-[102%] transition-all 
 										duration-100 ease-out`}>
 											{
 												msg?.message?.includes('media.tenor.com') ?
@@ -1259,16 +1304,15 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 												msg?.message?.includes('ik.imagekit.io/d3kzbpbila/Images') ? 
 												<img src={msg?.message} className={`${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
 												:
-												<h1 className={`${msg.fromSelf ? 'text-white' : 'text-black'} text-md break-all`}>{msg.message}</h1>
+												<h1 className={`${msg.fromSelf ? 'text-white' : 'text-black dark:text-white'} text-md break-all`}>{msg.message}</h1>
 											}
 										</div>
-										<h1 className={`text-gray-600/70 ${msg.fromSelf ? 'text-end':'text-start'} ${msg.fromSelf ? 'justify-end':'justify-start'} text-sm mx-1 select-none cursor-pointer hover:underline flex `}>
+										<h1 className={`text-gray-600/70 dark:text-gray-500/70 ${msg.fromSelf ? 'text-end':'text-start'} ${msg.fromSelf ? 'justify-end':'justify-start'} text-sm mx-1 select-none cursor-pointer hover:underline flex `}>
 										{tConvert(msg?.updatedAt)}&nbsp;
 										{msg.seenBy && currentChat.group ?
 											<span
 											onClick={()=>{
 												showSeenPeoples(msg.seenBy);
-												console.log(msg.seenBy.includes(currentUser._id))
 											}}
 											>{
 												j+1 === messages.length && msg.fromSelf &&
@@ -1298,8 +1342,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						}
 					</div>
 				</div>
-				<div className={`${!currentChat && 'hidden' } backdrop-blur-lg bg-white/40 sticky bottom-0 w-full px-2 py-2 border-t-[1px] border-gray-200/70`}>
-					<div className="bg-gray-200/70 relative rounded-2xl flex items-center gap-2 py-[6px] px-2">
+				<div className={`${!currentChat && 'hidden' } backdrop-blur-lg bg-white/40 dark:bg-[#100C08]/40 sticky bottom-0 w-full px-2 py-2 border-t-[1px] dark:border-gray-700/70 border-gray-200/70`}>
+					<div className="bg-gray-200/70 dark:bg-gray-800/40 relative rounded-2xl flex items-center gap-2 py-[6px] px-2">
 						<div className="absolute -top-2 left-0 w-full">	
 							{
 								uploading &&
@@ -1307,24 +1351,24 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							}
 						</div>
 						<div className="flex items-center">
-							<div className="hover:bg-sky-200/80 transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
+							<div className="hover:bg-sky-200/80 dark:hover:bg-sky-900/30 transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
 								<BsCardImage onClick={openFileInput} className={`h-[18px] w-[18px] ${url.length<4 ? 'text-sky-500':'text-gray-500'}`}/>
 								<input type="file" id="file1" accept="image/*" 
 								value={path} onChange={(e)=>{setPath(e.target.value);url1Setter()}}
 								hidden multiple="multiple"
 								/>
 							</div>
-							<div className="hover:bg-sky-200/80 relative transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
+							<div className="hover:bg-sky-200/80 dark:hover:bg-sky-900/30 relative transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
 								<TbGif onClick={()=>setGifInput(!gifInput)} className="text-sky-500 h-[18px] w-[18px]"/>
 								<div className={`absolute z-50 ${gifInput ? '-left-10' : '-left-[1000px]'} bottom-12 transition-all duration-200 ease-in-out`} >
 							      <GifPicker tenorApiKey={process.env.NEXT_PUBLIC_TERNOR} height="450px" width={gifWidth} 
-							      autoFocusSearch="true" theme="dark"  onGifClick={(e)=>{
+							      autoFocusSearch={true} theme="dark"  onGifClick={(e)=>{
 							      		setGifInput(false);
 							      		sendGifMessage(e?.url)
 							      }} />
 							    </div>							
 							</div>
-							<div className="hover:bg-sky-200/80 z-40 relative transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
+							<div className="hover:bg-sky-200/80 dark:hover:bg-sky-900/30 z-40 relative transition-all box-border duration-200 ease-in-out p-2 rounded-full cursor-pointer">
 								<BsEmojiSmile onClick={openEmojiInput} className={`h-[18px] w-[18px] text-sky-500 z-30 ${iconsReveal && 'hidden w-0 overflow-hidden'}`}/>
 								{
 									emojiInput &&
@@ -1346,7 +1390,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						</div>
 						<div 
 						onClick={()=>{if(messageText.length>0) sendMessage()}}
-						className="rounded-full mr-1 hover:bg-sky-100 transition-all duration-200 ease-in-out cursor-pointer">
+						className="rounded-full mr-1 dark:hover:bg-sky-900/30 hover:bg-sky-100 transition-all duration-200 ease-in-out cursor-pointer">
 							{
 								messageText ? 
 								<RiSendPlane2Line className="h-5 w-5 text-sky-500"/>
@@ -1368,8 +1412,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	}else{
 		return (
 			<div className="lg:w-[40.4%] relative xl:w-[32.4%] w-0 hidden lg:block h-full pl-7 pr-10 overflow-y-scroll scrollbar-thin scrollbar-thumb-sky-400">
-				<div className={`h-full w-full backdrop-blur-lg px-3 bg-black/30 left-0 flex items-center justify-center fixed z-50 ${uploadArray.length>0  ? 'block' : 'hidden'} bg-black/40`}>
-					<div className={`max-w-3xl mx-auto md:h-[85%] h-[93%] bg-white px-2 rounded-xl border-[2px] border-gray-400/60 shadow-xl overflow-y-scroll 
+				<div className={`h-full w-full backdrop-blur-lg px-3 bg-black/30 left-0 flex items-center justify-center fixed z-50 ${uploadArray.length>0  ? 'block' : 'hidden'} bg-black/40 dark:backdrop-blur-md`}>
+					<div className={`max-w-3xl mx-auto md:h-[85%] h-[93%] bg-white dark:bg-[#100C08] px-2 rounded-xl border-[2px] border-gray-400/60 dark:border-gray-700/60 shadow-xl overflow-y-scroll 
 					scrollbar-none relative`}>
 						<div className="grid grid-cols-1 md:grid-cols-2 md:gap-2 pb-12">
 							<div className="w-full flex flex-col md:gap-3 gap-2 py-4 pl-2 pr-1">
@@ -1390,16 +1434,16 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							</div>
 						</div>
 						<div className="fixed border-t-[1px] border-l-[1px] border-r-[1px] border-gray-400/50 rounded-t-xl overflow-hidden 
-						bg-white md:h-14 h-12 flex items-center w-full md:bottom-[8%] bottom-[0%] md:max-w-2xl sm:max-w-lg xs:max-w-md max-w-sm right-0 mx-auto left-0 ">
+						bg-white dark:bg-[#100C08] md:h-14 h-12 flex items-center w-full md:bottom-[8%] bottom-[0%] md:max-w-2xl sm:max-w-lg xs:max-w-md max-w-sm right-0 mx-auto left-0 ">
 							<div 
 							onClick={()=>{setUploadArray([]);setPath('')}}
-							className="w-[50%] h-full cursor-pointer rounded-t-md hover:bg-gray-200 transition-all duration-200 ease-in-out
+							className="w-[50%] h-full cursor-pointer rounded-t-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out
 							flex items-center justify-center">
 								<button className="text-xl text-red-600 font-semibold">Cancel</button>
 							</div>
 							<div 
 							onClick={startUploadingImage}
-							className="w-[50%] h-full cursor-pointer rounded-t-md hover:bg-gray-200 transition-all duration-200 ease-in-out
+							className="w-[50%] h-full cursor-pointer rounded-t-md hover:bg-gray-200 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out
 							flex items-center justify-center">
 								<button className="text-xl text-green-600 font-semibold">Confirm</button>
 							</div>
@@ -1408,18 +1452,19 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 					</div>
 				</div>
 				<div className="flex flex-col w-full">
-					<div className={`mt-2 relative bg-gray-200/70 rounded-full px-5 py-2 focus-within:bg-transparent w-full
-					focus-within:border-sky-500 border-[1.5px]  flex gap-3 items-center ${currentWindow === 'Explore' && 'hidden'}`}>
-						<FiSearch className="h-5 w-5 text-gray-700 peer-active:text-sky-600 "/>
+					<div className={`mt-2 relative bg-gray-200/70 dark:bg-gray-800/70 rounded-full px-5 py-2 focus-within:bg-transparent w-full
+					focus-within:border-sky-500 dark:focus-within:border-sky-500 border-[1.5px] dark:border-gray-900/50  flex gap-3 items-center ${currentWindow === 'Explore' && 'hidden'}`}>
+						<FiSearch className="h-5 w-5 text-gray-700 dark:text-gray-600 peer-focus:text-sky-600 "/>
 						<input type="text" id="exploreRightSearch" placeholder="Search twitter" 
 						value={searchText} onChange={(e)=>setSearchText(e.target.value)}
-						className="w-full bg-transparent peer outline-none placholder:text-gray-500 text-black text-lg"/>
-						<div className={`absolute left-0 top-[52px] bg-white w-full shadow-xl rounded-xl overflow-hidden border-gray-300/80 
-						${revealExploreInfo ? 'border-[1px] max-h-[400px]' : 'h-0 overflow-hidden'} px-2 flex flex-col`}>
-							<h1 className={`my-5  text-md ${!searchText && 'text-center' } w-full text-gray-500 `}>
+						className="w-full bg-transparent peer outline-none placholder:text-gray-500 text-black dark:text-gray-200 text-lg"/>
+						<div className={`absolute left-0 top-[52px] bg-white dark:bg-[#100C08]/50 dark:backdrop-blur-md w-full shadow-xl rounded-xl 
+						overflow-hidden border-gray-300/80 dark:border-gray-700/80 
+						${revealExploreInfo ? 'border-[1px] max-h-[400px]' : 'h-0 overflow-hidden'} overflow-y-scroll scrollbar-none px-2 pb-2 flex flex-col`}>
+							<h1 className={`my-5 px-1 text-md ${!searchText && 'text-center' } w-full dark:text-gray-400 text-gray-500 `}>
 							{ 
 								!searchText ? 
-								'Try searching for people, topics, or keywords'
+								'Try searching for people with username'
 								:
 								`Search for "${searchText}"`
 							}
@@ -1432,10 +1477,10 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 										window.history.replaceState({id:100},'Default',`?profile=${res._id}`);
 										setNeedToReloadProfile(true)
 									}}
-									className="flex z-40 overflow-hidden cursor-pointer gap-[7px] w-full px-4 w-full hover:bg-gray-200/50 transition-all duration-200 ease-in-out py-3">
+									className="flex z-40  cursor-pointer gap-[7px] w-full px-2 w-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 ease-in-out py-3">
 										<img src={res.image} className="h-12 w-12 rounded-full"/>
 										<div className="flex flex-col truncate shrink">
-											<span className="text-black text-md truncate font-semibold m-0 p-0">{res.name}</span>
+											<span className="text-black dark:text-gray-100 text-md truncate font-semibold m-0 p-0">{res.name}</span>
 											<span className="text-gray-500 truncate text-md m-0 p-0">@{res.username}</span>
 										</div>
 									</div>
@@ -1444,14 +1489,14 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							}
 						</div>
 					</div>
-					<div className={`mt-5 rounded-2xl bg-gray-300/20 flex flex-col overflow-hidden ${currentWindow === 'Explore' && 'hidden'}`}>
-						<h1 className="my-3 mx-4 text-xl text-black font-bold">What is happening</h1>
+					<div className={`mt-5 rounded-2xl bg-gray-300/20 dark:bg-gray-700/30 flex flex-col overflow-hidden ${currentWindow === 'Explore' && 'hidden'}`}>
+						<h1 className="my-3 mx-4 text-xl text-black dark:text-gray-200 font-bold">What is happening</h1>
 						{
 							tempEventData.map((event,i)=>(
-								<div key={i} className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
+								<div key={i} className="flex justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/30 transition-all duration-200 ease-in-out p-4">
 									<div className="flex flex-col ">
-										<h1 className="text-gray-600 text-md">{event.head}</h1>
-										<h1 className="text-black text-lg font-semibold">{event.text}</h1>
+										<h1 className="text-gray-600 dark:text-gray-400 text-md">{event.head}</h1>
+										<h1 className="text-black text-lg dark:text-gray-100 font-semibold">{event.text}</h1>
 									</div>
 									<div className="">
 										<img className="h-14 w-14 rounded-2xl " src={event.image} alt=""/>
@@ -1461,10 +1506,10 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						}
 						{
 							tempHashData.map((hash,j)=>(
-								<div key={j} className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
+								<div key={j} className="flex justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/30 transition-all duration-200 ease-in-out p-4">
 									<div className="flex flex-col ">
-										<h1 className="text-gray-600 text-md">{hash.head}</h1>
-										<h1 className="text-black text-lg font-semibold">{hash.text}</h1>
+										<h1 className="text-gray-600 dark:text-gray-400 text-md">{hash.head}</h1>
+										<h1 className="text-black dark:text-gray-100 text-lg font-semibold">{hash.text}</h1>
 									</div>
 									<div className="">
 										<BsThreeDots className="text-gray-600 h-5 w-5"/>
@@ -1474,11 +1519,11 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						}
 						{
 							tempTextData.map((text,k)=>(
-								<div key={k} className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4">
+								<div key={k} className="flex justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/30 transition-all duration-200 ease-in-out p-4">
 									<div className="flex flex-col ">
 										<h1 className="text-gray-500 text-md">{text.head}</h1>
-										<h1 className="text-black text-lg font-semibold">{text.text}</h1>
-										<h1 className="text-gray-400 text-md">{text.tweets} Tweets</h1>
+										<h1 className="text-black dark:text-gray-100 text-lg font-semibold">{text.text}</h1>
+										<h1 className="text-gray-400 dark:text-gray-600 text-md">{text.tweets} Tweets</h1>
 									</div>
 									<div className="">
 										<BsThreeDots className="text-gray-600 h-5 w-5"/>
@@ -1486,53 +1531,72 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 								</div>
 							))
 						}
-						<div className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4 w-full">
+						<div className="flex justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/30 transition-all duration-200 ease-in-out p-4 w-full">
 							<h1 className="text-lg text-sky-500 font-semibold">Show more</h1>
 						</div>
 					</div>
-					<div className="mt-5 mb-[70px] rounded-2xl bg-gray-300/20 flex flex-col overflow-hidden">
-						<h1 className="my-3 mx-4 text-xl text-black font-bold">Who to follow</h1>
+					<div className="mt-5 mb-[70px] rounded-2xl bg-gray-300/20 dark:bg-gray-700/30 flex flex-col overflow-hidden">
+						<h1 className="my-3 mx-4 text-xl text-black font-bold dark:text-gray-100">Who to follow</h1>
 						{
 							whoToFollow.map((who,i)=>(
-								<div className="p-4 flex justify-between hover:bg-gray-200 
-								transition-all duration-200 ease-in-out cursor-pointer" key={i}>
-									<div className="flex gap-2 items-center">
-										<img src={who.image} className="h-12 w-12"/>
-										<div className="flex flex-col gap-[2px]">
-											<h1 className="text-black text-md font-semibold">{who.name}</h1>
-											<h1 className="text-gray-500 text-md">@{who.username}</h1>
+								<div 
+								onClick={()=>{
+									setCurrentWindow('Profile')
+									window.history.replaceState({id:100},'Default',`?profile=${who?._id}`);
+									setNeedToReloadProfile(true)
+								}}
+								className="p-4 flex justify-between hover:bg-gray-200 dark:hover:bg-gray-800/30
+								transition-all duration-200 ease-in-out cursor-pointer gap-2" key={i}>
+									<div className="flex gap-2 items-center overflow-hidden">
+										<img src={who.image} className="h-12 w-12 rounded-xl"/>
+										<div className="flex flex-col gap-[2px] overflow-hidden">
+											<h1 className="text-black dark:text-gray-200 text-md font-semibold truncate">{who.name}</h1>
+											<h1 className="text-gray-500 text-md truncate">@{who.username}</h1>
 										</div>
 									</div>
 									<div className="">
-										<button className="shrink rounded-full bg-black text-white font-semibold px-5 py-1">
+										<button className="shrink rounded-full bg-black dark:bg-white dark:text-black text-white font-semibold px-5 py-1">
 											Follow
 										</button>
 									</div>
 								</div>
 							))
 						}
-						<div className="flex justify-between cursor-pointer hover:bg-gray-200 transition-all duration-200 ease-in-out p-4 w-full">
-							<h1 className="text-lg text-sky-500 font-semibold">Show more</h1>
+						<div 
+						onClick={()=>{
+							if(currentUser){
+								fetchAllTrendingUsers()	
+							}else{
+								setShowLoginNow(true)
+							}
+						}}
+						className="flex justify-between cursor-pointer hover:bg-gray-200  dark:hover:bg-gray-800/30 transition-all duration-200 ease-in-out p-4 w-full">
+							<h1 className="text-lg text-sky-500 font-semibold">{
+								allTrendUsersLoading ? 
+								<span className="animate-pulse">Fetching</span>												
+								:
+								'Show more'
+							}</h1>
 						</div>
 					</div>
 				</div>
-				<div className={`fixed right-7 lg:w-[36.4%] xl:w-[28.4%] w-0 border-gray-300 border-[1.5px] flex flex-col h-full 
-				overflow-hidden bg-white ${!currentChat && 'pt-4'} h-[95%] w-full ${msgReveal ? '-bottom-[60px]' : '-bottom-[90%]'} transition-all 
+				<div className={`fixed right-7 lg:w-[36.4%] xl:w-[28.4%] w-0 border-gray-300 dark:border-gray-700 border-[1.5px] flex flex-col h-full 
+				overflow-hidden bg-white dark:bg-[#100C08]/70 backdrop-blur-md ${!currentChat && 'pt-4'} h-[95%] w-full ${msgReveal ? '-bottom-[60px]' : '-bottom-[90%]'} transition-all 
 				duration-200 ease-in-out  rounded-2xl shadow-xl pb-[60px] ${!currentUser && 'hidden'} `}>
 					<div className={`flex cursor-pointer items-center justify-between ${currentChat && 'hidden'} w-full px-5 shadow-sm pb-3 mx-auto`}>
 						<h1 
 						onClick={()=>setMsgReveal(!msgReveal)}
-						className="text-black text-2xl select-none font-semibold">Messages</h1>
+						className="text-black dark:text-gray-200 text-2xl select-none font-semibold">Messages</h1>
 						<div className="flex items-center">
 							<div 
 							onClick={()=>{setNewMessageSearch(true);setMsgReveal(true)}}
-							className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
-								<RiMailAddLine className="h-5 w-5 text-black"/>
+							className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out">
+								<RiMailAddLine className="h-5 w-5 text-black dark:text-gray-200"/>
 							</div>
 							<div 
 							onClick={()=>setMsgReveal(!msgReveal)}
-							className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
-								<HiOutlineChevronDoubleDown className={`h-5 w-5 text-black ${!msgReveal && 'rotate-180'  }`}/>
+							className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out">
+								<HiOutlineChevronDoubleDown className={`h-5 w-5 text-black dark:text-gray-200 ${!msgReveal && 'rotate-180'  }`}/>
 							</div>
 						</div>
 					</div>
@@ -1540,22 +1604,22 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						{
 							currentChat ? 
 							<div className="h-full w-full flex flex-col relative">
-								<div className={`h-full w-full backdrop-blur-lg bg-white flex items-center justify-center absolute z-50 ${loading && 'hidden'}`}>
+								<div className={`h-full w-full backdrop-blur-lg bg-white dark:bg-[#100C08] flex items-center justify-center absolute z-50 ${loading && 'hidden'}`}>
 									<span className="loader3"></span>
 								</div>
-								<div className={`w-full sticky top-0 backdrop-blur-lg bg-white/50 ${msgReveal ? 'py-3':'py-4' } ${!msgReveal && 'pb-7'} 
+								<div className={`w-full sticky top-0 backdrop-blur-lg bg-white/50 dark:bg-[#100C08]/50 ${msgReveal ? 'py-3':'py-4' } ${!msgReveal && 'pb-7'} 
 								flex justify-between overflow-hidden items-center px-2 shadow-md`}>
 									<div className="flex gap-3 items-center overflow-hidden">
 										<div onClick={()=>setCurrentChat('')} 
-										className="p-2 cursor-pointer rounded-full hover:bg-gray-200 transition-all duration-200 ease-in-out">
-											<HiOutlineArrowLeft className="h-5 w-5 text-gray-800"/>
+										className="p-2 cursor-pointer rounded-full hover:bg-gray-200 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out">
+											<HiOutlineArrowLeft className="h-5 w-5 text-gray-800 dark:text-gray-200"/>
 										</div>
 										<div 
 										onClick={()=>{
 											setMsgReveal(!msgReveal);
 										}}
 										className="flex cursor-pointer flex-col truncate shrink">
-											<span className="text-lg text-black truncate font-semibold">{currentChat?.name}</span>
+											<span className="text-lg dark:text-gray-200 text-black truncate font-semibold">{currentChat?.name}</span>
 											{
 												msgReveal &&
 												<span className="text-md truncate text-gray-500">@{currentChat?.username}</span>
@@ -1566,12 +1630,12 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 									onClick={()=>{
 										setMsgReveal(!msgReveal);
 									}}
-									className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
-										<HiOutlineChevronDoubleDown className={`h-5 w-5 text-black ${!msgReveal && 'rotate-180'  }`}/>
+									className="p-[6px] rounded-full cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out">
+										<HiOutlineChevronDoubleDown className={`h-5 w-5 text-black dark:text-gray-500 ${!msgReveal && 'rotate-180'  }`}/>
 									</div>	
 								</div>
 								<div className="w-full h-full overflow-y-scroll flex-col flex scrollbar scrollbar-thin scrollbar-thumb-sky-400 
-								scrollbar-track-gray-200 pb-14">
+								scrollbar-track-gray-200 dark:scrollbar-track-gray-900 pb-14">
 									<div 
 									onClick={()=>{
 										if(!currentChat?.group){
@@ -1580,8 +1644,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 											setNeedToReloadProfile(true)																
 										}							
 									}}
-									className="w-full mt-2 hover:bg-gray-100 rounded-md transition-all duration-200 ease-in-out 
-									cursor-pointer px-4 py-6 pb-14 border-gray-200/70 border-b-[1px] flex flex-col">
+									className="w-full mt-2 hover:bg-gray-100 dark:hover:bg-gray-900/30 rounded-md transition-all duration-200 ease-in-out 
+									cursor-pointer px-4 py-6 pb-14 border-gray-200/70 dark:border-gray-700/70 border-b-[1px] flex flex-col">
 										{
 											currentChat?.group ? 
 											<div className="h-[70px] w-[70px] rounded-full overflow-hidden mx-auto grid grid-cols-2">
@@ -1606,10 +1670,10 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 											:
 											<img src={currentChat.image} alt="" className="h-[70px] w-[70px] rounded-full mx-auto"/>
 										}
-										<h1 className="text-black text-lg font-bold select-none text-center mx-auto">{currentChat?.name}</h1>
-										<h1 className="text-gray-600 text-md select-none text-center mx-auto">@{currentChat?.username}</h1>
-										<h1 className="text-gray-900 mt-5 select-none text-center mx-auto">{currentChat?.description}</h1>
-										<h1 className="text-gray-600 mt-2 select-none text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]} {!currentChat?.group && <span> - {currentChat?.followers?.length} Followers</span>}</h1>
+										<h1 className="text-black dark:text-gray-200 text-lg font-bold select-none text-center mx-auto">{currentChat?.name}</h1>
+										<h1 className="text-gray-600 dark:text-gray-400 text-md select-none text-center mx-auto">@{currentChat?.username}</h1>
+										<h1 className="text-gray-900 dark:text-gray-100 mt-5 select-none text-center mx-auto">{currentChat?.description}</h1>
+										<h1 className="text-gray-600 mt-2 select-none dark:text-gray-400 text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]}</h1>
 										{
 										!currentChat?.group &&
 										<h1 className="text-gray-600 text-sm select-none mt-2 text-center mx-auto">Not followed by anyone you are following</h1>
@@ -1625,7 +1689,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 													}
 													<div className={`flex flex-col gap-1  ${msg.fromSelf ? 'justify-end':'justify-start'} max-w-[80%]`}>
 														<div className={`rounded-2xl ${msg.fromSelf ? 'ml-auto' : 'mr-auto'}  flex ${( msg.message.includes('media.tenor.com') || msg.message.includes('ik.imagekit.io/d3kzbpbila/Images') ) ? 'p-0	': 'px-[14px] py-2 '}
-														${msg.fromSelf ? 'bg-sky-500 hover:bg-sky-600' : 'bg-gray-300/50 hover:bg-gray-300/70'} hover:scale-[102%] transition-all 
+														${msg.fromSelf ? 'bg-sky-500 hover:bg-sky-600 dark:hover:bg-sky-700 dark:bg-sky-600' : 'bg-gray-300/50 dark:bg-gray-600/50 hover:bg-gray-300/70 dark:hover:bg-gray-500/70'} hover:scale-[102%] transition-all 
 														duration-100 ease-out`}>
 															{
 																msg.message.includes('media.tenor.com') ?
@@ -1634,10 +1698,10 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 																msg?.message?.includes('ik.imagekit.io/d3kzbpbila/Images') ? 
 																<img src={msg?.message} className={`${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
 																:
-																<h1 className={`${msg.fromSelf ? 'text-white' : 'text-black'} text-md break-all`}>{msg.message}</h1>
+																<h1 className={`${msg.fromSelf ? 'text-white' : 'text-black dark:text-white'} text-md break-all`}>{msg.message}</h1>
 															}
 														</div>
-														<h1 className={`text-gray-600/70 ${msg.fromSelf ? 'text-end':'text-start'} ${msg.fromSelf ? 'justify-end':'justify-start'} text-sm mx-1 select-none cursor-pointer hover:underline flex `}>
+														<h1 className={`text-gray-600/70 dark:text-gray-500/70 ${msg.fromSelf ? 'text-end':'text-start'} ${msg.fromSelf ? 'justify-end':'justify-start'} text-sm mx-1 select-none cursor-pointer hover:underline flex `}>
 														{tConvert(msg?.updatedAt)}&nbsp;
 														{msg.seenBy && currentChat.group ?
 															<span
@@ -1675,9 +1739,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 
 								</div>
 
-
-								<div className="absolute bottom-0 py-1 px-3 bg-white w-full">
-									<div className="rounded-xl bg-gray-200/60 w-full flex px-2 py-1 items-center">
+								<div className="absolute bottom-0 py-1 px-3 bg-white dark:bg-[#100C08]/60 backdrop-blur-lg w-full">
+									<div className="rounded-xl bg-gray-200/60 dark:bg-gray-800/40 w-full flex px-2 py-1 items-center">
 										<div className="flex items-center">
 											<div className="absolute -top-1 left-0 w-[98%]">	
 												{
@@ -1685,7 +1748,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 													<div className="loader w-full mx-auto"></div>
 												}
 											</div>
-											<div className={`cursor-pointer rounded-full p-2 hover:bg-gray-200/60 transition-all duration-200 ease-in-out ${iconsReveal && 'hidden w-0 overflow-hidden'}`}>
+											<div className={`cursor-pointer rounded-full p-2 hover:bg-gray-200/60 dark:hover:bg-gray-800/60 transition-all duration-200 ease-in-out ${iconsReveal && 'hidden w-0 overflow-hidden'}`}>
 												<BsCardImage onClick={()=>{
 													document.getElementById('file2').click();
 												}} className={`h-[18px] w-[18px] ${url.length<4 ? 'text-sky-500':'text-gray-500'}`}/>
@@ -1694,7 +1757,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 												hidden multiple="multiple"
 												/>
 											</div>
-											<div className={`cursor-pointer relative rounded-full p-2 hover:bg-gray-200/60 transition-all duration-200 ease-in-out`}>
+											<div className={`cursor-pointer relative rounded-full p-2 hover:bg-gray-200/60 dark:hover:bg-gray-800/60 transition-all duration-200 ease-in-out`}>
 												{
 													iconsReveal ? 
 													<AiOutlineRight className={`h-[17px] w-[17px] text-sky-500`}/>
@@ -1709,12 +1772,12 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 											      }} />
 											    </div>
 											</div>
-											<div className={`relative cursor-pointer hidden sm:block rounded-full p-2 hover:bg-gray-200/60 transition-all duration-200 ease-in-out ${iconsReveal && 'hidden w-0 overflow-hidden'}`}>
+											<div className={`relative cursor-pointer hidden sm:block rounded-full p-2 dark:hover:bg-gray-800/60 hover:bg-gray-200/60 transition-all duration-200 ease-in-out ${iconsReveal && 'hidden w-0 overflow-hidden'}`}>
 												<BsEmojiSmile onClick={openEmojiInput} className={`h-[17px] w-[17px] text-sky-500 z-30 ${iconsReveal && 'hidden w-0 overflow-hidden'}`}/>
 												{
 													emojiInput &&
 													<div className="absolute bottom-10 -left-[75px] z-30">
-														<EmojiPicker Theme="dark" onEmojiClick={(emoji)=>{
+														<EmojiPicker theme="dark" onEmojiClick={(emoji)=>{
 															setMessageText((messageText)=>{return messageText+' '+emoji.emoji})
 														}}/>
 													</div>											
@@ -1727,10 +1790,10 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 										value={messageText}
 										onChange={(e)=>{setMessageText(e.target.value)}}
 										onClick={()=>addEventListenerForMe()}
-										className="w-full placeholder:text-gray-500 text-black outline-none bg-transparent"/>
+										className="w-full placeholder:text-gray-500 dark:text-gray-200 text-black outline-none bg-transparent"/>
 										<div 
 										onClick={()=>{if(messageText.length>0) sendMessage()}}
-										className="rounded-full mr-1 hover:bg-sky-100 transition-all duration-200 ease-in-out cursor-pointer">
+										className="rounded-full mr-1 hover:bg-sky-100 dark:hover:bg-gray-800/60 transition-all duration-200 ease-in-out cursor-pointer">
 											{
 												messageText ? 
 												<AiOutlineSend className="h-5 w-5 text-sky-500"/>
@@ -1750,7 +1813,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							chats.map((chat,i)=>(
 								<div key={i}
 								onClick={()=>{setCurrentChat(chat)}}
-								className="px-5 overflow-hidden py-[14px] hover:bg-gray-200/40 transition-all duration-200 ease-in-out 
+								className="px-3 overflow-hidden py-[14px] hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all duration-200 ease-in-out 
 								cursor-pointer flex items-center gap-3 group w-full">
 									{
 										chat.group ? 
@@ -1780,7 +1843,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 									<div className={`flex flex-col ${chat.group ? 'max-w-[80%]':'w-full'} `}>
 										<div className="flex w-full flex-wrap  items-center justify-between">
 											<div className={`flex ${chat.group ? 'w-full':'max-w-[85%]'} shrink gap-[1.1px] items-center`}>
-												<h1 className="select-none text-black font-semibold text-lg truncate">{chat?.name}</h1>
+												<h1 className="select-none text-black dark:text-gray-200 font-semibold text-lg truncate">{chat?.name}</h1>
 												<h1 className="select-none text-gray-500 text-lg truncate">@{chat?.username}</h1>
 												<h1 className="select-none text-gray-500 text-lg whitespace-nowrap"> - {calDate(chat?.updatedMsg)}</h1>
 											</div>
@@ -1804,7 +1867,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							))
 							:
 							<div className="h-full w-full flex items-center justify-center">
-								<h1 className="text-center text-2xl font-bold">No Chats</h1>
+								<h1 className="text-center dark:text-gray-200 text-black text-2xl font-bold">No Chats</h1>
 							</div>
 						}
 					</div>

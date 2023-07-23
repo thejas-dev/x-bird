@@ -200,14 +200,15 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 	}
 
 	return(
-		<div className="lg:w-[44.6%] relative  md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 scrollbar-none overflow-y-scroll">
-			<div className="sticky top-0 gap-8 w-full backdrop-blur-lg z-30 flex items-center md:px-4 px-2 py-1 bg-white/50">
+		<div className="lg:w-[44.6%] relative  md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 scrollbar-none overflow-y-scroll">
+			<div className="sticky top-0 gap-8 w-full backdrop-blur-lg z-30 flex items-center md:px-4 px-2 py-1 hover:bg-gray-100/80 dark:hover:bg-gray-900/80 
+			transition-all duration-200 ease-in-out cursor-pointer bg-white/50 dark:bg-[#100C08]/50">
 				<div className="flex flex-col select-none">
-					<h1 className="text-xl text-black font-semibold">Bookmarks</h1>
+					<h1 className="text-xl text-black font-semibold dark:text-gray-200">Bookmarks</h1>
 					<h1 className="text-sm text-gray-500 ">@{currentUser?.username}</h1>
 				</div>
 			</div>
-			<div className={`h-full w-full backdrop-blur-lg bg-white flex items-center justify-center absolute z-50 ${!loading && 'hidden'}`}>
+			<div className={`h-full w-full backdrop-blur-lg bg-white dark:bg-[#100C08] flex items-center justify-center absolute z-50 ${!loading && 'hidden'}`}>
 				<span class="loader3"></span>
 			</div>
 			<div className="flex flex-col w-full mb-10 h-full">
@@ -217,18 +218,23 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 						{
 							bookmarkTweets.map((main,j)=>(
 								<div key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-								border-gray-300/70 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+								border-gray-300/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/40 dark:border-gray-800/70 transition-all z-0 duration-200 ease-in cursor-pointer`}>
 									<img src={main.user.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
 									<div className="flex flex-col w-full overflow-hidden">
 										<div className='flex gap-1 w-full shrink truncate justify-between' >
 											<div className="flex gap-1 truncate shrink items-center ">
-												<h1 className="text-lg truncate font-semibold text-black select-none hover:cursor-pointer hover:underline">
-													{main.user.name}
+												<h1 
+												onClick={()=>{
+													setCurrentWindow('Profile')
+													window.history.replaceState({id:100},'Default',`?profile=${main?.user?.id}`);
+												}}
+												className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
+													{main?.user?.name}
 												</h1>
 												<h1 
 												onClick={()=>{
-													window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
-													setCurrentWindow('tweet')
+													setCurrentWindow('Profile')
+													window.history.replaceState({id:100},'Default',`?profile=${main?.user?.id}`);
 												}}
 												className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
 												<h1 
@@ -249,7 +255,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
 										}}
 										className="w-full text-lg">
-											<h1 className="w-full text-gray-900 select-none break-words">{main.text}</h1>
+											<h1 className="w-full text-gray-900 dark:text-gray-200 select-none break-words">{main.text}</h1>
 										</div>	
 										<div 
 										onClick={()=>{
@@ -275,7 +281,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 												setCurrentWindow('tweet')
 											}}
 											className="flex group md:gap-[6px] gap-[3px] items-center">
-												<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+												<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-800/30 transition-all duration-200 ease-in-out rounded-full">
 													<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 												</div>
 												<h1 className="text-md text-gray-500 group-hover:text-sky-500">
@@ -285,7 +291,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 											<div 
 											onClick={()=>{retweetThisTweet(j);makeMeSpin(j)}}
 											className="flex group md:gap-[6px] gap-[3px] items-center">
-												<div className="p-[10px] group-hover:bg-green-300/30 transition-all duration-200 ease-in-out rounded-full">
+												<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-800/30 transition-all duration-200 ease-in-out rounded-full">
 													<AiOutlineRetweet id={`retweet-${j}`} className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
 													${main.retweetedBy.some(element=>{
 														if(element.id === currentUser?._id){
@@ -309,7 +315,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 											<div
 											onClick={()=>{likeThisTweet(j);makeMePink(j)}}
 											className="flex group md:gap-[6px] gap-[3px] items-center">
-												<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
+												<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-800/30 transition-all duration-200 ease-in-out rounded-full">
 													{
 														main.likes.some(element=>{
 															if(element.id === currentUser?._id){
@@ -336,7 +342,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 												</h1>
 											</div>
 											<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
-												<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+												<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-800/30 transition-all duration-200 ease-in-out rounded-full">
 													<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 												</div>
 												<h1 className="text-md text-gray-500 group-hover:text-sky-500">
@@ -348,7 +354,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 
 											}}
 											className="flex group md:gap-[6px] gap-[3px] items-center">
-												<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+												<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-800/30 transition-all duration-200 ease-in-out rounded-full">
 													<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 												</div>
 											</div>
@@ -367,7 +373,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 							<img src="https://abs.twimg.com/responsive-web/client-web/book-in-bird-cage-400x200.v1.366bcfc9.png" alt=""
 							className=""/>
 							<div className="flex absolute gap-[10px] top-[100%] flex-col">
-								<h1 className="text-3xl md:text-start text-center text-black font-bold">Save Tweets for later</h1>
+								<h1 className="text-3xl md:text-start text-center dark:text-gray-200 text-black font-bold">Save Tweets for later</h1>
 								<h1 className="text-md text-center md:text-start text-gray-600">Don’t let the good ones fly away! Bookmark Tweets to easily find them again in the future.</h1>
 							</div>
 						</div>

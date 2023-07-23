@@ -32,14 +32,18 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	const [tweetFetched,setTweetFetched] = useState(false);	
 	const [loading,setLoading] = useState(true);
 	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
+	const [postLoading,setPostLoading] = useState(false);
 	
-
 	const fetchTweets = async() => {
 		if(displayUser){
 			setCurrentUserTweets([]);
+			let tweet = []
 			for(let i = 0; i<displayUser?.tweets?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${displayUser.tweets[i]}`);
-				setCurrentUserTweets(currentUserTweets=>[...currentUserTweets,data.post[0]]);
+				tweet = [...tweet,data.post[0]];
+				if((i+1) === displayUser?.tweets?.length){
+					setCurrentUserTweets(tweet);
+				}
 			}
 		}
 	}
@@ -83,7 +87,6 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		}else{
 			setAccountFound(true);
 			setDisplayUser(currentUser);
-			console.log("i ran")
 			setOwnAccount(true);
 			setLoading(false)
 		}
@@ -116,7 +119,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 	useEffect(()=>{
 		if(displayUser){
-			if(!tweetFetched){
+			if(!tweetFetched && currentUserTweets?.length < 1){
+				setCurrentUserTweets([]);
 				fetchTweets()
 				setTweetFetched(true);
 			}
@@ -137,7 +141,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				setOwnAccount(false)
 			}
 			if(currentHeading === 'Tweets'){
-				fetchTweets();
+				
 			}else if(currentHeading === 'Likes') {
 				fetchLikes();
 			}else{
@@ -399,7 +403,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 	useEffect(()=>{
 		if(currentHeading === 'Tweets'){
-			fetchTweets();
+
 		}else if(currentHeading === 'Likes') {
 			fetchLikes();
 		}else{
@@ -675,30 +679,31 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 
 	return (
-		<div className="lg:w-[44.6%] relative  md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 scrollbar-none overflow-y-scroll">
-			<div className={`h-full w-full absolute flex items-center justify-center bg-white z-30 ${accountFound && 'hidden'}`}>
+		<div className="lg:w-[44.6%] relative  md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 scrollbar-none overflow-y-scroll">
+			<div className={`h-full w-full absolute flex items-center justify-center bg-white dark:bg-[#100C08] z-30 ${accountFound && 'hidden'}`}>
 				<div className="flex flex-col relative gap-8 w-auto select-none">
 					<img src="https://abs.twimg.com/responsive-web/client-web/book-in-bird-cage-400x200.v1.366bcfc9.png" alt=""
 					className=""/>
 					<div className="flex absolute gap-[10px] top-[100%] flex-col w-full items-center">
-						<h1 className="text-3xl md:text-start text-center text-black font-bold">Account not found</h1>
-						<h1 className="text-md text-center md:text-start text-gray-600">May your idol flew away.</h1>
+						<h1 className="text-3xl md:text-start text-center text-black dark:text-gray-200 font-bold">Account not found</h1>
+						<h1 className="text-md text-center md:text-start text-gray-600 dark:text-gray-500">May your idol flew away.</h1>
 					</div>
 				</div>
 			</div>
-			<div className="sticky z-40 top-0 gap-8 w-full backdrop-blur-lg z-30 flex items-center md:px-4 px-2 py-1 bg-white/50">
+			<div className="sticky z-40 top-0 gap-8 w-full backdrop-blur-lg z-30 flex items-center hover:bg-gray-100/80 dark:hover:bg-gray-900/80 
+			transition-all duration-200 ease-in-out cursor-pointer md:px-4 px-2 py-1 dark:bg-[#100C08]/50 bg-white/50">
 				<HiOutlineArrowLeft 
 				onClick={()=>{setCurrentWindow('Home');setDisplayUser('')}}
-				className="h-[18px] cursor-pointer w-[18px] text-black"/>
+				className="h-[18px] cursor-pointer w-[18px] text-black dark:text-gray-200"/>
 				<div className={`flex select-none flex-col ${!accountFound && 'hidden'}`}>
-					<h1 className="md:text-xl text-lg text-black font-semibold">{displayUser?.name}</h1>
+					<h1 className="md:text-xl text-lg text-black dark:text-gray-200 font-semibold">{displayUser?.name}</h1>
 					<h1 className="text-md text-gray-500 ">{displayUser?.tweets?.length} Tweets</h1>
 				</div>
 			</div>
-			<div className={`h-full w-full backdrop-blur-lg bg-white flex items-center justify-center absolute z-50 ${!loading && 'hidden'}`}>
+			<div className={`h-full w-full backdrop-blur-lg bg-white dark:bg-[#100C08] flex items-center justify-center absolute z-50 ${!loading && 'hidden'}`}>
 				<span className="loader3"></span>
 			</div>
-			<div className="relative w-full lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] bg-blue-200/50">
+			<div className="relative w-full lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] dark:bg-blue-800/20 bg-blue-200/50">
 				{
 					displayUser?.backgroundImage ?
 					<img src={displayUser?.backgroundImage} alt="" className="lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] w-full"/>
@@ -706,7 +711,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					<div className="lg:h-[210px] md:h-[180px] sm:h-[170px] h-[160px] w-full"/>
 
 				}
-				<div className="p-1 cursor-pointer absolute lg:-bottom-[36%] md:-bottom-[40%] -bottom-[35%] bg-white rounded-full left-3 md:left-5">
+				<div className="p-1 cursor-pointer absolute lg:-bottom-[36%] md:-bottom-[40%] -bottom-[35%] bg-white dark:bg-[#100C08] rounded-full left-3 md:left-5">
 					<img src={displayUser?.image} alt="" className="md:h-[150px] h-[100px] z-10 md:w-[150px] w-[100px] rounded-full"/>
 				</div>
 			</div>	
@@ -716,8 +721,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						ownAccount?
 						<button 
 						onClick={editProfile}
-						className="px-4 py-[6px] rounded-full text-black font-semibold hover:bg-gray-200/70 transition-all 
-						duration-200 ease-in-out border-[1.5px] border-gray-400/60">
+						className="px-4 py-[6px] rounded-full text-black dark:text-gray-200 font-semibold hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-all 
+						duration-200 ease-in-out border-[1.5px] border-gray-400/60 dark:border-gray-600/60">
 							Edit profile
 						</button>
 						:
@@ -725,12 +730,14 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						onClick={()=>{
 							if(currentUser){
 								followUser()
+							}else{
+								setShowLoginNow(true)
 							}
 						}}
-						className={`px-4 py-[6px] rounded-full ${currentUser ? 'bg-black' : 'bg-gray-700/60' } font-semibold hover:scale-105 active:scale-95 transition-all 
+						className={`px-4 py-[6px] rounded-full ${!currentUser && 'opacity-50' } font-semibold hover:scale-105 active:scale-95 transition-all 
 						duration-200 ease-in-out border-[1.5px] border-gray-400/60
 						${
-							userFollowing ? 'bg-transparent text-black' : 'bg-black text-white '
+							userFollowing ? 'bg-transparent text-black dark:text-gray-200' : 'bg-black text-white dark:bg-gray-200 dark:text-black '
 						}
 						`}>
 							{
@@ -740,11 +747,11 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					}
 				</div>
 				<div className="flex flex-col mt-6 w-full">
-					<h1 className="text-xl truncate font-bold text-black">
+					<h1 className="text-xl truncate font-bold text-black dark:text-gray-200">
 						{displayUser?.name}
 					</h1>
-					<h1 className="text-gray-500 text-md truncate">@{displayUser?.username}</h1>
-					<h1 className={`text-black text-md ${displayUser?.bio && 'mt-[10px]' }`}>{displayUser?.bio}</h1>
+					<h1 className="text-gray-500 dark:text-gray-400 text-md truncate">@{displayUser?.username}</h1>
+					<h1 className={`text-black dark:text-gray-300 text-md ${displayUser?.bio && 'mt-[10px]' }`}>{displayUser?.bio}</h1>
 					{
 						displayUser?.website &&
 						<div className="mt-[7px] flex flex-col gap-[3px]">
@@ -752,14 +759,14 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								displayUser?.website?.includes(',') ?
 								displayUser?.website?.split(',')?.map((web,j)=>(
 									<div className="flex items-center gap-[3px]" key={j}>
-										<AiOutlineLink className="h-5 w-5 text-gray-600"/>
-										<h1 className="text-sky-600 hover:underline text-md"><a href={web}>{web}</a></h1>
+										<AiOutlineLink className="h-5 w-5 text-gray-600 dark:text-gray-400"/>
+										<h1 className="text-sky-600 dark:text-sky-400 hover:underline text-md"><a href={web} target="_blank">{web}</a></h1>
 									</div>
 								))
 								:
 								<div className="flex items-center gap-[3px]">
-									<AiOutlineLink className="h-5 w-5 text-gray-600"/>
-									<h1 className="text-sky-600 hover:underline text-md"><a href={displayUser?.website}>{displayUser?.website}</a></h1>
+									<AiOutlineLink className="h-5 w-5 text-gray-600 dark:text-gray-400"/>
+									<h1 className="text-sky-600 dark:text-sky-400 hover:underline text-md"><a href={displayUser?.website} target="_blank">{displayUser?.website}</a></h1>
 								</div>
 							}
 						</div>
@@ -783,19 +790,19 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 							setOverlayFor('Following');
 							setOpenOverlay(displayUser?.following)
 						}}
-						className="text-gray-600 text-md cursor-pointer hover:underline"><span className="text-black">{displayUser?.following?.length}</span> Following</h1>
+						className="text-gray-600 dark:text-gray-500 text-md cursor-pointer hover:underline"><span className="text-black dark:text-gray-200">{displayUser?.following?.length}</span> Following</h1>
 						<h1 
 						onClick={()=>{
 							setOverlayFor('Followers');
 							setOpenOverlay(displayUser?.followers)
 						}}
-						className="text-gray-600 text-md cursor-pointer hover:underline"><span className="text-black">{displayUser?.followers?.length}</span> Followers</h1>
+						className="text-gray-600 dark:text-gray-500 text-md cursor-pointer hover:underline"><span className="text-black dark:text-gray-200">{displayUser?.followers?.length}</span> Followers</h1>
 					</div>
 				</div>
 			</div>
-			<div className="mt-3 border-b-[1px] border-gray-200/80 flex items-center w-full">
+			<div className="mt-3 border-b-[1px] border-gray-200/80 dark:border-gray-800/80 flex items-center w-full">
 				{
-					headings.map((head,i)=>(
+					headings?.map((head,i)=>(
 						<div key={i}
 						onClick={()=>{
 							if(currentUser){
@@ -805,8 +812,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 							}
 						}}
 						className={`relative whitespace-nowrap w-[100%] px-7 flex items-center justify-center 
-						${currentHeading === head.title ? 'text-black':'text-gray-500'} py-3 hover:bg-gray-200/70 
-						transition-bg duration-200 font-semibold select-none cursor-pointer  ease-in-out `}>
+						${currentHeading === head.title ? 'text-black dark:text-gray-200':'text-gray-500 dark:text-gray-400'} py-3 
+						hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-bg duration-200 font-semibold select-none cursor-pointer ease-in-out `}>
 							{head.title}
 							<div className={`absolute bottom-0 w-[50%] rounded-full h-[4px] ${currentHeading === head.title ? 'bg-sky-500':'bg-transparent'}`}/>
 						</div>
@@ -818,8 +825,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				{	
 					currentHeading === 'Tweets' ?
 					currentUserTweets?.map((main,j)=>(
-						<div key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-						border-gray-300/70 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+						<div key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
+						border-gray-300/70 dark:border-gray-700/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/50 transition-all z-0 duration-200 ease-in cursor-pointer`}>
 							<img 
 							onClick={()=>{
 								window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
@@ -834,7 +841,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
-										className="text-lg truncate font-semibold text-black select-none hover:cursor-pointer hover:underline">
+										className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
 											{main.user.name}
 										</h1>
 										<h1 
@@ -852,7 +859,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											calDate(main.createdAt)
 										}</h1>
 									</div>
-									<div className="p-1 rounded-full md:hover:bg-sky-300/20 transition-all duration-200 ease-in-out group">
+									<div className="p-1 rounded-full md:hover:bg-sky-300/20 dark:md:hover:bg-sky-800/20 transition-all duration-200 ease-in-out group">
 										<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
 									</div>
 								</div>
@@ -861,7 +868,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className="w-full text-lg">
-									<h1 className="w-full text-gray-900 select-none break-words">{main.text}</h1>
+									<h1 className="w-full text-gray-900 dark:text-gray-300 select-none break-words">{main.text}</h1>
 								</div>	
 								<div 
 								onClick={()=>{
@@ -873,7 +880,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											main.images.map((ur,i)=>(
 											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 												<div className="absolute h-full w-full z-10 transition-all duration-200 
-												ease-in-out group-hover:bg-gray-500/10"/>
+												ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10"/>
 												<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
 											</div>
 											))
@@ -887,7 +894,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										setCurrentWindow('tweet')
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
@@ -901,7 +908,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										}
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-green-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<AiOutlineRetweet id={`retweet-${j}`} className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
 											${main.retweetedBy.some(element=>{
 												if(element.id === currentUser?._id){
@@ -930,7 +937,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										}
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
 											{
 												main?.likes?.some(element=>{
 													if(element.id === currentUser?._id){
@@ -957,7 +964,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</h1>
 									</div>
 									<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
@@ -969,7 +976,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 									</div>
@@ -983,8 +990,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					:
 					currentHeading === 'Likes' ? 
 					currentUserLikes?.map((main,j)=>(
-						<div key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-						border-gray-300/70 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+						<div key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
+						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
 							<img onClick={()=>{
 								window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
 								setCurrentWindow('tweet')
@@ -997,7 +1004,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
-										className="text-lg truncate font-semibold text-black select-none hover:cursor-pointer hover:underline">
+										className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
 											{main.user.name}
 										</h1>
 										<h1 
@@ -1024,7 +1031,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className="w-full text-lg">
-									<h1 className="w-full text-gray-900 select-none break-words">{main.text}</h1>
+									<h1 className="w-full text-gray-900 dark:text-gray-300 select-none break-words">{main.text}</h1>
 								</div>	
 								<div 
 								onClick={()=>{
@@ -1036,7 +1043,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											main.images.map((ur,i)=>(
 											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 												<div className="absolute h-full w-full z-10 transition-all duration-200 
-												ease-in-out group-hover:bg-gray-500/10"/>
+												ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10"/>
 												<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
 											</div>
 											))
@@ -1050,7 +1057,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										setCurrentWindow('tweet')
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
@@ -1060,7 +1067,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div 
 									onClick={()=>retweetThisLikedTweet(j)}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-green-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<AiOutlineRetweet className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
 											${main.retweetedBy.some(element=>{
 												if(element.id === currentUser?._id){
@@ -1084,7 +1091,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div
 									onClick={()=>{likeThisLikeTweet(j);makeMePink(j)}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
 											{
 												main.likes.some(element=>{
 													if(element.id === currentUser?._id){
@@ -1111,7 +1118,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</h1>
 									</div>
 									<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
@@ -1123,7 +1130,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 									</div>
@@ -1136,16 +1143,16 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					))
 					:
 					currentUserRetweets?.map((main,j)=>(
-						<div key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 pt-7 relative flex basis-auto md:gap-4 sm:gap-2 gap-2 
-						border-gray-300/70 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+						<div key={j} className={`w-full border-b-[1.6px] p-3 pt-7 relative flex basis-auto md:gap-4 sm:gap-2 gap-2 
+						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
 						<div 
 						onClick={()=>{
 							setCurrentWindow('Profile')
 							window.history.replaceState({id:100},'Default',`?profile=${displayUser._id}`);
 						}}
-						className="absolute hover:underline top-1 left-[10%] flex items-center text-sm font-semibold gap-[10px] text-gray-600">
+						className="absolute hover:underline top-1 left-[10%] flex items-center text-sm font-semibold gap-[10px] dark:text-gray-500 text-gray-600">
 							<AiOutlineRetweet className="h-4 w-4"/> {
-								ownAccount ? 'You Retweeted' : `Retweeted by ${displayUser.name}`
+								ownAccount ? 'You Retweeted' : `Retweeted by ${displayUser?.name}`
 							}
 						</div>
 							<img onClick={()=>{
@@ -1160,7 +1167,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
-										className="text-lg truncate font-semibold text-black select-none hover:cursor-pointer hover:underline">
+										className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
 											{main.user.name}
 										</h1>
 										<h1 
@@ -1178,7 +1185,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											calDate(main.createdAt)
 										}</h1>
 									</div>
-									<div className="p-1 rounded-full md:hover:bg-sky-300/20 transition-all duration-200 ease-in-out group">
+									<div className="p-1 rounded-full md:hover:bg-sky-300/20 dark:md:hover:bg-sky-700/20 transition-all duration-200 ease-in-out group">
 										<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
 									</div>
 								</div>
@@ -1187,7 +1194,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className="w-full text-lg">
-									<h1 className="w-full text-gray-900 select-none break-words">{main.text}</h1>
+									<h1 className="w-full text-gray-900 select-none dark:text-gray-200 break-words">{main.text}</h1>
 								</div>	
 								<div 
 								onClick={()=>{
@@ -1199,7 +1206,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											main.images.map((ur,i)=>(
 											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 												<div className="absolute h-full w-full z-10 transition-all duration-200 
-												ease-in-out group-hover:bg-gray-500/10"/>
+												ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10 "/>
 												<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
 											</div>
 											))
@@ -1213,7 +1220,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										setCurrentWindow('tweet')
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
@@ -1223,7 +1230,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div 
 									onClick={()=>retweetThisTweet(j)}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-green-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<AiOutlineRetweet className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
 											${main.retweetedBy.some(element=>{
 												if(element.id === currentUser?._id){
@@ -1247,7 +1254,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div
 									onClick={()=>{likeThisRetweet(j);makeMePink(j)}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-pink-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
 											{
 												main.likes.some(element=>{
 													if(element.id === currentUser?._id){
@@ -1274,7 +1281,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</h1>
 									</div>
 									<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
@@ -1286,7 +1293,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
 											<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
 										</div>
 									</div>

@@ -1,4 +1,4 @@
-export const host = "https://x-bird-server.vercel.app";
+export const host = "http://192.168.1.5:3333";
 
 export const registerRoute = `${host}/api/auth/register`;
 export const loginRoute = `${host}/api/auth/login`;
@@ -24,3 +24,14 @@ export const updateMsg = `${host}/api/auth/updateMsg`;
 export const updateGroupMsg = `${host}/api/auth/updateGroupMsg`;
 export const updateUserProfile = `${host}/api/auth/updateUserProfile`;
 export const updateUserLists = `${host}/api/auth/updateUserLists`;
+export const findPostByText = `${host}/api/auth/findPostByText`;
+export const findPostByCategories = `${host}/api/auth/findPostByCategories`;
+export const getAllFollowingPosts = `${host}/api/auth/getAllFollowingPosts`;
+export const getAllListMemPosts = `${host}/api/auth/getAllListMemPosts`;
+export const updateShowScrollInfo = `${host}/api/auth/updateShowScrollInfo`;
+export const updateThemeChangeInfo = `${host}/api/auth/updateThemeChangeInfo`;
+export const getTrendingPosts = `${host}/api/auth/getTrendingPosts`;
+export const updateCategories = `${host}/api/auth/updateCategories`;
+export const whoToFollowRoute = `${host}/api/auth/whoToFollow`;
+export const getAllTrendUsers = `${host}/api/auth/getAllTrendUsers`;
+export const updateNotifySettings = `${host}/api/auth/updateNotifySettings`;

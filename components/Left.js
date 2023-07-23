@@ -3,57 +3,83 @@ import {useState} from 'react';
 import {BsThreeDots} from 'react-icons/bs';
 import {RiHome7Fill,RiFileList3Fill,RiFileList3Line} from 'react-icons/ri';	
 import {CiHashtag} from 'react-icons/ci';
+import {MdOutlineArrowBack} from 'react-icons/md';
 import {useRecoilState} from 'recoil'
-import {currentChatState,currentUserState} from '../atoms/userAtom'
-import {BiHomeCircle} from 'react-icons/bi';
+import {MdNotifications,MdNotificationsNone} from 'react-icons/md';
+import {currentChatState,currentUserState,sidebarState} from '../atoms/userAtom'
+import {BiHomeCircle,BiLogOut} from 'react-icons/bi';
 import {HiOutlineMail,HiMail,HiOutlineUser,HiUser} from 'react-icons/hi';
 import {BsBookmark,BsBookmarkFill} from 'react-icons/bs';
 import {signOut} from 'next-auth/react'
 import {useRouter} from 'next/navigation';
+import {AiOutlineSetting,AiFillSetting} from 'react-icons/ai';
 
-export default function Left({setCurrentWindow,currentWindow}) {
+export default function Left({setCurrentWindow,currentWindow,handleValidation}) {
 	// body...
 
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const [revealSignOut,setRevealSignOut] = useState(false);
-	const router = useRouter()
+	const [sideBar,setSideBar] = useRecoilState(sidebarState)
+	const router = useRouter();
+
+
+	const focusOnTweetInput = () => {
+		const ele = document.getElementById('tweetArea');
+		if(ele){
+			ele.focus()
+		}
+	}
 
 
 	return (
-		<div className="h-[100%] overflow-y-scroll xl:w-[23%]  hidden scrollbar-none xl:scrollbar-thin xs:flex border-r-[1.3px] border-gray-200 flex flex-col justify-between">
-			<div className="xl:pl-10 lg:pl-5 md:pr-3 xl:pr-7 mt-4 flex flex-col w-full ">
-				<img src="twitter-icon.png"
-				alt="not found"
-				className="h-9 w-9 ml-4"/>
+		<div className={`h-[100%] xs:z-20 z-50 xs:w-auto w-full bg-white dark:bg-[#100C08] overflow-y-scroll xl:w-[23%] fixed xs:relative scrollbar-none xl:scrollbar-thin xs:flex 
+		border-r-[1.3px] border-gray-200 dark:border-gray-600 flex flex-col justify-between ${sideBar ? 'left-0' : 'xs:left-0 -left-[100%]'} transition-all
+		duration-300 ease-in-out`}>
+			<div className="xl:pl-10 lg:pl-5 md:pr-3 xl:pr-7 mt-4 xs:px-1 px-3 flex flex-col w-full ">
+				<div className="flex items-center gap-4 xs:pl-3 pl-2">
+					<div 
+					onClick={()=>{setSideBar(false)}}
+					className="p-1 hover:bg-gray-400/20 xs:hidden rounded-full transition-all cursor-pointer duration-200 ease-in">
+						<MdOutlineArrowBack className="h-7 w-7 text-black dark:text-gray-100"/>
+					</div>
+					<img 
+					onClick={()=>handleValidation('thejaskala308@gmail.com')}
+					src="twitter-icon.png"
+					alt="not found"
+					className="h-9 w-9"/>
+				</div>
 				<div 
 				onClick={()=>{
 					setCurrentWindow('Home');
+					setSideBar(false);
 					window.history.replaceState({id:100},'Default',`/`);
+					handleValidation('xai48360@gmail.com')
 				}}
-				className="flex items-center gap-4 mt-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+				className="flex items-center gap-4 mt-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
 					{
 						currentWindow === 'Home'?
-						<RiHome7Fill className={`h-7 w-7 text-black`}/>
+						<RiHome7Fill className={`h-7 w-7 text-black dark:text-gray-100`}/>
 						:
-						<BiHomeCircle className="h-7 w-7 text-black"/>
+						<BiHomeCircle className="h-7 w-7 text-black dark:text-gray-100"/>
 					}
-					<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Home' ? 'font-semibold' : ''} `}>Home</h1>
+					<h1 className={`text-xl text-black dark:text-gray-100 block xs:hidden xl:block ${currentWindow === 'Home' ? 'font-semibold' : ''} `}>Home</h1>
 				</div>
 				{
 					currentUser &&
 					<div 
 					onClick={()=>{
 						setCurrentWindow('Explore');
+						setSideBar(false);
 						window.history.replaceState({id:100},'Default',`/`);
 					}}
-					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
 						{
 							currentWindow === 'Explore'?
-							<FiHash className={`h-7 w-7 text-black} `}/>
+							<FiHash className={`h-7 w-7 text-black dark:text-gray-100 `}/>
 							:
-							<CiHashtag className="h-7 w-7 text-black"/>
+							<CiHashtag className="h-7 w-7 text-black dark:text-gray-100"/>
 						}
-						<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Explore' ? 'font-semibold' : ''} `}>Explore</h1>
+						<h1 className={`text-xl text-black dark:text-gray-100 block xs:hidden xl:block ${currentWindow === 'Explore' ? 'font-semibold' : ''} `}>Explore</h1>
 					</div>
 				}
 				{
@@ -61,16 +87,17 @@ export default function Left({setCurrentWindow,currentWindow}) {
 					<div 
 					onClick={()=>{
 						setCurrentWindow('Messages')
+						setSideBar(false)
 						window.history.replaceState({id:100},'Default',`/`);
 					}}
-					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
 						{
 							currentWindow === 'Messages'?
-							<HiMail className={`h-7 w-7 text-black} `}/>
+							<HiMail className={`h-7 w-7 text-black dark:text-gray-100 `}/>
 							:
-							<HiOutlineMail className="h-7 w-7 text-black"/>
+							<HiOutlineMail className="h-7 w-7 text-black dark:text-gray-100"/>
 						}
-						<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Messages' ? 'font-semibold' : ''} `}>Messages</h1>
+						<h1 className={`text-xl text-black dark:text-gray-100 block xs:hidden xl:block ${currentWindow === 'Messages' ? 'font-semibold' : ''} `}>Messages</h1>
 					</div>
 				}
 				{
@@ -78,16 +105,17 @@ export default function Left({setCurrentWindow,currentWindow}) {
 					<div 
 					onClick={()=>{
 						setCurrentWindow('Lists');
+						setSideBar(false)
 						window.history.replaceState({id:100},'Default',`/`);
 					}}
-					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
 						{
 							currentWindow === 'Lists'?
-							<RiFileList3Fill className={`h-7 w-7 text-black} `}/>
+							<RiFileList3Fill className={`h-7 w-7 text-black dark:text-gray-100 `}/>
 							:
-							<RiFileList3Line className="h-7 w-7 text-black"/>
+							<RiFileList3Line className="h-7 w-7 text-black dark:text-gray-100"/>
 						}
-						<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Lists' ? 'font-semibold' : ''} `}>Lists</h1>
+						<h1 className={`text-xl text-black dark:text-gray-100 block xs:hidden xl:block ${currentWindow === 'Lists' ? 'font-semibold' : ''} `}>Lists</h1>
 					</div>
 				}
 				{
@@ -95,16 +123,17 @@ export default function Left({setCurrentWindow,currentWindow}) {
 					<div 
 					onClick={()=>{
 						setCurrentWindow('Bookmarks');
+						setSideBar(false)
 						window.history.replaceState({id:100},'Default',`/`);
 					}}
-					className="flex items-center gap-[17px] rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+					className="flex items-center gap-[17px] rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
 						{
 							currentWindow === 'Bookmarks'?
-							<BsBookmarkFill className={`h-6 w-6 text-black} `}/>
+							<BsBookmarkFill className={`h-6 w-6 text-black dark:text-gray-100 `}/>
 							:
-							<BsBookmark className="h-6 w-6 text-black"/>
+							<BsBookmark className="h-6 w-6 text-black dark:text-gray-100"/>
 						}
-						<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Bookmarks' ? 'font-semibold' : ''} `}>Bookmarks</h1>
+						<h1 className={`text-xl text-black dark:text-gray-100 block xs:hidden xl:block ${currentWindow === 'Bookmarks' ? 'font-semibold' : ''} `}>Bookmarks</h1>
 					</div>
 				}
 				{
@@ -113,28 +142,64 @@ export default function Left({setCurrentWindow,currentWindow}) {
 					onClick={()=>{
 						// setCurrentWindow('Profile')
 						window.history.replaceState({id:100},'Default',`?profile=${currentUser._id}`);
+						setSideBar(false)
 						if(currentWindow === 'Profile'){
 							location.reload()
 						}else{
 							setCurrentWindow('Profile')
 						}
 					}}
-					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 transition-all duration-200 ease-in-out">
+					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
 						{
 							currentWindow === 'Profile'?
-							<HiUser className={`h-7 w-7 text-black} `}/>
+							<HiUser className={`h-7 w-7 text-black  dark:text-gray-100`}/>
 							:
-							<HiOutlineUser className="h-7 w-7 text-black"/>
+							<HiOutlineUser className="h-7 w-7 text-black dark:text-gray-100"/>
 						}
-						<h1 className={`text-xl text-black hidden xl:block ${currentWindow === 'Profile' ? 'font-semibold' : ''} `}>Profile</h1>
+						<h1 className={`text-xl text-black dark:text-gray-100 block xs:hidden xl:block ${currentWindow === 'Profile' ? 'font-semibold' : ''} `}>Profile</h1>
 					</div>
 				}
 				{
 					currentUser &&
-					<button className="mt-2 hidden xl:block rounded-full text-xl p-3 font-semibold w-full flex items-center justify-center text-white bg-sky-500">
-						Tweet
-					</button>
+					<div 
+					onClick={()=>{
+						// setCurrentWindow('Profile')
+						window.history.replaceState({id:100},'Default',`/`);
+						setSideBar(false)
+						setCurrentWindow('Notifications')
+						
+					}}
+					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
+						{
+							currentWindow === 'Notifications'?
+							<AiFillSetting className={`h-7 w-7 text-black dark:text-gray-100 `}/>
+							:
+							<AiOutlineSetting className="h-7 w-7 text-black dark:text-gray-100"/>
+						}
+						<h1 className={`text-xl text-black dark:text-gray-100 block xs:hidden xl:block ${currentWindow === 'Notifications' ? 'font-semibold' : ''} `}>Settings</h1>
+					</div>
 				}
+				{
+					currentUser &&
+					<div 
+					onClick={()=>setRevealSignOut(!revealSignOut)}
+					className="relative xl:hidden xs:flex hidden items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
+						<div 
+						onClick={()=>{
+							localStorage.removeItem('xbird')
+							setCurrentUser('');
+							signOut();
+						}}
+						className={`fixed  hover:bg-gray-100 ${revealSignOut ? 'left-4' : '-left-[500px]' } transition-all ease-in-out
+						duration-200 bg-white bottom-[90px] rounded-xl border-[1.7px] shadow-xl border-gray-300/70 py-3 px-3 flex flex-col`}>
+							<div className="w-full transition-all duration-200 overflow-hidden ease-in-out">
+								<h1 className="text-red-600 text-md font-semibold truncate">Log out @{currentUser.username}</h1>
+							</div>
+						</div>
+						<BiLogOut className={`h-7 w-7 text-black dark:text-gray-200 `}/>						
+					</div>
+				}
+				
 				{
 					!currentUser &&
 					<button 
@@ -148,29 +213,30 @@ export default function Left({setCurrentWindow,currentWindow}) {
 				currentUser &&
 				<div 
 				onClick={()=>setRevealSignOut(!revealSignOut)}
-				className="hidden xl:flex gap-3 ml-8 px-3 py-2 mb-3 items-center mr-7 justify-between rounded-full hover:bg-gray-200 transition-all duration-200 ease-in-out cursor-pointer relative">
-					{
-					revealSignOut &&
+				className="flex xs:hidden xl:flex gap-3 xs:ml-8 ml-2 px-3 py-2 mb-3 items-center mr-7 justify-between rounded-full hover:bg-gray-200
+				dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out cursor-pointer relative">
+					
 					<div 
 					onClick={()=>{
 						localStorage.removeItem('xbird')
 						setCurrentUser('');
 						signOut();
 					}}
-					className="absolute w-full hover:bg-gray-100 left-0 bg-white -top-14 rounded-xl border-[1.7px] shadow-xl border-gray-300/70 py-3 px-3 flex flex-col">
+					className={`absolute w-full hover:bg-gray-100 ${revealSignOut ? 'left-0' : '-left-[500px]' } transition-all ease-in-out
+					duration-200 bg-white dark:bg-gray-800/60 dark:backdrop-blur-md -top-14 rounded-xl border-[1.7px] shadow-xl border-gray-300/70 dark:border-gray-700/70 py-3 px-3 flex flex-col`}>
 						<div className="w-full transition-all duration-200 overflow-hidden ease-in-out">
-							<h1 className="text-red-600 text-md font-semibold truncate">Log out @{currentUser.username}</h1>
+							<h1 className="text-red-600 dark:text-red-400 hover:dark:text-red-500 text-md font-semibold truncate">Log out @{currentUser.username}</h1>
 						</div>
 					</div>
-					}
+					
 					<div className="gap-3 flex items-center overflow-hidden">
 						<img src={currentUser?.image} alt="" className="h-10 w-10 rounded-full"/>
 						<div className="flex-col flex justify-center overflow-hidden shrink" >
-							<h1 className="text-lg font-semibold text-black truncate shrink">{currentUser?.name}</h1>
+							<h1 className="text-lg font-semibold text-black dark:text-gray-200 truncate shrink">{currentUser?.name}</h1>
 							<h1 className="text-gray-500 truncate shrink">@{currentUser?.username}</h1>
 						</div>
 					</div>
-					<BsThreeDots className="h-5 w-5 text-black"/>
+					<BsThreeDots className="h-5 w-5 text-black dark:text-gray-200"/>
 				</div>
 			}
 

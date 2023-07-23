@@ -1,5 +1,5 @@
 import {io} from 'socket.io-client'
-let server = process.env.NEXT_PUBLIC_SERVER_BASE;
+let server = "http://192.168.1.5:3333"
 export const socket = io(server,{
     withCredentials:true,
     extraHeaders:{
