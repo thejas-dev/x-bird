@@ -1114,7 +1114,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 
 	if(currentWindow === 'Messages'){
 		return (
-			<div className={`lg:w-[50.6%] md:w-[80%] h-screen xs:w-[90%] w-[100%] ${currentChat ? 'relative':'hidden lg:block'} relative overflow-hidden`}>
+			<div className={`lg:w-[50.6%] md:w-[80%] h-[100%] xs:w-[90%] w-[100%] ${currentChat ? 'relative':'hidden lg:block'} relative overflow-hidden`}>
 				<div className={`h-full w-full backdrop-blur-lg px-3 bg-black/30 left-0 flex items-center justify-center fixed z-50 ${uploadArray.length>0  ? 'block' : 'hidden'} bg-black/40 dark:backdrop-blur-md`}>
 					<div className={`max-w-3xl mx-auto md:h-[85%] h-[93%] bg-white dark:bg-[#100C08] dark:border-gray-700/60 px-2 rounded-xl border-[2px] border-gray-400/60 shadow-xl overflow-y-scroll 
 					scrollbar-none relative`}>
@@ -1292,7 +1292,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 								}
 								<h1 className="text-black dark:text-gray-200 text-lg font-bold select-none text-center mx-auto">{currentChat?.name}</h1>
 								<h1 className="text-gray-600 dark:text-gray-400 text-md select-none text-center mx-auto">@{currentChat?.username}</h1>
-								<h1 className="text-gray-900 dark:text-gray-100 mt-5 select-none text-center mx-auto">{currentChat?.description}</h1>
+								<h1 className="text-gray-900 dark:text-gray-100 mt-5 select-none text-center mx-auto">{currentChat?.bio}</h1>
 								<h1 className="text-gray-600 dark:text-gray-400 mt-2 select-none text-center mx-auto">{currentChat.group ? 'Created at':'Joined'} {currentChat?.createdAt?.split('T')[0]}</h1>
 								{
 								!currentChat?.group &&
@@ -1301,7 +1301,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							</div>
 						</div>
 					}
-					<div className={`flex flex-col h-auto gap-3 md:px-3 px-2 py-2 w-full ${!currentChat && 'hidden'}`}>
+					<div className={`flex flex-col gap-3 md:px-3 px-2 py-2 w-full ${!currentChat && 'hidden'}`}>
 						{
 							messages?.map((msg,j)=>(
 								<div ref={scrollRef} key={j} className={`flex w-full ${msg.fromSelf ? 'justify-end':'justify-start'} gap-1`}>
