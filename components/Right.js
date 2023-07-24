@@ -1,6 +1,7 @@
 import {FiSearch} from 'react-icons/fi'
 import {useRecoilState} from 'recoil'
-import {currentChatState,currentUserState,chatsState,mainFeedState} from '../atoms/userAtom'
+import {currentChatState,currentUserState,chatsState,mainFeedState,
+	callerIdState} from '../atoms/userAtom'
 import {HiOutlineChevronDoubleDown,HiOutlineArrowLeft} from 'react-icons/hi';
 import {RiMailAddLine,RiSendPlane2Line} from 'react-icons/ri';
 import {CiMicrophoneOn} from 'react-icons/ci';
@@ -27,7 +28,7 @@ let currentChatVar = undefined
 export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	setNewMessageSearch,setRevealNotify,revealNotify,msgReveal,setMsgReveal,
 	notify,setNotify,setFullScreenLoader,fullScreenLoader,openOverlay,setOpenOverlay,
-	overlayFor,setOverlayFor,setNeedToReloadProfile,needToReloadProfile,setCallerId,callerId,
+	overlayFor,setOverlayFor,setNeedToReloadProfile,needToReloadProfile,
 	callNow,setCallNow,currentCaller,setCurrentCaller}) {
 
 	const [currentChat,setCurrentChat] = useRecoilState(currentChatState);
@@ -61,6 +62,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	const [uploading,setUploading] = useState(false);
 	const [addThisImage,setAddThisImage] = useState('');
 	const [allTrendUsersLoading,setAllTrendUsersLoading] = useState(false);
+	const [callerId,setCallerId] = useRecoilState(callerIdState);
+
 	const [whoToFollow,setWhoToFollow] = useState([
 		{
 			name:'The Babylon Bee',
@@ -1154,21 +1157,26 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 				<div className={`h-[100vh] w-full top-0 left-0 backdrop-blur-lg bg-white dark:bg-[#100C08] flex items-center justify-center absolute z-40 ${loading && 'hidden'}`}>
 					<span className="loader3"></span>
 				</div>
-				<div className={`w-full ${!currentChat && 'hidden'} overflow-hidden px-5 sticky top-0 backdrop-blur-lg left-0 bg-white/50 dark:bg-[#100C08]/50 flex justify-between p-2`}>
+
+				<div className={`w-full ${!currentChat && 'hidden'} overflow-hidden px-5 sticky top-0 backdrop-blur-lg bg-white/50 dark:bg-[#100C08]/50 flex justify-between p-2`}>
 					<div 
 					onClick={()=>{
 						if(!currentChat?.group){
 							setCurrentWindow('Profile')
 							window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
 							setCurrentChat('')													
+						}else{
+							let element = document.getElementById('groupInfoBox')
+							element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
 						}
 					}}
 					className="flex cursor-pointer items-center lg:ml-0 ml-7 gap-2 shrink">
 						{
 							!currentChat?.group ?
-							<img src={currentChat.image} className="h-7 w-7 rounded-full "/>
+							<img src={currentChat.image} className="h-9 w-9 rounded-full "/>
 							:
-							<div className="grid-cols-2 grid h-7 w-7 rounded-full overflow-hidden">
+							<>
+							<div className="grid-cols-2 grid h-9 w-9 rounded-full overflow-hidden">
 								{
 									currentChat?.image?.map((img,j)=>{
 										if(currentChat.image.length === 3){
@@ -1188,11 +1196,19 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 									})
 								}
 							</div>
-
+							</>
 						}
-						<h1 className="text-md text-black dark:text-gray-200 font-semibold truncate">{currentChat.name}</h1>
+						<h1 className="text-md text-black dark:text-gray-200 font-semibold truncate">{
+							currentChat?.group ? 
+							<>
+							<span className="sm:hidden" >{currentChat?.name?.length > 20 ? `${currentChat?.name.slice(0,19)} ...` : currentChat?.name}</span>
+							<span className="hidden sm:block">{currentChat?.name}</span>
+							</>
+							:
+							currentChat?.name
+						}</h1>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex items-center sm:gap-2 gap-[5px]">
 						<div 
 						onClick={()=>{
 							if(!currentChat?.group){
@@ -1200,7 +1216,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							}
 						}}
 						className="p-0 cursor-pointer rounded-full transition-all duration-200 ease-in-out">
-							<MdOutlineVideoCall className="h-7 w-7 text-gray-800 hover:text-sky-500 dark:hover:text-sky-500 transition-all 
+							<MdOutlineVideoCall className="h-7 w-7 text-gray-800 hover:text-sky-600 dark:hover:text-sky-500 transition-all 
 							duration-200 ease-in-out dark:text-gray-300"/>
 						</div>
 						<div 
@@ -1219,7 +1235,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 				<div 
 				onClick={()=>{setCurrentChat('');setMessages([])}}
 				className="sticky w-8 h-8 flex items-center justify-center rounded-full z-45 left-2 lg:hidden top-2 cursor-pointer p-1 hover:bg-gray-200/70 dark:hover:bg-gray-900/40 transition-all duration-200 ease-in-out">
-					<BsArrowLeft className="h-6 w-5 text-gray-800 dark:text-gray-200"/>
+					<BsArrowLeft className="h-full w-full text-gray-800 dark:text-gray-200"/>
 				</div>
 				<div className="h-full pt-[115px] w-full scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-200/50 dark:scrollbar-track-gray-900/50 overflow-y-scroll scroll-smooth">
 					{
@@ -1241,7 +1257,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						</div>	
 						:
 						<div className="mt-2 w-full flex flex-col px-5">
-							<div 
+							<div id="groupInfoBox"
 							onClick={()=>{
 								if(!currentChat?.group){
 									setCurrentWindow('Profile')

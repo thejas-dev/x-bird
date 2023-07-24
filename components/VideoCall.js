@@ -1,18 +1,21 @@
 import {ImPhoneHangUp} from 'react-icons/im';
 import {useState,useEffect} from 'react';
+import {MdOutlineCameraswitch} from 'react-icons/md'
 import {BsMic,BsMicMute,BsCameraVideo,BsCameraVideoOff} from 'react-icons/bs';
 import {useRecoilState} from 'recoil';
 import {currentPeerState,currentUserState,alertTheUserForIncomingCallState,
-	acceptedState,remotePeerIdState} from '../atoms/userAtom';
+	acceptedState,remotePeerIdState,currentRoomIdState,callerIdState} from '../atoms/userAtom';
 import { useId } from "react";
 import {socket} from '../service/socket'
 import { v4 as uuidv4 } from 'uuid';
+import {useSound} from 'use-sound';
 
 let myPeer;
 let myStream;
 let peers = {};
+let currentCall;
 
-export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,callerId,
+export default function VideoCall({currentWindow,setCurrentWindow,
 	callNow,setCallNow,currentCaller,setCurrentCaller
 }) {
 	const [micAllowed,setMicAllowed] = useState(true)
@@ -20,7 +23,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 	const [mediaStream,setMediaStream] = useState('');
 	const [currentPeerId,setCurrentPeerId] = useRecoilState(currentPeerState)
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState)
-	const [currentRoomId,setCurrentRoomId] = useState('');
+	const [currentRoomId,setCurrentRoomId] = useRecoilState(currentRoomIdState);
 	const [stopRing,setStopRing] = useState('');
 	const [newUserAlert,setNewUserAlert] = useState('');
 	const [showNewUserAlert,setShowNewUserAlert] = useState(false);
@@ -29,30 +32,110 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 	const [remotePeerId, setRemotePeerId] = useRecoilState(remotePeerIdState);
 	const [userLeftAlert,setUserLeftAlert] = useState('');
 	const [showUserLeftAlert,setShowUserLeftAlert] = useState(false);
+	const [currentFacingMode,setCurrentFacingMode] = useState('user');
+	const [hideOptions,setHideOptions] = useState(false);
+	const [callerId,setCallerId] = useRecoilState(callerIdState);
+	const [play, { stop }] = useSound('dialer.mp3',{
+	  loop:true
+	});
+
 	// const [myStream,setMyStream] = useState(undefined);
 
 	const [alertTheUserForIncomingCall,setAlertTheUserForIncomingCall] = useRecoilState(alertTheUserForIncomingCallState)
 
 
 	const updateMic = async() => {
-		if(micAllowed){
-			myStream.getAudioTracks()[0].enabled = false
-			setMicAllowed(false)
-		}else{
-			myStream.getAudioTracks()[0].enabled = true;			
-			setMicAllowed(true)			
+		if(myStream){
+			if(micAllowed){
+				myStream.getAudioTracks()[0].enabled = false
+				setMicAllowed(false)
+			}else{
+				myStream.getAudioTracks()[0].enabled = true;			
+				setMicAllowed(true)			
+			}			
 		}
 	}
 
 	const updateVideo = async() => {
-		if(videoAllowed){
-			myStream.getVideoTracks()[0].enabled = false;
-			setVideoAllowed(false)
-		}else{
-			myStream.getVideoTracks()[0].enabled = true;			
-			setVideoAllowed(true)			
+		if(myStream){
+			if(videoAllowed){
+				myStream.getVideoTracks()[0].enabled = false;
+				setVideoAllowed(false)
+			}else{
+				myStream.getVideoTracks()[0].enabled = true;			
+				setVideoAllowed(true)			
+			}			
 		}
 	}
+
+	async function switchCamera() {
+
+	  const videoTrack = myStream.getVideoTracks()[0];
+	  if(videoTrack.getSettings().facingMode === 'user'){
+	  	
+
+		navigator.getUserMedia({
+		  audio: true,
+		  video: {
+		    facingMode: { exact: "environment" },
+		  },
+		},function(stream){
+			if(currentCall){
+				currentCall.peerConnection.getSenders().forEach((sender) => {
+			    if(sender.track.kind === "audio" && stream.getAudioTracks().length > 0){
+			        sender.replaceTrack(stream.getAudioTracks()[0]);
+			    }
+			    if (sender.track.kind === "video" && stream.getVideoTracks().length > 0) {
+			        sender.replaceTrack(stream.getVideoTracks()[0]);
+			      }
+			    });				
+			}
+		    let tracks = myStream.getTracks();
+			tracks.forEach(function(track) {
+			   track.stop()
+			});
+		    myStream = stream;
+		    if(acceptedCall){
+		    	setLocalStreamToMiniVideo(stream)		    
+		    }else{
+		    	document.getElementById('videoMainStream').srcObject = myStream
+		    }
+		});
+
+	  }else{
+	  	
+
+		navigator.getUserMedia({audio: true, video: { 
+			facingMode: "user" 
+		}},async function(stream) {
+			if(currentCall){
+				currentCall.peerConnection.getSenders().forEach((sender) => {
+			    if(sender.track.kind === "audio" && stream.getAudioTracks().length > 0){
+			        sender.replaceTrack(stream.getAudioTracks()[0]);
+			    }
+			    if (sender.track.kind === "video" && stream.getVideoTracks().length > 0) {
+			        sender.replaceTrack(stream.getVideoTracks()[0]);
+			      }
+			    });				
+			}
+		    let tracks = myStream.getTracks();
+			tracks.forEach(function(track) {
+			   track.stop()
+			});
+		    myStream = stream;
+		    if(acceptedCall){
+		    	setLocalStreamToMiniVideo(stream)		    
+		    }else{
+		    	document.getElementById('videoMainStream').srcObject = myStream
+		    }
+		})
+
+	  }
+
+	}
+
+
+	
 
  // useEffect(() => {
  //     const enableVideoStream = async () => {
@@ -75,6 +158,9 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 	useEffect(()=>{
 		if(callerId){
 			setVideoToLocalStream();
+			play()
+			var video = document.getElementById('videoMainStream');
+			video.setAttribute("name", callerId);
 		}
 	},[callerId])
 
@@ -85,6 +171,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 		socket.on('new-user',({user,peerId})=>{
 			setNewUserAlert(user)
 			setShowNewUserAlert(true);
+			stop();
 			setTimeout(()=>{
 				setShowNewUserAlert(false)
 			},4000)	
@@ -99,17 +186,27 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 			setStopRing(id)
 		})
 		socket.on('user-disconnected',({id})=>{
+			// alert(id);
 			if(peers[id]){
 				peers[id].close()
 			};
 			setVideoToLocalStream();			
 			setAcceptedCall(false);
 		})
+		socket.on('user-left',({userId})=>{
+			if(document.getElementsByName(userId)[0]){
+				// alert(userId)
+				setVideoToLocalStream();
+				setAcceptedCall(false);
+			}
+		})
 
 		return ()=>{
 			socket.off('new-user');
 			socket.off('incoming-call')
 			socket.off('stop-ring')
+			socket.off('user-disconnected');
+			socket.off('user-left');
 		}
 	},[])
 
@@ -124,10 +221,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 	const stopTheRingFun = async(id) => {
 
 		if(alertTheUserForIncomingCall?.roomId  === id){
-			setAlertTheUserForIncomingCall('');
-			let ele = document.getElementById('ringtone-audio')
-			ele.pause()
-			ele.currentTime = 0
+			setAlertTheUserForIncomingCall('');			
 		}
 
 	}
@@ -159,13 +253,25 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 
 	const stopCall = async() => {
 		let currRoomId = currentRoomId; 
-		
-		let tracks = myStream.getTracks();
+		socket.emit('user-left',{roomId:currRoomId,userId:currentUser._id});
+		var video = document.getElementById('miniStream');
+		var video2 = document.getElementById('videoMainStream');
+		stop()
+		video.src = "";
+		video.muted = true;
+		video2.muted = true;
+		video2.src = "";
+
+		let tracks = myStream?.getTracks();
 		tracks.forEach(function(track) {
 		   track.stop()
 		});
+
 		if(peers[remotePeerId]){
 			peers[remotePeerId].close();
+		}
+		if(acceptedCall){
+			setAcceptedCall(false);			
 		}
 		if(accepted){
 			setAccepted(false);
@@ -190,17 +296,17 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 		    navigator.getUserMedia({audio: true, video: { 
     			facingMode: "user" 
     		}}, function(stream) {
-		    video.srcObject = stream;
-		    alert('194 ran')
 		    if(myStream?.getTracks()){
 			    let tracks = myStream.getTracks();
 				tracks.forEach(function(track) {
 				   track.stop()
 				});
 			    myStream = stream
+		    	video.srcObject = myStream;
 				connectToCall();
 		    }else{
 		    	myStream = stream
+		    	video.srcObject = myStream;
 				connectToCall();
 		    }
 	    }, errorCallback);
@@ -239,6 +345,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 	}
 
 	const addStreamToMain = (stream) => {
+		stop()
 		setAcceptedCall(true);
 		var video = document.getElementById('videoMainStream');
 		video.muted = false;
@@ -263,11 +370,13 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 				   track.stop()
 				});
     			myStream = stream
-				const call = myPeer.call(id, stream);
+				const call = myPeer.call(id, myStream);
+				peers[id] = call;
+				currentCall = call
 				call.on('stream',userVideoStream => {
 					// console.log(userVideoStream);
 					addStreamToMain(userVideoStream);
-					setLocalStreamToMiniVideo(stream)
+					setLocalStreamToMiniVideo(myStream);
 				})	    
 				call.on('close',()=>{
 					call.close();
@@ -275,11 +384,10 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 					tracks.forEach(function(track) {
 					   track.stop();
 					});
-					setVideoToLocalStream();
+					// setVideoToLocalStream();
 					setAccepted(false);
 				})
 
-				peers[id] = call
 	    	}, errorCallback);
 		}
 		
@@ -311,7 +419,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 				var errorCallback = function(e) {
 			    	console.log('Reeeejected!', e);
 			    };
-			    peers[callerId] = call;
+
 				if(navigator.getUserMedia){
 					navigator.getUserMedia({audio:true,video:{
 						facingMode:'user'
@@ -321,20 +429,21 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 						   track.stop()
 						});
 						myStream = stream;
-						call.answer(stream);
+						call.answer(myStream);
+						currentCall = call
 
 						call.on('stream',userVideoStream=>{
-							setLocalStreamToMiniVideo(stream);
+							setLocalStreamToMiniVideo(myStream);
 							addStreamToMain(userVideoStream)
 						})
 
 						call.on('close',()=>{
 							call.close();
-							let tracks = stream.getTracks();
+							let tracks = myStream.getTracks();
 							tracks.forEach(function(track) {
 							   track.stop()
 							});
-							setVideoToLocalStream();			
+							// setVideoToLocalStream();			
 							setAcceptedCall(false);
 						})
 
@@ -345,7 +454,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 	}, [])
 
 	return(
-		<div className={`fixed left-0 ${callNow ? 'bottom-0' : '-bottom-[100%]'} flex items-center justify-center
+		<div className={`fixed left-0 ${callerId ? 'bottom-0' : '-bottom-[100%]'} flex items-center justify-center
 		h-full w-full z-50 bg-black/80 backdrop-blur-sm transition-all duration-200 ease-in-out`}>
 			<div className="h-full relative w-full flex md:pt-8 justify-center">
 				<div className={`absolute top-2 ${showNewUserAlert ? 'left-2' : '-left-[100%]'} bg-black/70 px-2 py-2
@@ -359,17 +468,29 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 				</div>
 
 				<div className="sm:h-[85%] h-full  rounded-2xl md:aspect-[16/9] mx-auto aspect-[9/16]">
-					<video id="videoMainStream" className="min-h-full min-w-full object-cover" src=""></video>
+					<video id="videoMainStream" 
+					onClick={()=>setHideOptions(!hideOptions)}
+					className="min-h-full min-w-full object-cover" src=""></video>
 				</div>
-				<div className="absolute overflow-hidden flex items-center justify-center md:aspect-[16/9] h-[150px] bg-gray-800/50 backdrop-blur-sm right-3 md:right-8 rounded-xl bottom-14 aspect-[9/16]">
-					<video id="miniStream" className={`min-h-full ${acceptedCall ? 'block' : 'hidden'} min-w-full object-cover`} src=""></video>					
+				<div className={`absolute overflow-hidden flex items-center justify-center md:aspect-[16/9] h-[150px] 
+				bg-gray-800/50 backdrop-blur-sm right-3 md:right-8 rounded-xl ${hideOptions ? 'bottom-10' : 'bottom-14'}  
+				aspect-[9/16] transition-all duration-300 ease-in-out`}>
+					<video id="miniStream" 
+					onClick={()=>setHideOptions(!hideOptions)}					
+					className={`min-h-full ${acceptedCall ? 'block' : 'hidden'} min-w-full object-cover`} src=""></video>					
 					<div className={`w-[50%] md:w-[30%] ${acceptedCall ? 'hidden' : 'block'} aspect-square rounded-full`}>
 						<img src={currentCaller?.image} alt="" className="animate-pulse rounded-full h-full w-full"/>						
 					</div>
 				</div>
 
 
-				<div className="absolute flex gap-8 items-center md:bottom-3 bottom-5 left-0 right-0 mx-auto justify-center">
+				<div className={`absolute flex gap-8 ${hideOptions ? '-bottom-[10%]' : 'md:bottom-3 bottom-5'} items-center  
+				left-0 right-0 mx-auto justify-center transition-all duration-300 ease-in-out`}>
+					<div 
+					onClick={()=>{if(myStream) switchCamera()}}
+					className={`${videoAllowed ? 'bg-sky-500' : 'bg-gray-500/50'} select-none outline-none transition-all duration-200 ease-in-out p-2 rounded-full cursor-pointer`}>						
+						<MdOutlineCameraswitch className="text-white h-6 w-6"/>												
+					</div>
 					<div 
 					onClick={updateVideo}
 					className={`${videoAllowed ? 'bg-sky-500' : 'bg-gray-500/50'} select-none outline-none transition-all duration-200 ease-in-out p-2 rounded-full cursor-pointer`}>
@@ -392,8 +513,10 @@ export default function VideoCall({currentWindow,setCurrentWindow,setCallerId,ca
 					</div>
 					<div 
 					onClick={()=>{
-						setCallNow(false);						
-						stopCall()
+						setCallNow(false);	
+						if(myStream){
+							stopCall()
+						}					
 					}}
 					className="bg-red-500 p-2 rounded-full cursor-pointer">
 						<ImPhoneHangUp className="text-white h-6 w-6"/>

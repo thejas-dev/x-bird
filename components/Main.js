@@ -23,7 +23,7 @@ import axios from 'axios';
 import Lists from './Lists'
 import {useRecoilState} from 'recoil'
 import {currentChatState,chatsState,currentUserState,mainFeedState,displayUserState,
-showLoginNowState,showClipboardState,themeState,homeState} from '../atoms/userAtom'
+showLoginNowState,showClipboardState,themeState,homeState,callerIdState} from '../atoms/userAtom'
 import ImageKit from "imagekit"
 import Notifications from './Notifications';
 
@@ -66,7 +66,7 @@ export default function Main({handleValidation}) {
 	const [home,setHome] = useRecoilState(homeState);
 	const [callNow,setCallNow] = useState(false);
 	const [currentCaller,setCurrentCaller] = useState('');
-	const [callerId,setCallerId] = useState('');
+	const [callerId,setCallerId] = useRecoilState(callerIdState);
 	const router = useRouter();
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -363,18 +363,15 @@ export default function Main({handleValidation}) {
 			setFullScreenLoader={setFullScreenLoader} openOverlay={openOverlay} setOpenOverlay={setOpenOverlay} 
 			overlayFor={overlayFor} setOverlayFor={setOverlayFor} needToReloadProfile={needToReloadProfile} 
 			setNeedToReloadProfile={setNeedToReloadProfile} callNow={callNow}
-			setCallNow={setCallNow} callerId={callerId} setCallerId={setCallerId} 
-			currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
+			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
 			/>		
 			<Bottom  currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} />	
 			
 			<IncomingCallNotify callNow={callNow}
-			setCallNow={setCallNow} callerId={callerId} setCallerId={setCallerId} 
-			currentCaller={currentCaller} setCurrentCaller={setCurrentCaller} />	
+			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller} />	
 
 			<VideoCall currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} callNow={callNow}
-			setCallNow={setCallNow} callerId={callerId} setCallerId={setCallerId} 
-			currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
+			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
 			/>
 
 			<CategorySelector showCategorySelector={showCategorySelector} setShowCategorySelector={setShowCategorySelector}

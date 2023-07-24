@@ -99,3 +99,13 @@ export const remotePeerIdState = atom({
 	key:"remotePeerIdState",
 	default:''
 })
+
+export const currentRoomIdState = atom({
+	key:"currentRoomIdState",
+	default:''
+})
+
+export const callerIdState = atom({
+	key:"callerIdState",
+	default:''
+})

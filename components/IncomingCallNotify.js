@@ -1,14 +1,12 @@
 import {useRecoilState} from 'recoil';
 import {alertTheUserForIncomingCallState,currentUserState,currentPeerState,acceptedState,
-	remotePeerIdState} from '../atoms/userAtom';
+	remotePeerIdState,currentRoomIdState,callerIdState} from '../atoms/userAtom';
 import {useState,useEffect} from 'react'; 
 import {socket} from '../service/socket';
-
+import {useSound} from 'use-sound';
 
 export default function IncomingCallNotify({callNow,
 	setCallNow,
-	callerId,
-	setCallerId,
 	currentCaller,
 	setCurrentCaller
 }) {
@@ -18,7 +16,15 @@ export default function IncomingCallNotify({callNow,
 	const [currentPeerId,setCurrentPeerId] = useRecoilState(currentPeerState)
 	const [videoCallNotify,setVideoCallNotify] = useState(false);
 	const [accepted,setAccepted] = useRecoilState(acceptedState);
-	const [remotePeerId, setRemotePeerId] = useRecoilState(remotePeerIdState)
+	const [remotePeerId, setRemotePeerId] = useRecoilState(remotePeerIdState);
+	const [currentRoomId,setCurrentRoomId] = useRecoilState(currentRoomIdState);
+	const [callerId,setCallerId] = useRecoilState(callerIdState);
+	const [play, { stop }] = useSound('ringtone2.mp3',{
+	  onend: () => {
+	    play();
+	  },
+	});
+
 
 	useEffect(()=>{
 		if(currentUser){
@@ -31,26 +37,26 @@ export default function IncomingCallNotify({callNow,
 	},[currentUser])
 
 	useEffect(()=>{
-		if(alertTheUserForIncomingCall && videoCallNotify){
+		if(alertTheUserForIncomingCall){
 			playRingtone()
+		}else{
+			stopRingtone()
 		}
-	},[videoCallNotify])
+	},[alertTheUserForIncomingCall])
 
 
 	const playRingtone = () => {
-		let audioElement = document.getElementById('ringtone-audio')
-		audioElement.play()
+		play()
 	}
 
 	const stopRingtone = () => {
-		let audioElement = document.getElementById('ringtone-audio')
-		audioElement.pause();
-		audioElement.currentTime = 0;
+		stop()
 	};
 
 	const acceptCall = async() => {
-		setCallerId(alertTheUserForIncomingCall?.user?.id)
+		setCallerId(alertTheUserForIncomingCall?.user?.id);
 		setCurrentCaller(alertTheUserForIncomingCall?.user);
+		setCurrentRoomId(alertTheUserForIncomingCall?.roomId)
 		setCallNow(true);
 		const tempUser = {
 			id:currentUser._id,
@@ -86,7 +92,6 @@ export default function IncomingCallNotify({callNow,
 
 
 
-				<audio src="ringtone.mp3" loop={true} id="ringtone-audio"/>
 			</div>
 			<div className="flex items-center w-full justify-between gap-2">
 				<button 
