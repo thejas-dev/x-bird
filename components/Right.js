@@ -2,14 +2,14 @@ import {FiSearch} from 'react-icons/fi'
 import {useRecoilState} from 'recoil'
 import {currentChatState,currentUserState,chatsState,mainFeedState,
 	callerIdState} from '../atoms/userAtom'
-import {HiOutlineChevronDoubleDown,HiOutlineArrowLeft} from 'react-icons/hi';
+import {HiOutlineChevronDoubleDown,HiOutlineArrowLeft,HiOutlineArrowDown} from 'react-icons/hi';
 import {RiMailAddLine,RiSendPlane2Line} from 'react-icons/ri';
 import {CiMicrophoneOn} from 'react-icons/ci';
 import {BiSearchAlt2} from 'react-icons/bi';
 import {useState,useEffect,useRef} from 'react'
 import {BsThreeDots} from 'react-icons/bs';
 import {AiOutlineInfoCircle,AiOutlineSend,AiOutlineRight} from 'react-icons/ai';
-import {MdOutlineVideoCall} from 'react-icons/md';
+import {BiVideo} from 'react-icons/bi';
 import {BsCardImage,BsEmojiSmile,BsArrowLeft} from 'react-icons/bs';
 import {TbGif} from 'react-icons/tb';
 import {searchProfile,sendMsgRoute,updateUserChats,getAllMsgRoute,host,getUserByIdRoute,
@@ -63,6 +63,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	const [addThisImage,setAddThisImage] = useState('');
 	const [allTrendUsersLoading,setAllTrendUsersLoading] = useState(false);
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
+	const [showScrollBottom,setShowScrollBottom] = useState(false);
 
 	const [whoToFollow,setWhoToFollow] = useState([
 		{
@@ -137,6 +138,27 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 		}
 	]
 
+	useEffect(()=>{
+		if(currentChat){
+			let ele = document.getElementById('chatArea');
+			let startY = 0;
+			let scrollY = 0;
+			ele.addEventListener('touchstart', function(e) {
+			  startY = e.touches[0].clientY;
+			});
+
+			ele.addEventListener('touchmove', function(e) {
+			  scrollY = startY - e.touches[0].clientY;
+			  if(scrollY > 40){
+			  	setShowScrollBottom(false)
+			  }
+			  if(scrollY < -40){		  	
+			  	setShowScrollBottom(true)
+			  }
+			});			
+		}
+	},[currentChat])
+
 	const calDate = (date) => {
 		const date1 = new Date();
 		const date2 = new Date(date)
@@ -177,13 +199,11 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 			if(tempData?.group){
 				if(currentChat?.group){
 					if(!currentChat?._id?.includes(tempData?.from)){
-						console.log(" iran")
 						sendNotify(tempData);	
 					}else{
 						setArrivalMessage(tempData);				
 					}	
 				}else{
-					console.log(" i onl yran")
 					sendNotify(tempData);	
 				}						
 				setTempData('');				
@@ -1112,26 +1132,36 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 		}
 	}
 
+	const scrollMsgBottom = () => {
+		setShowScrollBottom(false)
+		scrollRef.current?.scrollIntoView({behaviour:"smooth"});
+	}
+
 	if(currentWindow === 'Messages'){
 		return (
-			<div className={`lg:w-[50.6%] md:w-[80%] h-[100%] xs:w-[90%] w-[100%] ${currentChat ? 'relative':'hidden lg:block'} relative overflow-hidden`}>
-				<div className={`h-full w-full backdrop-blur-lg px-3 bg-black/30 left-0 flex items-center justify-center fixed z-50 ${uploadArray.length>0  ? 'block' : 'hidden'} bg-black/40 dark:backdrop-blur-md`}>
-					<div className={`max-w-3xl mx-auto md:h-[85%] h-[93%] bg-white dark:bg-[#100C08] dark:border-gray-700/60 px-2 rounded-xl border-[2px] border-gray-400/60 shadow-xl overflow-y-scroll 
-					scrollbar-none relative`}>
+			<div className={`lg:w-[50.6%] md:w-[80%] min-h-screen xs:w-[90%] w-[100%] ${currentChat ? 'relative':'hidden lg:block'} relative overflow-hidden`}>
+				<div className={`h-full w-full backdrop-blur-lg px-3 bg-black/30 left-0 flex items-center 
+				justify-center fixed z-50 ${uploadArray.length>0  ? 'block' : 'hidden'} bg-black/40 
+				dark:backdrop-blur-md`}>
+					<div className={`max-w-3xl mx-auto md:h-[85%] h-[93%] bg-white dark:bg-[#100C08] 
+					dark:border-gray-700/60 px-2 rounded-xl border-[2px] border-gray-400/60 shadow-xl 
+					overflow-y-scroll scrollbar-none relative`}>
 						<div className="grid grid-cols-1 md:grid-cols-2 md:gap-2 pb-12">
 							<div className="w-full flex flex-col md:gap-3 gap-2 py-4 pl-2 pr-1">
 								{	
 									uploadArray?.map((ima,j)=>(
-										<img src={ima} key={j} className={`rounded-xl shadow-xl w-full hover:scale-105 transition-all 
-										duration-200 ease-in ${j%2===1 && 'hidden'}`}/>
+										<img src={ima} key={j} className={`rounded-xl shadow-xl w-full 
+										hover:scale-105 transition-all duration-200 ease-in 
+										${j%2===1 && 'hidden'}`}/>
 									))
 								}
 							</div>
 							<div className="w-full flex flex-col md:gap-3 gap-2 py-4 pl-2 pr-1">
 								{	
 									uploadArray?.map((ima,j)=>(
-										<img src={ima} key={j} className={`rounded-xl shadow-xl w-full hover:scale-105 transition-all 
-										duration-200 ease-in ${j%2===0 && 'hidden'}`}/>
+										<img src={ima} key={j} className={`rounded-xl shadow-xl w-full 
+										hover:scale-105 transition-all duration-200 ease-in 
+										${j%2===0 && 'hidden'}`}/>
 									))
 								}
 							</div>
@@ -1154,29 +1184,51 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						
 					</div>
 				</div>
-				<div className={`h-[100vh] w-full top-0 left-0 backdrop-blur-lg bg-white dark:bg-[#100C08] flex items-center justify-center absolute z-40 ${loading && 'hidden'}`}>
+				<div className={`h-[100vh] w-full top-0 left-0 backdrop-blur-lg bg-white 
+				dark:bg-[#100C08] flex items-center justify-center absolute z-40 ${loading && 'hidden'}`}>
 					<span className="loader3"></span>
 				</div>
 
-				<div className={`w-full ${!currentChat && 'hidden'} overflow-hidden px-5 sticky top-0 backdrop-blur-lg bg-white/50 dark:bg-[#100C08]/50 flex justify-between p-2`}>
+				<div className={`w-full ${!currentChat && 'hidden'} overflow-hidden md:px-5 xs:sticky fixed 
+				top-0 left-0 backdrop-blur-lg bg-white/70 shadow-lg dark:shadow-purple-500/20 shadow-gray-400/10 
+				dark:bg-[#100C08]/50 flex justify-between p-2 py-3`}>
+					
 					<div 
-					onClick={()=>{
-						if(!currentChat?.group){
-							setCurrentWindow('Profile')
-							window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
-							setCurrentChat('')													
-						}else{
-							let element = document.getElementById('groupInfoBox')
-							element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-						}
-					}}
-					className="flex cursor-pointer items-center lg:ml-0 ml-7 gap-2 shrink">
+					className="flex cursor-pointer items-center gap-2 w-[80%] shrink">
+						<div 
+						onClick={()=>{setCurrentChat('');setMessages([])}}
+						className=" w-8 h-8 flex items-center justify-center rounded-full z-45  lg:hidden  
+						cursor-pointer p-1 hover:bg-gray-200/70 dark:hover:bg-gray-900/40 transition-all duration-200 ease-in-out">
+							<BsArrowLeft className="h-full w-full text-gray-800 dark:text-gray-200"/>
+						</div>
 						{
 							!currentChat?.group ?
-							<img src={currentChat.image} className="h-9 w-9 rounded-full "/>
+							<img 
+							onClick={()=>{
+								if(!currentChat?.group){
+									setCurrentWindow('Profile')
+									window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
+									setCurrentChat('')													
+								}else{
+									let element = document.getElementById('groupInfoBox')
+									element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+								}
+							}}
+							src={currentChat?.image} className="h-9 w-9 rounded-full "/>
 							:
 							<>
-							<div className="grid-cols-2 grid h-9 w-9 rounded-full overflow-hidden">
+							<div 
+							onClick={()=>{
+								if(!currentChat?.group){
+									setCurrentWindow('Profile')
+									window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
+									setCurrentChat('')													
+								}else{
+									let element = document.getElementById('groupInfoBox')
+									element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+								}
+							}}
+							className="grid-cols-2 h-9 w-9 hidden sm:grid rounded-full overflow-hidden">
 								{
 									currentChat?.image?.map((img,j)=>{
 										if(currentChat.image.length === 3){
@@ -1198,27 +1250,34 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							</div>
 							</>
 						}
-						<h1 className="text-md text-black dark:text-gray-200 font-semibold truncate">{
-							currentChat?.group ? 
-							<>
-							<span className="sm:hidden" >{currentChat?.name?.length > 20 ? `${currentChat?.name.slice(0,19)} ...` : currentChat?.name}</span>
-							<span className="hidden sm:block">{currentChat?.name}</span>
-							</>
-							:
+						<h1 
+						onClick={()=>{
+							if(!currentChat?.group){
+								setCurrentWindow('Profile')
+								window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
+								setCurrentChat('')													
+							}else{
+								let element = document.getElementById('groupInfoBox')
+								element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+							}
+						}}
+						className="text-lg text-black dark:text-gray-200 font-semibold truncate">{							
 							currentChat?.name
 						}</h1>
 					</div>
-					<div className="flex items-center sm:gap-2 gap-[5px]">
-						<div 
-						onClick={()=>{
-							if(!currentChat?.group){
-								videoCallToUser(currentChat._id)													
-							}
-						}}
-						className="p-0 cursor-pointer rounded-full transition-all duration-200 ease-in-out">
-							<MdOutlineVideoCall className="h-7 w-7 text-gray-800 hover:text-sky-600 dark:hover:text-sky-500 transition-all 
-							duration-200 ease-in-out dark:text-gray-300"/>
-						</div>
+					<div className="flex items-center sm:gap-2 gap-[5px] shrink">
+						
+							<div 
+							onClick={()=>{
+								if(!currentChat?.group){
+									videoCallToUser(currentChat._id)													
+								}
+							}}
+							className="p-0 cursor-pointer rounded-full transition-all duration-200 ease-in-out">
+								<BiVideo className="h-7 w-7 text-gray-800 hover:text-sky-600 dark:hover:text-sky-500 transition-all 
+								duration-200 ease-in-out dark:text-gray-300"/>
+							</div>						
+						
 						<div 
 						onClick={()=>{
 							if(!currentChat?.group){
@@ -1232,12 +1291,9 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						</div>
 					</div>
 				</div>
-				<div 
-				onClick={()=>{setCurrentChat('');setMessages([])}}
-				className="sticky w-8 h-8 flex items-center justify-center rounded-full z-45 left-2 lg:hidden top-2 cursor-pointer p-1 hover:bg-gray-200/70 dark:hover:bg-gray-900/40 transition-all duration-200 ease-in-out">
-					<BsArrowLeft className="h-full w-full text-gray-800 dark:text-gray-200"/>
-				</div>
-				<div className="h-full pt-[115px] w-full scrollbar-thin scrollbar-thumb-sky-500 scrollbar-track-gray-200/50 dark:scrollbar-track-gray-900/50 overflow-y-scroll scroll-smooth">
+				
+				<div id="chatArea" className="h-full sm:pt-[115px] pt-[200px] w-full scrollbar-thin scrollbar-thumb-sky-500 
+				scrollbar-track-gray-200/50 dark:scrollbar-track-gray-900/50 overflow-y-scroll scroll-smooth">
 					{
 						!currentChat ? 
 						<div className="h-full w-full flex items-center justify-center">
@@ -1301,7 +1357,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							</div>
 						</div>
 					}
-					<div className={`flex flex-col gap-3 md:px-3 px-2 py-2 w-full ${!currentChat && 'hidden'}`}>
+					<div className={`flex flex-col h-[10%] gap-3 md:px-3 px-2 py-2 w-full ${!currentChat && 'hidden'}`}>
 						{
 							messages?.map((msg,j)=>(
 								<div ref={scrollRef} key={j} className={`flex w-full ${msg.fromSelf ? 'justify-end':'justify-start'} gap-1`}>
@@ -1358,8 +1414,19 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						}
 					</div>
 				</div>
-				<div className={`${!currentChat && 'hidden' } backdrop-blur-lg bg-white/40 dark:bg-[#100C08]/40 sticky bottom-0 w-full px-2 py-2 border-t-[1px] dark:border-gray-700/70 border-gray-200/70`}>
-					<div className="bg-gray-200/70 dark:bg-gray-800/40 relative rounded-2xl flex items-center gap-2 py-[6px] px-2">
+				<div 
+				onClick={scrollMsgBottom}
+				className={`fixed md:right-4 right-6 cursor-pointer bg-sky-500 dark:bg-sky-400 text-white p-1 
+				${showScrollBottom ? 'bottom-[70px]' : '-bottom-[100px]'} rounded-full transition-all
+				duration-300 ease-in-out`}>
+					<HiOutlineArrowDown className="h-6 w-6"/>
+
+				</div>
+				<div className={`${!currentChat && 'hidden' } backdrop-blur-lg bg-white/40 dark:bg-[#100C08]/40 sticky 
+				bottom-0 w-full px-2 py-2 border-t-[1px] dark:border-gray-700/70 border-gray-200/70`}>
+					<div className="bg-gray-200/70 dark:bg-gray-800/40 relative rounded-2xl flex items-center 
+					gap-2 py-[6px] px-2">
+						
 						<div className="absolute -top-2 left-0 w-full">	
 							{
 								uploading &&

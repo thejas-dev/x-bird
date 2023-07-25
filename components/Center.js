@@ -7,7 +7,7 @@ import {FaRegComment} from 'react-icons/fa';
 import {useRecoilState} from 'recoil';
 import {BiWorld} from 'react-icons/bi';
 import {currentChatState,homeState,currentUserState,showLoginNowState,mainFeedState,
-loaderState,sidebarState,followingFeedState,forYouState} from '../atoms/userAtom'
+loaderState,sidebarState,followingFeedState,forYouState,bottomHideState} from '../atoms/userAtom'
 import {MdSchedule} from 'react-icons/md'
 import {HiOutlineLocationMarker} from 'react-icons/hi';
 import {createTweet,getAllPosts,getPostByIdRoute,updatedPostRoute,
@@ -43,6 +43,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const ref = useRef()
 	const [emojiInput,setEmojiInput] = useState(false);
 	const [openSidebar,setOpenSidebar] = useRecoilState(sidebarState);
+  	const [bottomHide,setBottomHide] = useRecoilState(bottomHideState)	
 	const [mainFeedNotAdded,setMainFeedNotAdded] = useState(true);
 	const [tweetPublic,setTweetPublic] = useState(true);
 	const [openTweetVisiblityTab,setOpenTweetVisiblityTab] = useState(false)
@@ -72,6 +73,26 @@ export default function Center({setCurrentWindow,currentWindow}) {
 			setMainFeed(followingFeed);
 		}
 	},[home,foryou,followingFeed])
+
+	useEffect(()=>{
+		let ele = document.getElementById('tweetCardArea');
+		let startY = 0;
+		let scrollY = 0;
+
+		ele.addEventListener('touchstart', function(e) {
+		  startY = e.touches[0].clientY;
+		});
+
+		ele.addEventListener('touchmove', function(e) {
+		  scrollY = startY - e.touches[0].clientY;
+		  if(scrollY > 40){
+		  	setBottomHide(true)
+		  }
+		  if(scrollY < -40){		  	
+		  	setBottomHide(false)
+		  }
+		});
+	},[])
 
 	const calDate = (date) => {
 		const date1 = new Date();
@@ -459,7 +480,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	
 
 	return (
-		<div className={`lg:w-[44.6%] relative md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200
+		<div id="tweetCardArea" className={`lg:w-[44.6%] relative md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200
 		dark:border-gray-600 scrollbar-none 
 		${mainFeed?.length > 0 ? 'overflow-y-scroll' : 'overflow-hidden'} scroll-smooth`}>
 			

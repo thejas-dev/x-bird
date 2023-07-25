@@ -1,6 +1,6 @@
 import {useRecoilState} from 'recoil';
 import {alertTheUserForIncomingCallState,currentUserState,currentPeerState,acceptedState,
-	remotePeerIdState,currentRoomIdState,callerIdState} from '../atoms/userAtom';
+	remotePeerIdState,currentRoomIdState,callerIdState,inCallState} from '../atoms/userAtom';
 import {useState,useEffect} from 'react'; 
 import {socket} from '../service/socket';
 import {useSound} from 'use-sound';
@@ -19,6 +19,7 @@ export default function IncomingCallNotify({callNow,
 	const [remotePeerId, setRemotePeerId] = useRecoilState(remotePeerIdState);
 	const [currentRoomId,setCurrentRoomId] = useRecoilState(currentRoomIdState);
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
+	const [inCall,setInCall] = useRecoilState(inCallState);
 	const [play, { stop }] = useSound('ringtone2.mp3',{
 	  onend: () => {
 	    play();
@@ -46,14 +47,15 @@ export default function IncomingCallNotify({callNow,
 
 
 	const playRingtone = () => {
-		play()
+		if(videoCallNotify){play()}
 	}
 
 	const stopRingtone = () => {
-		stop()
+		if(videoCallNotify){stop()}
 	};
 
 	const acceptCall = async() => {
+		setInCall(true);
 		setCallerId(alertTheUserForIncomingCall?.user?.id);
 		setCurrentCaller(alertTheUserForIncomingCall?.user);
 		setCurrentRoomId(alertTheUserForIncomingCall?.roomId)

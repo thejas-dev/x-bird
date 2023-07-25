@@ -715,7 +715,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					<img src={displayUser?.image} alt="" className="md:h-[150px] h-[100px] z-10 md:w-[150px] w-[100px] rounded-full"/>
 				</div>
 			</div>	
-			<div className="w-full flex flex-col px-2 md:px-4">
+			<div className="w-full flex flex-col px-3 md:px-4">
 				<div className="flex md:mt-6 mt-3 justify-end w-full">
 					{
 						ownAccount?

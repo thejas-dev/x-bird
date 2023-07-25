@@ -109,3 +109,8 @@ export const callerIdState = atom({
 	key:"callerIdState",
 	default:''
 })
+
+export const inCallState = atom({
+	key:"inCallState",
+	default:false
+})

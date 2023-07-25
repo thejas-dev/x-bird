@@ -122,6 +122,12 @@ export default function Main({handleValidation}) {
 				setCurrentWindow('Explore');
 			}
 		}
+		window.addEventListener('beforeunload',function(event){
+			  console.log("UNLOAD:1");
+			  event.preventDefault();
+			  event.returnValue = "Are you sure you want to exit the site ?!"; //"Any text"; //true; //false;
+			  return null; //"Any text"; //true; //false;
+		}) 
 
 	},[])
 

@@ -2,7 +2,7 @@ import {AiOutlineSetting} from 'react-icons/ai';
 import {RiMailAddLine} from 'react-icons/ri';
 import {BiSearchAlt2} from 'react-icons/bi';
 import {useRecoilState} from 'recoil'
-import {currentChatState,chatsState} from '../atoms/userAtom'
+import {currentChatState,chatsState,bottomHideState} from '../atoms/userAtom'
 import {useState,useEffect} from 'react'
 import {BsThreeDots} from 'react-icons/bs';
 import DateDiff from 'date-diff'
@@ -17,6 +17,28 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 	const [searchChats,setSearchChats] = useState([]);
 	const [search,setSearch] = useState('');
 	const [searchValue,setSearchValue] = useState('');
+  	const [bottomHide,setBottomHide] = useRecoilState(bottomHideState)	
+
+
+	useEffect(()=>{
+		let ele = document.getElementById('messageArea');
+		let startY = 0;
+		let scrollY = 0;
+
+		ele.addEventListener('touchstart', function(e) {
+		  startY = e.touches[0].clientY;
+		});
+
+		ele.addEventListener('touchmove', function(e) {
+		  scrollY = startY - e.touches[0].clientY;
+		  if(scrollY > 120){
+		  	setBottomHide(true)
+		  }
+		  if(scrollY < -40){		  	
+		  	setBottomHide(false)
+		  }
+		});
+	},[])
 
 	const calDate = (date) => {
 		const date1 = new Date();
@@ -53,7 +75,7 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 
 	return(
 
-		<div className={`lg:w-[36.4%] xl:w-[30.4%] overflow-hidden ${currentChat ? 'hidden' : 'block'} md:w-[70%] w-[100%] lg:block flex flex-col h-full   
+		<div id="messageArea" className={`lg:w-[36.4%] xl:w-[30.4%] overflow-y-scroll scrollbar-none ${currentChat ? 'hidden' : 'block'} md:w-[70%] w-[100%] lg:block flex flex-col h-full   
 		dark:border-gray-600 pt-4 border-r-[1.3px] border-gray-200`}>
 			<div className="flex items-center justify-between w-[90%] mx-auto">
 				<h1 className="text-black text-2xl font-semibold dark:text-gray-100">Messages</h1>
@@ -75,16 +97,23 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 				type="text" placeholder="Search Direct Messages" className="transition-all duration-200 ease-in-out
 				placeholder:text-gray-500 dark:placeholder:text-gray-400 text-md text-black outline-none bg-transparent dark:text-gray-100 focus:w-full"/>
 			</div>	
-			<div className="mt-4 flex-col flex h-full w-full pb-14">
+			<div className="mt-4 flex flex-col h-full w-full pb-14 ">
 				{
 					chats.length > 0 ?
+					
 					!searchValue &&
 					chats.map((chat,i)=>(
 						<div key={i} 
-						onClick={()=>{setCurrentChat(chat);setMsgReveal(true)}}
+						onClick={()=>{
+							setCurrentChat(chat);
+							setMsgReveal(true);
+							window.history.replaceState({id:100},'Default',`?message=${chat?.name}`);
+						}}
 						className={`md:px-4 px-2 relative py-[14px] hover:bg-gray-200/40 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out 
 						${currentChat.name === chat.name ? 'bg-sky-200/60 dark:bg-sky-900/20' : ''}
-						cursor-pointer flex items-center md:gap-[10px] gap-[7px] group w-full overflow-hidden`}>
+						cursor-pointer flex items-center md:gap-[10px] gap-[7px] group w-full 
+
+						`}>
 							<div className={`absolute right-0 h-full w-[2px] ${currentChat.name === chat.name ? 'bg-blue-500' : ''}`}/>
 							
 							{
@@ -152,7 +181,13 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 					searchValue &&
 					searchChats?.map((chat,i)=>(
 						<div key={i} 
-						onClick={()=>{setCurrentChat(chat);setMsgReveal(true);setSearchChats([]);setSearchValue('')}}
+						onClick={()=>{
+							setCurrentChat(chat);
+							setMsgReveal(true);
+							window.history.replaceState({id:100},'Default',`?message=${chat?.name}`);							
+							setSearchChats([]);
+							setSearchValue('')
+						}}
 						className={`md:px-4 px-2 relative py-[14px] hover:bg-gray-200/40 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out 
 						${currentChat.name === chat.name ? 'bg-sky-200/60 dark:bg-sky-900/20' : ''}
 						cursor-pointer flex items-center md:gap-[10px] gap-[7px] group w-full overflow-hidden`}>

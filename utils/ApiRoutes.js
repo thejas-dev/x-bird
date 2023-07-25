@@ -35,3 +35,4 @@ export const updateCategories = `${host}/api/auth/updateCategories`;
 export const whoToFollowRoute = `${host}/api/auth/whoToFollow`;
 export const getAllTrendUsers = `${host}/api/auth/getAllTrendUsers`;
 export const updateNotifySettings = `${host}/api/auth/updateNotifySettings`;
+export const dialerRingtonePlayUpdate = `${host}/api/auth/dialerRingtonePlayUpdate`;

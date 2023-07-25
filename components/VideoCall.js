@@ -4,7 +4,8 @@ import {MdOutlineCameraswitch} from 'react-icons/md'
 import {BsMic,BsMicMute,BsCameraVideo,BsCameraVideoOff} from 'react-icons/bs';
 import {useRecoilState} from 'recoil';
 import {currentPeerState,currentUserState,alertTheUserForIncomingCallState,
-	acceptedState,remotePeerIdState,currentRoomIdState,callerIdState} from '../atoms/userAtom';
+	acceptedState,remotePeerIdState,currentRoomIdState,callerIdState,
+	inCallState} from '../atoms/userAtom';
 import { useId } from "react";
 import {socket} from '../service/socket'
 import { v4 as uuidv4 } from 'uuid';
@@ -35,6 +36,10 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 	const [currentFacingMode,setCurrentFacingMode] = useState('user');
 	const [hideOptions,setHideOptions] = useState(false);
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
+	const [inCall,setInCall] = useRecoilState(inCallState);
+	const [showUserAlreadyInCall,setShowUserAlreadyInCall] = useState(false);
+	const [userAlreadyInCall,setUserAlreadyInCall] = useState('');
+
 	const [play, { stop }] = useSound('dialer.mp3',{
 	  loop:true
 	});
@@ -158,7 +163,9 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 	useEffect(()=>{
 		if(callerId){
 			setVideoToLocalStream();
-			play()
+			if(currentUser?.dialerRingtonePlay){
+				play()
+			}
 			var video = document.getElementById('videoMainStream');
 			video.setAttribute("name", callerId);
 		}
@@ -177,10 +184,19 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 			},4000)	
 		});
 		socket.on('incoming-call',({peerId,roomId,user})=>{
-			const data = {
-				roomId,user,peerId
+			if(!inCall){
+				const data = {
+					roomId,user,peerId
+				}
+				setAlertTheUserForIncomingCall(data);
+			}else{
+				let currUser = {
+					name:currentUser?.name,
+					username:currentUser?.username,
+					image:currentUser?.image
+				}
+				socket.emit('user-in-call',{currUser,user});
 			}
-			setAlertTheUserForIncomingCall(data)
 		})
 		socket.on('stop-ring',({id})=>{
 			setStopRing(id)
@@ -199,6 +215,13 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 				setVideoToLocalStream();
 				setAcceptedCall(false);
 			}
+		})
+		socket.on('user-already-in-call',({currUser})=>{
+			setUserAlreadyInCall(currUser);
+			setShowUserAlreadyInCall(true)
+			setTimeout(()=>{
+				setShowUserAlreadyInCall(false)
+			},4000)
 		})
 
 		return ()=>{
@@ -263,9 +286,10 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 		video2.src = "";
 
 		let tracks = myStream?.getTracks();
-		tracks.forEach(function(track) {
-		   track.stop()
+		tracks?.forEach(function(track) {
+		   track?.stop()
 		});
+		setInCall(false);
 
 		if(peers[remotePeerId]){
 			peers[remotePeerId].close();
@@ -401,7 +425,6 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 		}
 	},[remotePeerId])
 
-	// useEffect(()=>{alert('myStream changed')},[myStream])
 
 
 	useEffect(() => {
@@ -456,6 +479,11 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 	return(
 		<div className={`fixed left-0 ${callerId ? 'bottom-0' : '-bottom-[100%]'} flex items-center justify-center
 		h-full w-full z-50 bg-black/80 backdrop-blur-sm transition-all duration-200 ease-in-out`}>
+			<div className={`fixed ${showUserAlreadyInCall ? 'scale-100' : 'scale-0'} transition-all duration-300 ease-in-out flex items-center justify-center `}>
+				<div className="bg-black/70 rounded-full text-white dark:bg-white/30 px-3 py-1">
+					<h1 className="text-md text-white font-semibold">{userAlreadyInCall?.name} in call</h1>
+				</div>
+			</div>
 			<div className="h-full relative w-full flex md:pt-8 justify-center">
 				<div className={`absolute top-2 ${showNewUserAlert ? 'left-2' : '-left-[100%]'} bg-black/70 px-2 py-2
 				text-white backdrop-blur-sm flex items-center gap-3 rounded-lg transition-all duration-200 ease-in-out`}>
@@ -514,9 +542,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 					<div 
 					onClick={()=>{
 						setCallNow(false);	
-						if(myStream){
-							stopCall()
-						}					
+						stopCall()			
 					}}
 					className="bg-red-500 p-2 rounded-full cursor-pointer">
 						<ImPhoneHangUp className="text-white h-6 w-6"/>

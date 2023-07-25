@@ -26,7 +26,12 @@ export default function Bottom({ setCurrentWindow, currentWindow }) {
     border-t-[1px] border-gray-200/60 fixed w-full flex p-2 
     justify-around bg-white dark:bg-[#100C08]/80 dark:border-gray-700/60 backdrop-blur-xl ${!currentUser && 'hidden'} z-50`}>
       <div
-        onClick={() => setCurrentWindow("Home")}
+        onClick={() => {
+          if(currentWindow === 'Home'){
+            document.getElementById('tweetArea').scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" });
+          }
+          setCurrentWindow("Home")
+        }}
         className="p-[6px] cursor-pointer rounded-full hover:bg-gray-200/70 dark:hover:bg-gray-700/70 transition-all duration-200 ease-in-out"
       >
         {currentWindow === "Home" ? (

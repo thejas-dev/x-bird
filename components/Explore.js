@@ -10,7 +10,8 @@ import millify from 'millify';
 import {AiOutlineRetweet,AiFillHeart,AiOutlineHeart} from 'react-icons/ai';
 import {HiOutlineArrowLeft} from 'react-icons/hi';
 import {useRecoilState} from 'recoil'
-import {currentUserState,showLoginNowState,mainFeedState,sidebarState,searchTextState} from '../atoms/userAtom'
+import {currentUserState,showLoginNowState,mainFeedState,sidebarState,searchTextState,
+	bottomHideState} from '../atoms/userAtom'
 import {socket} from '../service/socket';
 import TweetCard from './TweetCard';
 import DateDiff from 'date-diff';
@@ -29,6 +30,8 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 	const [postFound,setPostFound] = useState(true);
 	const [showScrollInfo,setShowScrollInfo] = useState(false);
 	const [openSidebar,setOpenSidebar] = useRecoilState(sidebarState);
+  	const [bottomHide,setBottomHide] = useRecoilState(bottomHideState)	
+
 
 	useEffect(()=>{
 		if(searchText){
@@ -61,6 +64,26 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 				behavior:"smooth"
 			})
 		})
+	},[])
+
+	useEffect(()=>{
+		let ele = document.getElementById('exploreArea');
+		let startY = 0;
+		let scrollY = 0;
+
+		ele.addEventListener('touchstart', function(e) {
+		  startY = e.touches[0].clientY;
+		});
+
+		ele.addEventListener('touchmove', function(e) {
+		  scrollY = startY - e.touches[0].clientY;
+		  if(scrollY > 40){
+		  	setBottomHide(true)
+		  }
+		  if(scrollY < -40){		  	
+		  	setBottomHide(false)
+		  }
+		});
 	},[])
 
 	const searchPostByText = async() => {
@@ -378,7 +401,7 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 	},[])
 
 	return (
-		<div className={`lg:w-[44.6%] md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 relative 
+		<div id="exploreArea" className={`lg:w-[44.6%] md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 relative 
 		scrollbar-none ${postLoading ? 'overflow-hidden':'overflow-y-scroll'} scroll-smooth`}>
 			<div className="w-full xs:hidden flex items-center pt-3 justify-center">
 				<img src={currentUser?.image || 'twitter-icon.png'} 

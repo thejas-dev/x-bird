@@ -2,7 +2,7 @@ import {BiArrowBack} from 'react-icons/bi';
 import {useRecoilState} from 'recoil'
 import {currentUserState} from '../atoms/userAtom'
 import {useState,useEffect} from 'react';
-import {updateNotifySettings} from '../utils/ApiRoutes';
+import {updateNotifySettings,dialerRingtonePlayUpdate} from '../utils/ApiRoutes';
 import axios from 'axios';
 import {AiOutlineRight} from 'react-icons/ai';
 import {signOut} from 'next-auth/react'
@@ -15,6 +15,7 @@ export default function Notification({currentWindow,setCurrentWindow,setShowThem
 	const [notify,setNotify] = useState(false);
 	const [notifyVibrate,setNotifyVibrate] = useState(false);
 	const [videCallNotify,setVideCallNotify] = useState(false);
+	const [currUserdialerRingtonePlay,setCurrUserdialerRingtonePlay] = useState(false);
 
 	useEffect(()=>{
 		if(currentUser){
@@ -40,8 +41,17 @@ export default function Notification({currentWindow,setCurrentWindow,setShowThem
 				document.getElementById('mainNotify').checked = false
 				
 			}
+			if(currentUser?.dialerRingtonePlay){
+				setCurrUserdialerRingtonePlay(true);
+				document.getElementById('dialerTone').checked = true
+			}else{
+				setCurrUserdialerRingtonePlay(false);
+				document.getElementById('dialerTone').checked = false			
+			}
 		}
 	},[currentUser])
+
+
 
 	const updateVibrateNotify = async(result) => {		
 		const {data} = await axios.post(`${updateNotifySettings}/${currentUser._id}`,{
@@ -62,6 +72,14 @@ export default function Notification({currentWindow,setCurrentWindow,setShowThem
 			notify,notifyVibrate,videCallNotify:result
 		})			
 		setCurrentUser(data.user)
+	}
+
+	const dialerRingtonePlayUpdateFun = async(value) => {
+		const {data} = await axios.post(`${dialerRingtonePlayUpdate}/${currentUser._id}`,{
+			dialerRingtonePlay:value
+		})
+		console.log(data.user)
+		setCurrentUser(data.user);
 	}
 
 	return (
@@ -125,9 +143,24 @@ export default function Notification({currentWindow,setCurrentWindow,setShowThem
 						}
 					}}
 					className="flex mt-4 items-center justify-between flex-wrap">
-						<h1 className="text-lg font-semibold text-black dark:text-gray-200">Video call notifications</h1>
+						<h1 className="text-lg font-semibold text-black dark:text-gray-200">Call ringtone</h1>
 						<label class="switch2">
 						  <input type="checkbox" id="videoNotify" class="input__check"/>
+						  <span class="slider2"></span>
+						</label>
+					</div>
+					<div 
+					onClick={()=>{
+						if(currUserdialerRingtonePlay){
+							dialerRingtonePlayUpdateFun(false)
+						}else{
+							dialerRingtonePlayUpdateFun(true)
+						}
+					}}
+					className="flex mt-4 items-center justify-between flex-wrap">
+						<h1 className="text-lg font-semibold text-black dark:text-gray-200">Call dialer tone</h1>
+						<label class="switch2">
+						  <input type="checkbox" id="dialerTone" class="input__check"/>
 						  <span class="slider2"></span>
 						</label>
 					</div>
