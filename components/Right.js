@@ -1,7 +1,7 @@
 import {FiSearch} from 'react-icons/fi'
 import {useRecoilState} from 'recoil'
 import {currentChatState,currentUserState,chatsState,mainFeedState,
-	callerIdState} from '../atoms/userAtom'
+	callerIdState,groupCallerState,inCallState} from '../atoms/userAtom'
 import {HiOutlineChevronDoubleDown,HiOutlineArrowLeft,HiOutlineArrowDown} from 'react-icons/hi';
 import {RiMailAddLine,RiSendPlane2Line} from 'react-icons/ri';
 import {CiMicrophoneOn} from 'react-icons/ci';
@@ -29,7 +29,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	setNewMessageSearch,setRevealNotify,revealNotify,msgReveal,setMsgReveal,
 	notify,setNotify,setFullScreenLoader,fullScreenLoader,openOverlay,setOpenOverlay,
 	overlayFor,setOverlayFor,setNeedToReloadProfile,needToReloadProfile,
-	callNow,setCallNow,currentCaller,setCurrentCaller}) {
+	callNow,setCallNow,currentCaller,setCurrentCaller,setCurrentGroupCaller,currentGroupCaller}) {
 
 	const [currentChat,setCurrentChat] = useRecoilState(currentChatState);
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
@@ -63,6 +63,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	const [addThisImage,setAddThisImage] = useState('');
 	const [allTrendUsersLoading,setAllTrendUsersLoading] = useState(false);
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
+	const [groupCaller,setGroupCaller] = useRecoilState(groupCallerState)
+	const [inCall,setInCall] = useRecoilState(inCallState);
 	const [showScrollBottom,setShowScrollBottom] = useState(false);
 
 	const [whoToFollow,setWhoToFollow] = useState([
@@ -143,19 +145,21 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 			let ele = document.getElementById('chatArea');
 			let startY = 0;
 			let scrollY = 0;
-			ele.addEventListener('touchstart', function(e) {
-			  startY = e.touches[0].clientY;
-			});
+			if(ele){
+				ele.addEventListener('touchstart', function(e) {
+				  startY = e.touches[0].clientY;
+				});
 
-			ele.addEventListener('touchmove', function(e) {
-			  scrollY = startY - e.touches[0].clientY;
-			  if(scrollY > 40){
-			  	setShowScrollBottom(false)
-			  }
-			  if(scrollY < -40){		  	
-			  	setShowScrollBottom(true)
-			  }
-			});			
+				ele.addEventListener('touchmove', function(e) {
+				  scrollY = startY - e.touches[0].clientY;
+				  if(scrollY > 40){
+				  	setShowScrollBottom(false)
+				  }
+				  if(scrollY < -40){		  	
+				  	setShowScrollBottom(true)
+				  }
+				});	
+			}
 		}
 	},[currentChat])
 
@@ -1126,8 +1130,18 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 
 	const videoCallToUser = async() => {
 		if(currentChat){
+			setInCall(true);
 			setCurrentCaller(currentChat);
 			setCallerId(currentChat._id);
+			setCallNow(true);
+		}
+	}
+
+	const videoCallToGroup = async() => {
+		if(currentChat){
+			setInCall(true);			
+			setCurrentGroupCaller(currentChat);
+			setGroupCaller(currentChat._id);
 			setCallNow(true);
 		}
 	}
@@ -1190,8 +1204,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 				</div>
 
 				<div className={`w-full ${!currentChat && 'hidden'} overflow-hidden md:px-5 xs:sticky fixed 
-				top-0 left-0 backdrop-blur-lg bg-white/70 shadow-lg dark:shadow-purple-500/20 shadow-gray-400/10 
-				dark:bg-[#100C08]/50 flex justify-between p-2 py-3`}>
+				top-0 left-0 backdrop-blur-lg bg-white/70 shadow-lg dark:shadow-blue-500/20 shadow-gray-400/10 
+				dark:bg-[#100C08]/50 flex justify-between p-2 py-2`}>
 					
 					<div 
 					className="flex cursor-pointer items-center gap-2 w-[80%] shrink">
@@ -1270,7 +1284,9 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							<div 
 							onClick={()=>{
 								if(!currentChat?.group){
-									videoCallToUser(currentChat._id)													
+									videoCallToUser(currentChat?._id)													
+								}else if(currentChat?.group){
+									videoCallToGroup(currentChat?._id)
 								}
 							}}
 							className="p-0 cursor-pointer rounded-full transition-all duration-200 ease-in-out">

@@ -114,3 +114,13 @@ export const inCallState = atom({
 	key:"inCallState",
 	default:false
 })
+
+export const groupCallerState = atom({
+	key:"groupCallerState",
+	default:''
+})
+
+export const currentGroupPeerState = atom({
+	key:"currentGroupPeerState",
+	default:""
+})

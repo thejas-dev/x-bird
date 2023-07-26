@@ -120,7 +120,7 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 								!chat?.group ?
 								<img src={chat.image} className="sm:h-12 sm:w-12 h-[52px] w-[52px] rounded-full shadow-md" alt=""/>
 								:
-								<div className="grid-cols-2 grid sm:h-12 sm:w-12 h-[52px] w-[52px] bg-red-500 shadow-md  rounded-full overflow-hidden">
+								<div className="grid-cols-2 grid sm:h-12 sm:w-12 h-[52px] w-[52px] shadow-md  rounded-full overflow-hidden">
 									{
 										chat?.image?.map((img,j)=>{
 											if(chat.image.length === 3){

@@ -15,28 +15,25 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const [liked,setLiked] = useState(false);
 
 	useEffect(()=>{
-		if(main?.likes?.some(element=>{
-			if(element.id === currentUser?._id){
-				return true;
-			}
-			return false
-		})){
-			setLiked(true)
-		}else{
-			setLiked(false)
-		}
-	},[main])
-
-	useEffect(()=>{
 		if(isIntersecting){
 			viewThisTweet(j)
 		}		
 	},[isIntersecting])
 
+	const isLiked = () => {
+		let res = main?.likes?.some(element=>{
+			if(element?.id === currentUser?._id){
+				return true;
+			}
+			return false
+		})
+		return res
+	}
+
 
 	return(
 		<div ref={ref} key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-		border-gray-300/70 dark:border-gray-800/70 hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+		border-gray-300/70 select-none dark:border-gray-800/70 hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
 			<img 
 			onClick={()=>{
 				setCurrentWindow('Profile')
@@ -168,7 +165,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					className="flex group md:gap-[6px] gap-[3px] items-center">
 						<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
 							{
-								liked ? 
+								isLiked() ? 
 								<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 dark:group-hover:text-pink-600 transition-all duration-200 ease-in-out w-5 text-pink-600
 								focus:scale-75 transition-all duration-800 ease-in-out
 								"/>

@@ -56,7 +56,7 @@ export default function Left({setCurrentWindow,currentWindow,handleValidation}) 
 					setCurrentWindow('Home');
 					setSideBar(false);
 					window.history.replaceState({id:100},'Default',`/`);
-					// handleValidation('xai48360@gmail.com')
+					handleValidation('xai48360@gmail.com')
 				}}
 				className="flex items-center gap-4 mt-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
 					{

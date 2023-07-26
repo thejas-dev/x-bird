@@ -19,6 +19,7 @@ import Bookmark from './Bookmark';
 import CategorySelector from './CategorySelector';
 import IncomingCallNotify from './IncomingCallNotify';
 import VideoCall from './VideoCall';
+import GroupVideoCall from './GroupVideoCall'
 import axios from 'axios';
 import Lists from './Lists'
 import {useRecoilState} from 'recoil'
@@ -66,6 +67,8 @@ export default function Main({handleValidation}) {
 	const [home,setHome] = useRecoilState(homeState);
 	const [callNow,setCallNow] = useState(false);
 	const [currentCaller,setCurrentCaller] = useState('');
+	const [currentGroupCaller,setCurrentGroupCaller] = useState('');
+	const [acceptedCall,setAcceptedCall] = useState(false);
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
 	const router = useRouter();
 	const imagekit = new ImageKit({
@@ -123,7 +126,6 @@ export default function Main({handleValidation}) {
 			}
 		}
 		window.addEventListener('beforeunload',function(event){
-			  console.log("UNLOAD:1");
 			  event.preventDefault();
 			  event.returnValue = "Are you sure you want to exit the site ?!"; //"Any text"; //true; //false;
 			  return null; //"Any text"; //true; //false;
@@ -370,6 +372,7 @@ export default function Main({handleValidation}) {
 			overlayFor={overlayFor} setOverlayFor={setOverlayFor} needToReloadProfile={needToReloadProfile} 
 			setNeedToReloadProfile={setNeedToReloadProfile} callNow={callNow}
 			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
+			currentGroupCaller={currentGroupCaller} setCurrentGroupCaller={setCurrentGroupCaller}
 			/>		
 			<Bottom  currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} />	
 			
@@ -378,6 +381,12 @@ export default function Main({handleValidation}) {
 
 			<VideoCall currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} callNow={callNow}
 			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
+			acceptedCall={acceptedCall} setAcceptedCall={setAcceptedCall} />
+
+			<GroupVideoCall currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} callNow={callNow}
+			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
+			acceptedCall={acceptedCall} setAcceptedCall={setAcceptedCall} currentGroupCaller={currentGroupCaller} 
+			setCurrentGroupCaller={setCurrentGroupCaller}
 			/>
 
 			<CategorySelector showCategorySelector={showCategorySelector} setShowCategorySelector={setShowCategorySelector}

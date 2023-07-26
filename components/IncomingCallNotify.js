@@ -87,7 +87,12 @@ export default function IncomingCallNotify({callNow,
 				<img src={alertTheUserForIncomingCall?.user?.image} alt="" className="rounded-full md:h-12 h-10 md:w-12 w-10 hover:shadow-md
 				shadow-sky-500" id="image"/>
 				<div className="flex flex-col">
-					<p className="text-black dark:text-gray-200 md:text-xl text-lg font-semibold">Incoming video call</p>
+					<p className="text-black dark:text-gray-200 md:text-xl text-lg font-semibold">{
+						alertTheUserForIncomingCall?.group ? 
+						'Incoming group call'
+						:
+						'Incoming video call'
+					}</p>
 					<p className="text-gray-500 dark:text-gray-400 md:text-lg text-md ">@ {alertTheUserForIncomingCall?.user?.username}</p>
 				</div>
 
@@ -106,7 +111,12 @@ export default function IncomingCallNotify({callNow,
 				onClick={()=>{
 					acceptCall();
 				}}
-				className="px-5 py-2 rounded-lg bg-green-500 w-[50%] dark:bg-green-600 border-[1px] border-gray-300 dark:border-gray-800 text-gray-100">Accept</button>
+				className="px-5 py-2 rounded-lg bg-green-500 w-[50%] dark:bg-green-600 border-[1px] border-gray-300 dark:border-gray-800 text-gray-100">{
+					alertTheUserForIncomingCall?.group ? 
+					'Join'
+					:
+					'Accept'
+				}</button>
 			</div>
 
 		</div>
