@@ -1,6 +1,7 @@
 import {useRecoilState} from 'recoil';
 import {alertTheUserForIncomingCallState,currentUserState,currentPeerState,acceptedState,
-	remotePeerIdState,currentRoomIdState,callerIdState,inCallState} from '../atoms/userAtom';
+	remotePeerIdState,currentRoomIdState,callerIdState,inCallState,groupCallerState,
+	remotePeerIdGroupState} from '../atoms/userAtom';
 import {useState,useEffect} from 'react'; 
 import {socket} from '../service/socket';
 import {useSound} from 'use-sound';
@@ -17,7 +18,9 @@ export default function IncomingCallNotify({callNow,
 	const [videoCallNotify,setVideoCallNotify] = useState(false);
 	const [accepted,setAccepted] = useRecoilState(acceptedState);
 	const [remotePeerId, setRemotePeerId] = useRecoilState(remotePeerIdState);
+	const [remotePeerIdGroup, setRemotePeerIdGroup] = useRecoilState(remotePeerIdGroupState);
 	const [currentRoomId,setCurrentRoomId] = useRecoilState(currentRoomIdState);
+	const [groupCaller,setGroupCaller] = useRecoilState(groupCallerState)
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
 	const [inCall,setInCall] = useRecoilState(inCallState);
 	const [play, { stop }] = useSound('ringtone2.mp3',{
@@ -77,6 +80,29 @@ export default function IncomingCallNotify({callNow,
 		stopRingtone();
 	}
 
+	const acceptGroupCall = async() => {
+		setInCall(true);
+		setGroupCaller(alertTheUserForIncomingCall?.user?.id);
+		setCurrentCaller(alertTheUserForIncomingCall?.user);
+		setCurrentRoomId(alertTheUserForIncomingCall?.roomId)
+		setCallNow(true);
+		const tempUser = {
+			id:currentUser._id,
+			name:currentUser.name,
+			username:currentUser.username,
+			image:currentUser.image
+		}
+		socket.emit('group-call-accepted',{
+			user:tempUser,
+			roomId:alertTheUserForIncomingCall?.roomId,
+			peerId:alertTheUserForIncomingCall?.peerId
+		})
+		setAccepted(true)
+		setRemotePeerIdGroup(alertTheUserForIncomingCall?.peerId);
+		setAlertTheUserForIncomingCall('');
+		stopRingtone();
+	}
+
 	return (
 		<div className={`fixed ${alertTheUserForIncomingCall && videoCallNotify && !accepted ? 'top-0' : '-top-[40%]'}
 		px-3 md:py-2 py-4 bg-white dark:bg-[#100C08]/70 left-0 right-0 mx-auto dark:backdrop-blur-md border-[1px] border-gray-500/90 shadow-xl 
@@ -109,7 +135,11 @@ export default function IncomingCallNotify({callNow,
 				className="px-5 py-2 rounded-lg bg-red-500 w-[50%] dark:bg-red-600 border-[1px] border-gray-300 dark:border-gray-800 text-gray-100">Decline</button>
 				<button 
 				onClick={()=>{
-					acceptCall();
+					if(alertTheUserForIncomingCall?.group){
+						acceptGroupCall()
+					}else{
+						acceptCall();
+					}
 				}}
 				className="px-5 py-2 rounded-lg bg-green-500 w-[50%] dark:bg-green-600 border-[1px] border-gray-300 dark:border-gray-800 text-gray-100">{
 					alertTheUserForIncomingCall?.group ? 

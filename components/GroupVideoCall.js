@@ -1,6 +1,6 @@
 import {useRecoilState} from 'recoil'
 import {currentChatState,currentUserState,groupCallerState,alertTheUserForIncomingCallState,
-	currentPeerState,currentRoomIdState,inCallState,remotePeerIdState,acceptedState,
+	currentPeerState,currentRoomIdState,inCallState,remotePeerIdGroupState,acceptedState,
 	currentGroupPeerState
 } from '../atoms/userAtom'
 import { v4 as uuidv4 } from 'uuid';
@@ -43,12 +43,11 @@ export default function GroupVideoCall({
 	const [showUserLeftAlert,setShowUserLeftAlert] = useState(false);
 	const [userLeftAlert,setUserLeftAlert] = useState('');
 	const [newUserAlert,setNewUserAlert] = useState('');
-	const [currentPeerId,setCurrentPeerId] = useRecoilState(currentPeerState);
 	const [currentGroupPeerId,setCurrentGroupPeerId] = useRecoilState(currentGroupPeerState)
 	const [currentRoomId,setCurrentRoomId] = useRecoilState(currentRoomIdState);
 	const [currentFacingMode,setCurrentFacingMode] = useState('user');
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState)
-	const [remotePeerId, setRemotePeerId] = useRecoilState(remotePeerIdState);
+	const [remotePeerIdGroup, setRemotePeerIdGroup] = useRecoilState(remotePeerIdGroupState);
 	const [inCall,setInCall] = useRecoilState(inCallState);
 	const [accepted,setAccepted] = useRecoilState(acceptedState);	
 	const [videoAllowed,setVideoAllowed] = useState(true);
@@ -98,8 +97,7 @@ export default function GroupVideoCall({
 	    	console.log('Reeeejected!', e);
 	    };
 
-	    var video = document.getElementById('miniGroupStream');
-	    video.muted = true
+	    
 	    if (navigator.getUserMedia) {
 		    navigator.getUserMedia({audio: true, video: { 
     			facingMode: "user" 
@@ -110,18 +108,14 @@ export default function GroupVideoCall({
 				   track.stop()
 				});
 			    myStream = stream
-		    	video.srcObject = myStream;	
+		    	addOwnStreamToContainer(myStream)	
 		    	connectToCall()			
 		    }else{
 		    	myStream = stream
-		    	video.srcObject = myStream;
+		    	addOwnStreamToContainer(myStream);
 		    	connectToCall()					    					
 		    }		   	    
 	    }, errorCallback);
-
-		video.onloadedmetadata = function(e) {
-	        video.play()
-	    };
 
 		}
 	}
@@ -262,7 +256,7 @@ export default function GroupVideoCall({
 				   track?.stop()
 				});
 			    myStream = stream;
-			    setLocalStreamToMiniVideo(stream)		    
+			    setLocalStreamToMiniVideo(myStream)		    
 			});			
 		}
 
@@ -295,7 +289,7 @@ export default function GroupVideoCall({
 			   track.stop()
 			});
 		    myStream = stream;
-		    setLocalStreamToMiniVideo(stream)		    
+		    setLocalStreamToMiniVideo(myStream)		    
 		    
 		});
 
@@ -320,7 +314,7 @@ export default function GroupVideoCall({
 			   track.stop()
 			});
 		    myStream = stream;
-		    setLocalStreamToMiniVideo(stream)		    
+		    setLocalStreamToMiniVideo(myStream)		    
 		})
 	  }
 	}
@@ -328,11 +322,7 @@ export default function GroupVideoCall({
 	const stopCall = async() => {
 		let currRoomId = currentRoomId; 
 		socket.emit('user-left',{roomId:currRoomId,userId:currentUser._id});
-		var video = document.getElementById('miniGroupStream');
-		// var video2 = document.getElementById('videoMainStream');
 		stopAudio4()
-		video.src = "";
-		video.muted = true;
 		// video2.muted = true;
 		// video2.src = "";
 
@@ -342,8 +332,8 @@ export default function GroupVideoCall({
 		});
 		setInCall(false);
 
-		if(peers[remotePeerId]){
-			peers[remotePeerId].close();
+		if(peers[remotePeerIdGroup]){
+			peers[remotePeerIdGroup].close();
 		}
 		if(acceptedCall){
 			setAcceptedCall(false);			
@@ -355,17 +345,41 @@ export default function GroupVideoCall({
 		let currGroupCaller = groupCaller;
 		setGroupCaller('');
 		setCurrentGroupCaller('');
-		setRemotePeerId('');
+		setRemotePeerIdGroup('');
 		setCurrentRoomId('');
 		socket.emit('stop-ring',{groupCaller:currGroupCaller, roomId:currRoomId})
 	}
 
+	const addOwnStreamToContainer = async(userVideoStream) => {
+		const newDiv = document.createElement("div");
+
+		newDiv.classList.add('bg-black', 'xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
+		,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center')
+		let video = document.createElement('video')
+		video.srcObject = userVideoStream;
+		video.muted = true;
+		video.addEventListener('click',(e)=>{
+			setHideOptions(!hideOptions)
+		})
+
+		video.id = "miniGroupStream"
+		
+		video.onloadedmetadata = function(){
+			video.play()
+		}
+		video.classList.add('h-full', 'w-full', 'object-cover', 'object-center','bg-red-500')
+		newDiv.appendChild(video);
+		console.log(newDiv)
+		document.getElementById('streamContainer').append(newDiv);;
+
+	}
+
 	const addStreamToContainer = async(userVideoStream,id) => {
-		const newDiv = document.createElement("video");
+		const newDiv = document.createElement("div");
 
 		newDiv.setAttribute('id',id);
-		newDiv.classList.add('rounded-xl', 'hover:scale-105', 'transition-all',	'duration-300', 
-		'ease-in-out', 'sm:aspect-[16/9]','aspect-[9/16]','')
+		newDiv.classList.add('bg-black', 'xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
+		,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center')
 		let video = document.createElement('video')
 		video.srcObject = userVideoStream;
 
@@ -376,8 +390,31 @@ export default function GroupVideoCall({
 		video.onloadedmetadata = function(){
 			video.play()
 		}
-		video.classList.add('min-h-full', 'min-w-full', 'object-cover')
+		video.classList.add('h-full', 'w-full', 'object-cover', 'object-center')
 		newDiv.appendChild(video);
+		document.getElementById('streamContainer').append(newDiv);
+
+	}
+
+	const addStreamToContainer2 = async(stream) => {
+		const newDiv = document.createElement("div");
+
+		newDiv.setAttribute('id',stream?.id);
+		newDiv.classList.add('bg-black', 'xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
+		,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center')
+		let video = document.createElement('video')
+		video.srcObject = stream?.userVideoStream;
+
+		video.addEventListener('click',(e)=>{
+			setHideOptions(!hideOptions)
+		})
+
+		video.onloadedmetadata = function(){
+			video.play()
+		}
+		video.classList.add('h-full', 'w-full', 'object-cover', 'object-center')
+		newDiv.appendChild(video);
+		console.log(newDiv)
 		document.getElementById('streamContainer').append(newDiv);
 
 	}
@@ -397,7 +434,6 @@ export default function GroupVideoCall({
 				var errorCallback = function(e) {
 			    	console.log('Reeeejected!', e);
 			    };
-
 				if(navigator.getUserMedia){
 					navigator.getUserMedia({audio:true,video:{
 						facingMode:'user'
@@ -406,6 +442,7 @@ export default function GroupVideoCall({
 						await tracks?.forEach(function(track) {
 						   track?.stop()
 						});
+						peers[call.peer] = call;
 						myStream = stream;
 						call.answer(myStream);
 						currentCall = call;
@@ -413,7 +450,10 @@ export default function GroupVideoCall({
 						call.on('stream',userVideoStream=>{
 							stopAudio4()
 							setAcceptedCall(true);
-							setAddToContainer(userVideoStream);
+							let userStream = {
+								userVideoStream,id:call.peer
+							}
+							setAddToContainer(userStream);
 						})
 
 						call.on('close',()=>{
@@ -429,7 +469,7 @@ export default function GroupVideoCall({
 
 	useEffect(()=>{
 		if(addToContainer){
-			addStreamToContainer(addToContainer)
+			addStreamToContainer2(addToContainer)
 		}
 	},[addToContainer])
 
@@ -456,10 +496,20 @@ export default function GroupVideoCall({
 					<img src={userLeftAlert?.image} alt="" className="h-6 w-6 rounded-full" /> {userLeftAlert?.name} left
 				</div>
 
-				<div id="streamContainer" className={`h-full relative flex gap-5 p-5 w-full mx-auto flex-wrap 
-				overflow-y-scroll scrollbar-none`}>
-					<div className={`grid-cols-2 grid w-[20%] md:w-[15%] ${acceptedCall ? 'hidden' : 'block'} aspect-square 
-					rounded-full overflow-hidden absolute m-auto inset-0`}>
+				<div 
+				className={`h-full relative p-[2%] w-full mx-auto 
+				overflow-y-scroll flex items-center justify-center scrollbar-none`}>
+					<div 
+					onClick={()=>setHideOptions(!hideOptions)}		
+					id="streamContainer" className="h-full w-full md:gap-[2%] gap-[3%] flex flex-wrap items-center justify-center">
+						
+						
+
+						
+					</div>
+					
+					<div className={`grid-cols-2 grid w-[12%] md:w-[10%] ${acceptedCall ? 'hidden' : 'block'} aspect-square 
+					rounded-full overflow-hidden absolute m-auto right-2 bottom-10`}>
 						{
 							currentGroupCaller?.image?.map((img,j)=>{
 								if(currentGroupCaller.image.length === 3){
@@ -479,20 +529,10 @@ export default function GroupVideoCall({
 						}
 					</div>
 
-					<div 
-					onClick={()=>setHideOptions(!hideOptions)}					
-					className={`absolute h-full w-full left-0 sm:rounded-2xl transition-all duration-300 xs:hidden bg-gradient-to-t from-black/40 via-transparent to-transparent
-					ease-in-out ${!hideOptions ? 'bottom-0' : '-bottom-[100%]'}`}/>
 					
 					
 				</div>
-				<div className={`absolute overflow-hidden flex items-center justify-center md:aspect-[16/9] h-[150px] 
-				bg-gray-800/50 backdrop-blur-sm right-3 md:right-8 rounded-xl ${hideOptions ? 'bottom-10' : 'bottom-14'}  
-				aspect-[9/16] transition-all duration-300 ease-in-out`}>
-					<video id="miniGroupStream" 
-					onClick={()=>setHideOptions(!hideOptions)}					
-					className={`min-h-full min-w-full object-cover`} src=""></video>
-				</div>
+				
 
 
 				<div className={`absolute flex xs:gap-8 gap-5 ${hideOptions ? '-bottom-[10%]' : 'md:bottom-3 bottom-5'} items-center  

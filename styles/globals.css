@@ -1156,3 +1156,5 @@ radial-gradient(at 55% 24%, hsla(138,60%,62%,1) 0px, transparent 50%);
 .checkbox3:active ~ .slider3::before {
   transform: translate(0);
 }
+
+
