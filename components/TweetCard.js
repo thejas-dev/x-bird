@@ -76,7 +76,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 
 						main?.text?.split(' ')?.map((txt,j)=>{
 						if(txt[0] === '#'){
-							return <span> <a 
+							return <span key={j}> <a 
 							onClick={()=>{
 								window.history.replaceState({id:100},'Explore');
 								setSearchText(txt);
@@ -85,7 +85,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 								
 							className="text-sky-500 hover:underline" key={j} > {txt}</a></span>
 						}else{
-							return <span> <a 
+							return <span key={j}> <a 
 							onClick={()=>{
 								window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
 								setCurrentWindow('tweet')
