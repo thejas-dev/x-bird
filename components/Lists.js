@@ -512,7 +512,7 @@ export default function Lists({currentWindow,setCurrentWindow}) {
 						{
 							listMembers.length > 0 ?
 							listMembers.map((user,j)=>(
-								<div className="w-full xs:px-6 px-3 py-3 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 cursor-pointer transition-all 
+								<div key={j} className="w-full xs:px-6 px-3 py-3 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 cursor-pointer transition-all 
 								duration-100 ease-in-out flex items-center justify-between">
 									<div className="flex items-center gap-2 overflow-hidden">
 										<img src={user?.image} alt="" className="h-10 select-none w-10 rounded-full"/>
