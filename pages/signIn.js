@@ -3,7 +3,7 @@ import {useRecoilState} from 'recoil'
 import {currentUserState} from '../atoms/userAtom'
 import SignInComponent from '../components/SignInComponent';
 import {useEffect,useState} from 'react';
-import {loginRoute,registerRoute} from '../utils/ApiRoutes';
+import {loginRoute,registerRoute,registerNGARoute,loginNGARoute,checkNGA} from '../utils/ApiRoutes';
 import {getProviders,getSession,useSession} from 'next-auth/react'
 import axios from 'axios';
 import ImageKit from "imagekit"
@@ -22,6 +22,16 @@ export default function Home({providers,session2}) {
 	const [currentWindow,setCurrentWindow] = useState('google');
 	const [finalLoading,setFinalLoading] = useState(false);
 	const [imgurl,setImgurl] = useState('');
+	const [ngaGmail,setNgaGmail] = useState('');
+	const [ngaPassword,setNgaPassword] = useState('');
+	const [ngaConfirmPassword,setNgaConfirmPassword] = useState('');
+	const [incorrectPass,setIncorrectPass] = useState('');
+	const [passwordNotMatch,setPasswordNotMatch] = useState(false);
+	const [creatingNGAAccount,setCreatingNGAAccount] = useState(false);
+	const [accountAlreadyExist,setAccountAlreadyExist] = useState(false);
+	const [imageSet,setImageSet] = useState(false);
+
+
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
 	    privateKey : process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE,
@@ -35,8 +45,6 @@ export default function Home({providers,session2}) {
 		}
 	},[session])
 
-	//temp
-	useEffect(()=>{handleValidation()},[])
 
 	const imagePathCheck = (path) =>{
 		if(path){
@@ -56,6 +64,7 @@ export default function Home({providers,session2}) {
 	      setName(session?.user.name);
 	      setUsername(session?.user.name);
 	      setImage(session?.user.image);
+	      setImageSet(true);
 	      setEmail(session?.user.email);
 	      // const {data} = await axios.post(registerRoute,{
 	      //   email,name,username,image
@@ -87,6 +96,7 @@ export default function Home({providers,session2}) {
 			reader.addEventListener('load',()=>{
 				let uploaded_file = reader.result;
 				if(imagePathCheck(uploaded_file)){
+					setImageSet(true)
 					setImage(uploaded_file)
 				}
 			})
@@ -95,18 +105,53 @@ export default function Home({providers,session2}) {
 	}
 
 	const createAccount = async() => {
-		setFinalLoading(true)
-		imagekit.upload({
-	    file : image, //required
-	    folder:"Images",
-	    fileName : 'TNS_BIRD',   //required
-		}).then(async(response) => {
-			createAndRedirect(response.url);			
-		}).catch(error => {
-		    console.log(error.message)
-		});
+		if(creatingNGAAccount){
+			setFinalLoading(true)
+			imagekit.upload({
+		    file : image === './default.png' ? 'https://ik.imagekit.io/d3kzbpbila/default_2cwdqa7Vg.png?updatedAt=1690648406325' : image, 
+		    folder:"Images",
+		    fileName : 'TNS_BIRD',   //required
+			}).then(async(response) => {
+				createNGAAndRedirect(response.url);			
+			}).catch(error => {
+			    console.log(error.message)
+			});	
+		}else{
+			setFinalLoading(true)
+			imagekit.upload({
+		    file : image, //required
+		    folder:"Images",
+		    fileName : 'TNS_BIRD',   //required
+			}).then(async(response) => {
+				createAndRedirect(response.url);			
+			}).catch(error => {
+			    console.log(error.message)
+			});			
+		}
 		
 	}
+
+	const createNGAAndRedirect = async(imgurl) => {
+		const {data} = await axios.post(registerNGARoute,{
+			email:ngaGmail,
+			image:imgurl,
+			name,
+			password:ngaPassword,
+			username
+		})
+		if(data.status === true) {
+			if(!localStorage.getItem('xbird')){
+				localStorage.setItem('xbird',JSON.stringify(data?.user.email));
+			}
+			let tempdata = {
+				email:ngaGmail,password:ngaPassword
+			}
+			sessionStorage.setItem('trendzio-auth',JSON.stringify(tempdata));
+			setCurrentUser(data?.user);			
+		}else{
+			location.reload()
+		}
+	}	
 
 	const createAndRedirect = async(imgurl) => {
 		const {data} = await axios.post(registerRoute,{
@@ -118,13 +163,64 @@ export default function Home({providers,session2}) {
 		setCurrentUser(data?.user);
 	}
 	
+	const loginAccountNGA = async() => {
+		if (/@gmail\.com$/.test(ngaGmail)) {
+			const {data} = await axios.post(loginNGARoute,{
+				email:ngaGmail,password:ngaPassword
+			})
+			if(data.status === false){
+				setIncorrectPass(true);
+			}else{
+				setIncorrectPass(false);
+				let tempdata = {email:ngaGmail,password:ngaPassword}
+				sessionStorage.setItem('trendzio-auth',JSON.stringify(tempdata));
+				setCurrentUser(data.user);
+			}		    
+		}else{
+			setNgaGmail('');
+		}
+	}
+
+	const registerAccountNGA = async() => {
+		if (/@gmail\.com$/.test(ngaGmail)) {
+			if(ngaPassword === ngaConfirmPassword){
+				const {data} = await axios.post(checkNGA,{
+					email:ngaGmail
+				})
+				if(data.status === true){
+					setPasswordNotMatch(false);
+					setName(ngaGmail.split('@')[0])
+					setUsername(ngaGmail.split('@')[0])
+					setCurrentWindow('accountset')
+					setCreatingNGAAccount(true);
+					setAccountAlreadyExist(false);
+					setPasswordNotMatch(false)					
+				}else{
+					setAccountAlreadyExist(true);
+					setPasswordNotMatch(false)
+				}
+			}else{
+				setPasswordNotMatch(true)
+				setAccountAlreadyExist(false);
+			}
+		}else{
+			setNgaGmail('')
+		}
+	}
 
 	return (
 		<div className="h-screen w-full">
 			<SignInComponent id="google" loading={loading} name={name}
 			username={username} email={email} image={image} setName={setName} setUsername={setUsername} 
 			currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} url1Setter={url1Setter} 
-			finalLoading={finalLoading} setFinalLoading={setFinalLoading} createAccount={createAccount} />
+			finalLoading={finalLoading} setFinalLoading={setFinalLoading} createAccount={createAccount} 
+			ngaGmail={ngaGmail} setNgaGmail={setNgaGmail} ngaPassword={ngaPassword} setNgaPassword={setNgaPassword}
+			ngaConfirmPassword={ngaConfirmPassword} setNgaConfirmPassword={setNgaConfirmPassword}
+			loginAccountNGA={loginAccountNGA} registerAccountNGA={registerAccountNGA} incorrectPass={incorrectPass}
+			setIncorrectPass={setIncorrectPass} passwordNotMatch={passwordNotMatch} 
+			setPasswordNotMatch={setPasswordNotMatch} setAccountAlreadyExist={setAccountAlreadyExist} 
+			accountAlreadyExist={accountAlreadyExist} imageSet={imageSet}
+			/>
 		</div>
 
 	)

@@ -11,7 +11,7 @@ import {AiOutlineRetweet,AiFillHeart,AiOutlineHeart} from 'react-icons/ai';
 import {HiOutlineArrowLeft} from 'react-icons/hi';
 import {useRecoilState} from 'recoil'
 import {currentUserState,showLoginNowState,mainFeedState,sidebarState,searchTextState,
-	bottomHideState} from '../atoms/userAtom'
+	bottomHideState,currentHeadingState} from '../atoms/userAtom'
 import {socket} from '../service/socket';
 import TweetCard from './TweetCard';
 import DateDiff from 'date-diff';
@@ -20,7 +20,7 @@ import DateDiff from 'date-diff';
 export default function Explore({currentWindow,setCurrentWindow}) {
 	
 	const [headings,setHeadings]  = useState([])
-	const [currentHeading,setCurrentHeading] = useState('For you')
+	const [currentHeading,setCurrentHeading] = useRecoilState(currentHeadingState)
 	const [searchText,setSearchText] = useRecoilState(searchTextState);
 	const [postLoading,setPostLoading] = useState(false);
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
@@ -387,7 +387,7 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 		},{
 			title:'Business and Finance'
 		},{
-			title:'Memes'
+			title:'Sarcasm'
 		},{
 			title:'Social'
 		},{
@@ -404,7 +404,7 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 		<div id="exploreArea" className={`lg:w-[44.6%] md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 relative 
 		scrollbar-none ${postLoading ? 'overflow-hidden':'overflow-y-scroll'} scroll-smooth`}>
 			<div className="w-full xs:hidden flex items-center pt-3 justify-center">
-				<img src={currentUser?.image || 'twitter-icon.png'} 
+				<img src={currentUser?.image || 'https://ik.imagekit.io/d3kzbpbila/thejashari_QSzOWJHFV?updatedAt=1690659361414'} 
 				onClick={()=>setOpenSidebar(true)}
 				className="left-3 absolute top-3 cursor-pointer left-5 h-8 w-8 rounded-full"/>
 				<center>
@@ -414,8 +414,9 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 			<div className="mt-2 xs:hidden block bg-gray-200/40 dark:bg-gray-700/40 w-full h-[1px]"/>
 			<div 
 			onClick={()=>setShowScrollInfo(false)}
-			className={`${showScrollInfo ? 'fixed' : 'hidden'} left-0 top-0 bg-black/70 z-20 h-full w-full flex flex-col justify-center items-center`}>
-				<h1 className="text-white md:text-3xl text-xl font-semibold ">Scroll / Slide at this area for more categories</h1>
+			className={`${showScrollInfo ? 'fixed' : 'hidden'} left-0 top-0 bg-black/70 backdrop-blur-md z-20 
+			h-full w-full flex flex-col justify-center items-center`}>
+				<h1 className="text-white md:text-3xl text-xl font-semibold text-center">Scroll / Slide at this area for more categories</h1>
 			</div>
 			<div className="flex items-center w-full md:px-5 px-3 lg:gap-7 md:gap-4 gap-3 mt-2">
 				<div className="rounded-full overflow-hidden bg-gray-200/80 dark:bg-gray-800/80 w-full flex items-center p-[10px] px-4 gap-3">
@@ -423,7 +424,7 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 					<input 
 					value={searchText} onChange={(e)=>setSearchText(e.target.value)}
 					type="text" className="w-full placeholder:font-normal placeholder:text-gray-400 dark:placeholder:text-gray-600 
-					outline-none bg-transparent font-semibold text-gray-800 dark:text-gray-300" placeholder="Search Twitter"/>
+					outline-none bg-transparent font-semibold text-gray-800 dark:text-gray-300" placeholder="Search a trend"/>
 				</div>
 				<div className="p-2 hover:bg-gray-300 dark:hover:bg-gray-800/50 rounded-full cursor-pointer transition-all duration-200 ease-in-out">
 					<AiOutlineSetting className="h-5 w-5 text-black dark:text-gray-200"/>

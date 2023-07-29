@@ -1,7 +1,7 @@
 import {FiSearch} from 'react-icons/fi'
 import {useRecoilState} from 'recoil'
 import {currentChatState,currentUserState,chatsState,mainFeedState,
-	callerIdState,groupCallerState,inCallState} from '../atoms/userAtom'
+	callerIdState,groupCallerState,inCallState,currentHeadingState} from '../atoms/userAtom'
 import {HiOutlineChevronDoubleDown,HiOutlineArrowLeft,HiOutlineArrowDown} from 'react-icons/hi';
 import {RiMailAddLine,RiSendPlane2Line} from 'react-icons/ri';
 import {CiMicrophoneOn} from 'react-icons/ci';
@@ -66,6 +66,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	const [groupCaller,setGroupCaller] = useRecoilState(groupCallerState)
 	const [inCall,setInCall] = useRecoilState(inCallState);
 	const [showScrollBottom,setShowScrollBottom] = useState(false);
+	const [currentHeading,setCurrentHeading] = useRecoilState(currentHeadingState)
+
 
 	const [whoToFollow,setWhoToFollow] = useState([
 		{
@@ -1554,7 +1556,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 					<div className={`mt-2 relative bg-gray-200/70 dark:bg-gray-800/70 rounded-full px-5 py-2 focus-within:bg-transparent w-full
 					focus-within:border-sky-500 dark:focus-within:border-sky-500 border-[1.5px] dark:border-gray-900/50  flex gap-3 items-center ${currentWindow === 'Explore' && 'hidden'}`}>
 						<FiSearch className="h-5 w-5 text-gray-700 dark:text-gray-600 peer-focus:text-sky-600 "/>
-						<input type="text" id="exploreRightSearch" placeholder="Search twitter" 
+						<input type="text" id="exploreRightSearch" placeholder="Search trendy peoples" 
 						value={searchText} onChange={(e)=>setSearchText(e.target.value)}
 						className="w-full bg-transparent peer outline-none placholder:text-gray-500 text-black dark:text-gray-200 text-lg"/>
 						<div className={`absolute left-0 top-[52px] bg-white dark:bg-[#100C08]/50 dark:backdrop-blur-md w-full shadow-xl rounded-xl 
@@ -1630,7 +1632,12 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 								</div>
 							))
 						}
-						<div className="flex justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/30 transition-all duration-200 ease-in-out p-4 w-full">
+						<div 
+						onClick={()=>{
+							setCurrentWindow('Explore')
+							setCurrentHeading('Trending')
+						}}
+						className="flex justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/30 transition-all duration-200 ease-in-out p-4 w-full">
 							<h1 className="text-lg text-sky-500 font-semibold">Show more</h1>
 						</div>
 					</div>
@@ -1912,8 +1919,9 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							chats.map((chat,i)=>(
 								<div key={i}
 								onClick={()=>{setCurrentChat(chat)}}
-								className="px-3 overflow-hidden py-[14px] hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all duration-200 ease-in-out 
-								cursor-pointer flex items-center gap-3 group w-full">
+								className={`px-3 overflow-hidden py-[14px] hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all duration-200 ease-in-out 
+								cursor-pointer flex items-center gap-3 group w-full ${i === 0 ? 'border-y-[1px]':'border-b-[1px]'} 
+								border-gray-300/70 dark:border-gray-700/70 `}>
 									{
 										chat.group ? 
 										<div className="h-12 w-12 rounded-full overflow-hidden mx-auto grid grid-cols-2">

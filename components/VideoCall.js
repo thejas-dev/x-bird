@@ -5,7 +5,7 @@ import {BsMic,BsMicMute,BsCameraVideo,BsCameraVideoOff} from 'react-icons/bs';
 import {TbScreenShare} from 'react-icons/tb';
 import {useRecoilState} from 'recoil';
 import {currentPeerState,currentUserState,alertTheUserForIncomingCallState,
-	acceptedState,remotePeerIdState,currentRoomIdState,callerIdState,
+	acceptedState,remotePeerIdState,currentRoomIdState,callerIdState,inGroupCallState,
 	inCallState} from '../atoms/userAtom';
 import { useId } from "react";
 import {socket} from '../service/socket'
@@ -19,7 +19,7 @@ let currentCall;
 
 export default function VideoCall({currentWindow,setCurrentWindow,
 	callNow,setCallNow,currentCaller,setCurrentCaller,acceptedCall,
-	setAcceptedCall
+	setAcceptedCall,inCall,inGroupCall
 }) {
 	const [micAllowed,setMicAllowed] = useState(true)
 	const [videoAllowed,setVideoAllowed] = useState(true);
@@ -37,11 +37,12 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 	const [currentFacingMode,setCurrentFacingMode] = useState('user');
 	const [hideOptions,setHideOptions] = useState(false);
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
-	const [inCall,setInCall] = useRecoilState(inCallState);
+	// const [inCall,setInCall] = useRecoilState(inCallState);
 	const [showUserAlreadyInCall,setShowUserAlreadyInCall] = useState(false);
 	const [userAlreadyInCall,setUserAlreadyInCall] = useState('');
 	const [screenSharing,setScreenSharing] = useState(false);
 	const [screenSharingSupported,setScreenSharingSupported] = useState(false);
+	// const [inGroupCall,setInGroupCall] = useRecoilState(inGroupCallState)
 	const [stopAudio,setStopAudio] = useState(false);
 
 	const [play2, { stop:stopAudio3 }] = useSound('dialer.mp3',{
@@ -50,6 +51,13 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 
 	const [alertTheUserForIncomingCall,setAlertTheUserForIncomingCall] = useRecoilState(alertTheUserForIncomingCallState)
 
+	useEffect(()=>{
+		if(myStream){
+			setVideoAllowed(true);
+			setMicAllowed(true);
+			setCurrentFacingMode('user')
+		}
+	},[myStream])
 
 	const updateMic = async() => {
 		if(myStream){
@@ -223,7 +231,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 			},4000)	
 		});
 		socket.on('incoming-call',({peerId,roomId,user})=>{
-			if(!inCall){
+			if(!inCall && !inGroupCall){
 				const data = {
 					roomId,user,peerId
 				}
@@ -339,7 +347,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 		tracks?.forEach(function(track) {
 		   track?.stop()
 		});
-		setInCall(false);
+		inCall = false;
 
 		if(peers[remotePeerId]){
 			peers[remotePeerId].close();
@@ -535,14 +543,14 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 					${!hideOptions ? 'opacity-100' : 'opacity-0'}`}/>
 					<video id="videoMainStream" 
 					onClick={()=>setHideOptions(!hideOptions)}
-					className="min-h-full min-w-full object-cover" src=""></video>
+					className="h-full w-full object-cover object-center bg-black sm:rounded-2xl" src=""></video>
 				</div>
 				<div className={`absolute overflow-hidden flex items-center justify-center md:aspect-[16/9] sm:h-[25%] h-[20%] 
 				bg-gray-800/50 backdrop-blur-sm right-3 md:right-8 rounded-xl ${hideOptions ? 'bottom-10' : 'bottom-14'}  
 				aspect-[9/16] transition-all duration-300 ease-in-out`}>
 					<video id="miniStream" 
 					onClick={()=>setHideOptions(!hideOptions)}					
-					className={`min-h-full ${acceptedCall ? 'block' : 'hidden'} min-w-full object-cover`} src=""></video>					
+					className={`min-h-full ${acceptedCall ? 'block' : 'hidden'} min-w-full object-cover object-center`} src=""></video>					
 					<div className={`w-[50%] md:w-[30%] ${acceptedCall ? 'hidden' : 'block'} aspect-square rounded-full`}>
 						<img src={currentCaller?.image} alt="" className="animate-pulse rounded-full h-full w-full"/>						
 					</div>

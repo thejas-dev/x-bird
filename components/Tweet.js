@@ -97,8 +97,12 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 
 	useEffect(()=>{
 		const fetchData = async() => {
-			const {data} = await axios.get(`${findPostRoute}/${location.search.split('=')[1]}`);
-			setCurrentPost(data.post[0]);
+			try{
+				const {data} = await axios.get(`${findPostRoute}/${location.search.split('=')[1]}`);
+				setCurrentPost(data.post[0]);
+			}catch(ex){
+				setCurrentWindow('Home')
+			}
 		}
 
 		fetchData();
@@ -625,7 +629,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				<HiOutlineArrowLeft 
 				onClick={()=>{setCurrentPost('');setCurrentWindow('Home');}}
 				className="h-[18px] cursor-pointer w-[18px] text-black dark:text-gray-200"/>
-				<h1 className="select-none text-xl text-black font-semibold dark:text-gray-200">Tweet</h1>
+				<h1 className="select-none text-xl text-black font-semibold dark:text-gray-200">Trend</h1>
 			</div>
 			<div className="pt-4 flex flex-col w-full md:px-4 px-2">
 				<div 
@@ -769,7 +773,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						<textarea type="text" value={replyText}
 						onClick={()=>{setReveal(true)}} 
 						onChange={(e)=>setReplyText(e.target.value)}
-						placeholder="Tweet your reply!"
+						placeholder="Trend your reply!"
 						className={`text-xl resize-none h-7 overflow-hidden placeholder:text-gray-500 dark:text-gray-200 text-black w-full outline-none bg-transparent ${loader && 'select-none'} `}/>
 						<button 
 						onClick={replyTweet}

@@ -7,7 +7,9 @@ import {FaRegComment} from 'react-icons/fa';
 import {useRecoilState} from 'recoil';
 import {BiWorld} from 'react-icons/bi';
 import {currentChatState,homeState,currentUserState,showLoginNowState,mainFeedState,
-loaderState,sidebarState,followingFeedState,forYouState,bottomHideState} from '../atoms/userAtom'
+	loaderState,sidebarState,followingFeedState,forYouState,bottomHideState,needToRefetchState,
+	mainFeedNotAddedState
+	} from '../atoms/userAtom'
 import {MdSchedule} from 'react-icons/md'
 import {HiOutlineLocationMarker} from 'react-icons/hi';
 import {createTweet,getAllPosts,getPostByIdRoute,updatedPostRoute,
@@ -33,6 +35,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [mainFeed,setMainFeed] = useRecoilState(mainFeedState);
 	const [foryou,setForyou] = useRecoilState(forYouState);
 	const [followingFeed,setFollowingFeed] = useRecoilState(followingFeedState);
+	const [needToRefetch,setNeedToRefetch] = useRecoilState(needToRefetchState)
 	const [tweetText,setTweetText] = useState('');	
 	const [path,setPath] = useState('');
 	const [url,setUrl] = useState([]);
@@ -44,9 +47,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [emojiInput,setEmojiInput] = useState(false);
 	const [openSidebar,setOpenSidebar] = useRecoilState(sidebarState);
   	const [bottomHide,setBottomHide] = useRecoilState(bottomHideState)	
-	const [mainFeedNotAdded,setMainFeedNotAdded] = useState(true);
+	const [mainFeedNotAdded,setMainFeedNotAdded] = useRecoilState(mainFeedNotAddedState);
 	const [tweetPublic,setTweetPublic] = useState(true);
-	const [openTweetVisiblityTab,setOpenTweetVisiblityTab] = useState(false)
+	const [openTweetVisiblityTab,setOpenTweetVisiblityTab] = useState(false);
+	const [firstTimeFeed,setFirstTimeFeed] = useState(false);
 
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -187,6 +191,27 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		}
 	},[])
  	
+	useEffect(()=>{
+		if(currentUser && !firstTimeFeed){
+			setFirstTimeFeed(true)
+			setMainFeed([])
+			refetchFeed();
+		}
+	},[currentUser])
+
+	useEffect(()=>{
+		if(needToRefetch){
+			refetchFeed()
+		}
+	},[needToRefetch])
+
+	const refetchFeed = () => {
+		fetchTimeLine();
+		if(currentUser){
+			fetchFollowingFeed();
+		}
+	}
+
  	const fetchFollowingFeed = async() => {
 		const following = currentUser?.following
 		const {data} = await axios.post(getAllFollowingPosts,{
@@ -493,11 +518,12 @@ export default function Center({setCurrentWindow,currentWindow}) {
 							Home
 						</h1>
 						<div className="w-full xs:hidden flex items-center pt-3 justify-center">
-							<img src={currentUser?.image || 'twitter-icon.png'} 
+							<img src={currentUser?.image || 'https://ik.imagekit.io/d3kzbpbila/thejashari_QSzOWJHFV?updatedAt=1690659361414'} 
 							onClick={()=>setOpenSidebar(true)}
 							className="left-3 absolute top-3 cursor-pointer left-5 h-8 w-8 rounded-full"/>
 							<center>
-								<img src="twitter-icon.png" className="h-9 cursor-pointer w-9"/>
+								<img src="https://ik.imagekit.io/d3kzbpbila/thejashari_QSzOWJHFV?updatedAt=1690659361414" 
+								className="h-9 cursor-pointer w-9"/>
 							</center>
 						</div>
 						<div className="mt-2 xs:hidden block bg-gray-200/40 dark:bg-gray-800/40 w-full h-[1px]"/>
@@ -570,7 +596,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
  								value={tweetText}
  								onChange={(e)=>setTweetText(e.target.value)}
  								className={`text-xl resize-none overflow-hidden h-7 w-full placeholder:text-gray-500 ${loader ? 'text-gray-400/70 dark:text-gray-700/70' : 'text-gray-900 dark:text-gray-100'} bg-transparent outline-none`}
- 								placeholder="What is happening?!"
+ 								placeholder="Create a trend?!"
  								/>
 							</div>
 							{
@@ -630,7 +656,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 								<button 
 								onClick={()=>tweet()}
 								className={`px-5 py-[6px] select-none rounded-full text-white font-bold ${((tweetText.length>2 || url.length>0) && !loader) ? 'bg-sky-500 dark:bg-sky-500' : 'bg-sky-300 dark:bg-sky-900'}`}>
-									Tweet
+									Trend
 								</button>
 							</div>
 						</div>	
@@ -639,7 +665,8 @@ export default function Center({setCurrentWindow,currentWindow}) {
 					<div className={`w-full backdrop-blur-lg bg-white/50 dark:bg-[#100C08]/50 flex items-center justify-center overflow-hidden absolute z-30 transition-all duration-300 ease-out 
 					${mainFeed.length > 0 ? 'h-[0%]' : 'h-[50%]'}`}>
 						<span className="loader4">
-							<img src="twitter-icon.png" className="absolute -rotate-[45deg] h-[46px] w-[46px] top-0 bottom-0 left-0 right-0 m-auto" alt=""/>
+							<img src="https://ik.imagekit.io/d3kzbpbila/thejashari_QSzOWJHFV?updatedAt=1690659361414" 
+							className="absolute -rotate-[45deg] h-[46px] w-[46px] top-0 bottom-0 left-0 right-0 m-auto" alt=""/>
 						</span>
 					</div>
 					<div className="flex flex-col w-full pb-10 mb-10 h-full">

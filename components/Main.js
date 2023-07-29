@@ -10,7 +10,7 @@ import Center from './Center'
 import Bottom from './Bottom'
 import Message from './Message'
 import {loginRoutes,registerRoutes,searchProfile,getPostByIdRoute,
-	updateUserProfile,updateCategories} from '../utils/ApiRoutes'
+	updateUserProfile,updateCategories,updateThemeChangeInfo} from '../utils/ApiRoutes'
 import {RxCross2} from 'react-icons/rx'
 import Explore from './Explore';
 import Tweet from './Tweet';
@@ -24,11 +24,15 @@ import axios from 'axios';
 import Lists from './Lists'
 import {useRecoilState} from 'recoil'
 import {currentChatState,chatsState,currentUserState,mainFeedState,displayUserState,
-showLoginNowState,showClipboardState,themeState,homeState,callerIdState} from '../atoms/userAtom'
+	showLoginNowState,showClipboardState,themeState,homeState,callerIdState,needToRefetchState
+	} from '../atoms/userAtom'
 import ImageKit from "imagekit"
 import Notifications from './Notifications';
 
-export default function Main({handleValidation}) {
+let inGroupCall = false;
+let inCall = false;
+
+export default function Main() {
 	const [currentWindow,setCurrentWindow] = useState('Home');
 	const [openOverlay,setOpenOverlay] = useState([]);
 	const [overlayFor,setOverlayFor] = useState('');
@@ -70,6 +74,7 @@ export default function Main({handleValidation}) {
 	const [currentGroupCaller,setCurrentGroupCaller] = useState('');
 	const [acceptedCall,setAcceptedCall] = useState(false);
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
+	const [needToRefetch,setNeedToRefetch] = useRecoilState(needToRefetchState)
 	const router = useRouter();
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -315,8 +320,25 @@ export default function Main({handleValidation}) {
 			categories:categoryList
 		})
 		setCurrentUser(data.user);
-		setCurrentWindow('Home');
 		setHome('For you')
+		setNeedToRefetch(true)
+		if(currentUser?.themeChangeInfo){
+			setCurrentWindow('Notifications');
+			setShowThemeMenu(true);
+			setTimeout(()=>{
+				document.getElementById('themeCheckBox').checked = false;
+				setTheme('light')
+				localStorage.setItem('x-bird-theme','light')
+			},1000)
+			const {data} = await axios.post(`${updateThemeChangeInfo}/${currentUser._id}`,{
+				themeChangeInfo:true
+			})
+			if(data.status){
+				setCurrentUser(data.user)
+			}
+		}else{
+			setCurrentWindow('Home');
+		}
 	}
 
 	const editProfile = () => {
@@ -327,7 +349,7 @@ export default function Main({handleValidation}) {
 
 	return(
 		<div className="h-[100%] flex w-full justify-center dark:bg-[#100C08]">
-			<Left handleValidation={handleValidation} currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} />
+			<Left currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} />
 			{
 				currentWindow === 'Messages'?
 				<Message currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} 
@@ -376,21 +398,21 @@ export default function Main({handleValidation}) {
 			/>		
 			<Bottom  currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} />	
 			
-			<IncomingCallNotify callNow={callNow}
+			<IncomingCallNotify callNow={callNow} inCall={inCall} inGroupCall={inGroupCall} 
 			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller} />	
 
 			<VideoCall currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} callNow={callNow}
 			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
-			acceptedCall={acceptedCall} setAcceptedCall={setAcceptedCall} />
+			acceptedCall={acceptedCall} setAcceptedCall={setAcceptedCall} inCall={inCall} inGroupCall={inGroupCall} />
 
 			<GroupVideoCall currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} callNow={callNow}
 			setCallNow={setCallNow} currentCaller={currentCaller} setCurrentCaller={setCurrentCaller}
 			acceptedCall={acceptedCall} setAcceptedCall={setAcceptedCall} currentGroupCaller={currentGroupCaller} 
-			setCurrentGroupCaller={setCurrentGroupCaller}
+			setCurrentGroupCaller={setCurrentGroupCaller} inCall={inCall} inGroupCall={inGroupCall}
 			/>
 
 			<CategorySelector showCategorySelector={showCategorySelector} setShowCategorySelector={setShowCategorySelector}
-			imageUploading={imageUploading} updateCategories={updateCategoriesFunction} categoryList={categoryList} setCategoryList={setCategoryList}
+			imageUploading={imageUploading} updateCategoriesFunction={updateCategoriesFunction} categoryList={categoryList} setCategoryList={setCategoryList}
 			currentUser={currentUser}
 			/>
 

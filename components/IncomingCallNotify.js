@@ -1,7 +1,7 @@
 import {useRecoilState} from 'recoil';
 import {alertTheUserForIncomingCallState,currentUserState,currentPeerState,acceptedState,
 	remotePeerIdState,currentRoomIdState,callerIdState,inCallState,groupCallerState,
-	remotePeerIdGroupState} from '../atoms/userAtom';
+	currentGroupPeerState,inGroupCallState} from '../atoms/userAtom';
 import {useState,useEffect} from 'react'; 
 import {socket} from '../service/socket';
 import {useSound} from 'use-sound';
@@ -9,7 +9,9 @@ import {useSound} from 'use-sound';
 export default function IncomingCallNotify({callNow,
 	setCallNow,
 	currentCaller,
-	setCurrentCaller
+	setCurrentCaller,
+	inCall,
+	inGroupCall
 }) {
 	// body...
 	const [alertTheUserForIncomingCall,setAlertTheUserForIncomingCall] = useRecoilState(alertTheUserForIncomingCallState)
@@ -18,11 +20,13 @@ export default function IncomingCallNotify({callNow,
 	const [videoCallNotify,setVideoCallNotify] = useState(false);
 	const [accepted,setAccepted] = useRecoilState(acceptedState);
 	const [remotePeerId, setRemotePeerId] = useRecoilState(remotePeerIdState);
-	const [remotePeerIdGroup, setRemotePeerIdGroup] = useRecoilState(remotePeerIdGroupState);
+	// const [remotePeerIdGroup, setRemotePeerIdGroup] = useRecoilState(remotePeerIdGroupState);
+	const [currentGroupPeerId,setCurrentGroupPeerId] = useRecoilState(currentGroupPeerState)
 	const [currentRoomId,setCurrentRoomId] = useRecoilState(currentRoomIdState);
 	const [groupCaller,setGroupCaller] = useRecoilState(groupCallerState)
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
-	const [inCall,setInCall] = useRecoilState(inCallState);
+	// const [inGroupCall,setInGroupCall] = useRecoilState(inGroupCallState)
+	// const [inCall,setInCall] = useRecoilState(inCallState);
 	const [play, { stop }] = useSound('ringtone2.mp3',{
 	  onend: () => {
 	    play();
@@ -58,7 +62,7 @@ export default function IncomingCallNotify({callNow,
 	};
 
 	const acceptCall = async() => {
-		setInCall(true);
+		inCall = true;
 		setCallerId(alertTheUserForIncomingCall?.user?.id);
 		setCurrentCaller(alertTheUserForIncomingCall?.user);
 		setCurrentRoomId(alertTheUserForIncomingCall?.roomId)
@@ -81,7 +85,7 @@ export default function IncomingCallNotify({callNow,
 	}
 
 	const acceptGroupCall = async() => {
-		setInCall(true);
+		inGroupCall = true;
 		setGroupCaller(alertTheUserForIncomingCall?.user?.id);
 		setCurrentCaller(alertTheUserForIncomingCall?.user);
 		setCurrentRoomId(alertTheUserForIncomingCall?.roomId)
@@ -95,10 +99,9 @@ export default function IncomingCallNotify({callNow,
 		socket.emit('group-call-accepted',{
 			user:tempUser,
 			roomId:alertTheUserForIncomingCall?.roomId,
-			peerId:alertTheUserForIncomingCall?.peerId
+			peerId:currentGroupPeerId
 		})
 		setAccepted(true)
-		setRemotePeerIdGroup(alertTheUserForIncomingCall?.peerId);
 		setAlertTheUserForIncomingCall('');
 		stopRingtone();
 	}

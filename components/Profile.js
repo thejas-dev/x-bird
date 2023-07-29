@@ -24,7 +24,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	const [currentUserTweets,setCurrentUserTweets] = useState([]);
 	const [currentUserLikes,setCurrentUserLikes] = useState([]);
 	const [headings,setHeadings] = useState([]);
-	const [currentHeading,setCurrentHeading] = useState('Tweets');
+	const [currentHeading,setCurrentHeading] = useState('Trends');
 	const [ownAccount,setOwnAccount] = useState(false);
 	const [currentUserRetweets,setCurrentUserRetweets] = useState([]);
 	const [accountFound,setAccountFound] = useState(false);
@@ -140,7 +140,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			}else{
 				setOwnAccount(false)
 			}
-			if(currentHeading === 'Tweets'){
+			if(currentHeading === 'Trends'){
 				
 			}else if(currentHeading === 'Likes') {
 				fetchLikes();
@@ -173,13 +173,13 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	useEffect(()=>{
 		const data = [
 		{
-			title:'Tweets'
+			title:'Trends'
 		},
 		{
 			title:'Likes'
 		},
 		{
-			title:'Retweets'
+			title:'Retrends'
 		}
 		]
 		setHeadings(data)
@@ -402,7 +402,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	}
 
 	useEffect(()=>{
-		if(currentHeading === 'Tweets'){
+		if(currentHeading === 'Trends'){
 
 		}else if(currentHeading === 'Likes') {
 			fetchLikes();
@@ -697,7 +697,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				className="h-[18px] cursor-pointer w-[18px] text-black dark:text-gray-200"/>
 				<div className={`flex select-none flex-col ${!accountFound && 'hidden'}`}>
 					<h1 className="md:text-xl text-lg text-black dark:text-gray-200 font-semibold">{displayUser?.name}</h1>
-					<h1 className="text-md text-gray-500 ">{displayUser?.tweets?.length} Tweets</h1>
+					<h1 className="text-md text-gray-500 ">{displayUser?.tweets?.length} Trends</h1>
 				</div>
 			</div>
 			<div className={`h-full w-full backdrop-blur-lg bg-white dark:bg-[#100C08] flex items-center justify-center absolute z-50 ${!loading && 'hidden'}`}>
@@ -813,7 +813,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						}}
 						className={`relative whitespace-nowrap w-[100%] px-7 flex items-center justify-center 
 						${currentHeading === head.title ? 'text-black dark:text-gray-200':'text-gray-500 dark:text-gray-400'} py-3 
-						hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-bg duration-200 font-semibold select-none cursor-pointer ease-in-out `}>
+						hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-bg duration-200 font-semibold select-none cursor-pointer ease-in-out no_highlights`}>
 							{head.title}
 							<div className={`absolute bottom-0 w-[50%] rounded-full h-[4px] ${currentHeading === head.title ? 'bg-sky-500':'bg-transparent'}`}/>
 						</div>
@@ -823,13 +823,14 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			</div>
 			<div className="flex flex-col w-full mb-10">
 				{	
-					currentHeading === 'Tweets' ?
+					currentHeading === 'Trends' ?
 					currentUserTweets?.map((main,j)=>(
 						<div key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-						border-gray-300/70 dark:border-gray-700/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/50 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+						border-gray-300/70 dark:border-gray-700/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/50 
+						transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
 							<img 
 							onClick={()=>{
-								window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+								window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 								setCurrentWindow('tweet')
 							}}
 							src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
@@ -838,7 +839,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div className="flex gap-1 truncate shrink items-center ">
 										<h1 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
@@ -846,13 +847,13 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</h1>
 										<h1 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
 										<h1 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
@@ -865,14 +866,14 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								</div>
 								<div 
 								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
+									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className="w-full text-lg">
 									<h1 className="w-full text-gray-900 dark:text-gray-300 select-none break-words">{main.text}</h1>
 								</div>	
 								<div 
 								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
+									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
 									{
@@ -890,7 +891,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
 									<div 
 									onClick={()=>{
-										window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+										window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 										setCurrentWindow('tweet')
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
@@ -991,9 +992,10 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					currentHeading === 'Likes' ? 
 					currentUserLikes?.map((main,j)=>(
 						<div key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 
+						transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
 							<img onClick={()=>{
-								window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+								window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 								setCurrentWindow('tweet')
 							}}
 							src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
@@ -1001,7 +1003,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								<div className='flex gap-1 w-full shrink truncate justify-between' >
 									<div className="flex gap-1 truncate shrink items-center ">
 										<h1 onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
@@ -1009,13 +1011,13 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</h1>
 										<h1 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
 										<h1 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
@@ -1028,14 +1030,14 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								</div>
 								<div 
 								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
+									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className="w-full text-lg">
 									<h1 className="w-full text-gray-900 dark:text-gray-300 select-none break-words">{main.text}</h1>
 								</div>	
 								<div 
 								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
+									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
 									{
@@ -1053,7 +1055,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
 									<div 
 									onClick={()=>{
-										window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+										window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 										setCurrentWindow('tweet')
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
@@ -1144,7 +1146,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					:
 					currentUserRetweets?.map((main,j)=>(
 						<div key={j} className={`w-full border-b-[1.6px] p-3 pt-7 relative flex basis-auto md:gap-4 sm:gap-2 gap-2 
-						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 
+						transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
 						<div 
 						onClick={()=>{
 							setCurrentWindow('Profile')
@@ -1152,11 +1155,11 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						}}
 						className="absolute hover:underline top-1 left-[10%] flex items-center text-sm font-semibold gap-[10px] dark:text-gray-500 text-gray-600">
 							<AiOutlineRetweet className="h-4 w-4"/> {
-								ownAccount ? 'You Retweeted' : `Retweeted by ${displayUser?.name}`
+								ownAccount ? 'You Retweeted' : `Retrend by ${displayUser?.name}`
 							}
 						</div>
 							<img onClick={()=>{
-								window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+								window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 								setCurrentWindow('tweet')
 							}}
 							src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
@@ -1164,7 +1167,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								<div className='flex gap-1 w-full shrink truncate justify-between' >
 									<div className="flex gap-1 truncate shrink items-center ">
 										<h1 onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
@@ -1172,13 +1175,13 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</h1>
 										<h1 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
 										<h1 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 											setCurrentWindow('tweet')
 										}}
 										className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
@@ -1191,14 +1194,14 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								</div>
 								<div 
 								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
+									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className="w-full text-lg">
 									<h1 className="w-full text-gray-900 select-none dark:text-gray-200 break-words">{main.text}</h1>
 								</div>	
 								<div 
 								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
+									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
 									{
@@ -1216,7 +1219,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 								<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
 									<div 
 									onClick={()=>{
-										window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+										window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 										setCurrentWindow('tweet')
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">

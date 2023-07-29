@@ -33,7 +33,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 
 	return(
 		<div ref={ref} key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-		border-gray-300/70 select-none dark:border-gray-800/70 hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+		border-gray-300/70 select-none dark:border-gray-800/70 hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all z-0 duration-200 
+		no_highlights ease-in cursor-pointer`}>
 			<img 
 			onClick={()=>{
 				setCurrentWindow('Profile')
@@ -59,7 +60,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						className="text-gray-500 text-md truncate select-none hidden sm:block">@{main?.user?.username}</h1>
 						<h1 
 						onClick={()=>{
-							window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+							window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 							setCurrentWindow('tweet')
 						}}
 						className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
@@ -87,7 +88,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						}else{
 							return <span key={j}> <a 
 							onClick={()=>{
-								window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+								window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 								setCurrentWindow('tweet')
 							}} key={j} > {txt}</a></span>
 							
@@ -96,7 +97,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 				</div>	
 				<div 
 				onClick={()=>{
-					window.history.replaceState({id:100},'Tweet',`?tweet=${main?._id}`);setCurrentWindow('tweet')
+					window.history.replaceState({id:100},'Tweet',`?trend=${main?._id}`);setCurrentWindow('tweet')
 				}}
 				className={`rounded-2xl ${main?.images?.length>0 && 'mt-3'} grid rounded-2xl ${main?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
 					{
@@ -105,7 +106,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 								<div className="absolute h-full w-full z-10 transition-all duration-200 
 								ease-in-out group-hover:bg-gray-500/10"/>
-								<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
+								<img src={ur} alt="" className="select-none w-full transition-all duration-300 ease-in-out"/>
 							</div>
 							))
 
@@ -114,7 +115,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 				<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
 					<div 
 					onClick={()=>{
-						window.history.replaceState({id:100},'Tweet',`?tweet=${main?._id}`);
+						window.history.replaceState({id:100},'Tweet',`?trend=${main?._id}`);
 						setCurrentWindow('tweet')
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">
@@ -198,7 +199,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					</div>
 					<div 
 					onClick={()=>{
-						navigator.clipboard.writeText(location.toString() + '?tweet=' + main._id)
+						navigator.clipboard.writeText(location.toString() + '?trend=' + main._id)
 						setShowClipboard(true)
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">

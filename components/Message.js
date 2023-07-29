@@ -109,8 +109,8 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 							setMsgReveal(true);
 							window.history.replaceState({id:100},'Default',`?message=${chat?.name}`);
 						}}
-						className={`md:px-4 px-2 relative py-[14px] hover:bg-gray-200/40 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out 
-						${currentChat.name === chat.name ? 'bg-sky-200/60 dark:bg-sky-900/20' : ''}
+						className={`md:px-4 px-2 relative py-[14px] hover:bg-gray-200/40 dark:hover:bg-gray-800/70 
+						transition-all duration-200 ease-in-out ${currentChat.name === chat.name ? 'bg-sky-200/60 dark:bg-sky-900/20' : ''}
 						cursor-pointer flex items-center md:gap-[10px] gap-[7px] group w-full 
 
 						`}>
@@ -174,7 +174,7 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 					!searchValue &&
 					<div className="h-full w-full flex pt-[150px] flex-col items-center">
 						<h1 className="text-center text-2xl font-bold text-black dark:text-gray-100">Welcome to your inbox!</h1>
-						<p className="text-md text-gray-500 tracking-[0.5px] px-3 py-2 text-center">Start chatting, sharing and private conversations with your friends in TNS-Bird</p>
+						<p className="text-md text-gray-500 tracking-[0.5px] px-3 py-2 text-center">Start chatting, sharing and private conversations with your friends in Trendzio</p>
 					</div>
 				}
 				{

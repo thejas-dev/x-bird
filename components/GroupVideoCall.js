@@ -1,7 +1,7 @@
 import {useRecoilState} from 'recoil'
 import {currentChatState,currentUserState,groupCallerState,alertTheUserForIncomingCallState,
-	currentPeerState,currentRoomIdState,inCallState,remotePeerIdGroupState,acceptedState,
-	currentGroupPeerState
+	currentPeerState,currentRoomIdState,inCallState,inGroupCallState,remotePeerIdGroupState,
+	acceptedState,currentGroupPeerState
 } from '../atoms/userAtom'
 import { v4 as uuidv4 } from 'uuid';
 import {ImPhoneHangUp} from 'react-icons/im';
@@ -11,14 +11,14 @@ import {useSound} from 'use-sound';
 import {MdOutlineCameraswitch} from 'react-icons/md'
 import {useState,useEffect} from 'react';
 import {socket} from '../service/socket'
-
-
+import {FiMaximize,FiMinimize2} from 'react-icons/fi';
+import ReactDOM from 'react-dom';
 
 let myPeer;
 let myStream;
 let peers = {};
 let currentCall;
-
+let activeStreams = [];
 
 export default function GroupVideoCall({
 	currentWindow,
@@ -28,7 +28,9 @@ export default function GroupVideoCall({
 	setCurrentGroupCaller,
 	currentGroupCaller,
 	acceptedCall,
-	setAcceptedCall
+	setAcceptedCall,
+	inGroupCall,
+	inCall
 }) {
 	// body...
 	const [groupCaller,setGroupCaller] = useRecoilState(groupCallerState)
@@ -48,23 +50,76 @@ export default function GroupVideoCall({
 	const [currentFacingMode,setCurrentFacingMode] = useState('user');
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState)
 	const [remotePeerIdGroup, setRemotePeerIdGroup] = useRecoilState(remotePeerIdGroupState);
-	const [inCall,setInCall] = useRecoilState(inCallState);
+	// const [inCall,setInCall] = useRecoilState(inCallState);
+	// const [inGroupCall,setInGroupCall] = useRecoilState(inGroupCallState)
 	const [accepted,setAccepted] = useRecoilState(acceptedState);	
 	const [videoAllowed,setVideoAllowed] = useState(true);
 	const [streams,setStreams] = useState([]);
 	const [addToContainer,setAddToContainer] = useState('');
+	const [addToContainer2,setAddToContainer2] = useState('');
+	const [stopRing,setStopRing] = useState(false);
+	const [changeVisibleOption,setChangeVisibleOption] = useState(false);
+	const [openMaxWindow,setOpenMaxWindow] = useState(false);
+	const [maxVideoSource,setMaxVideoSource] = useState('');
 	const [play, { stop:stopAudio4 }] = useSound('dialer.mp3',{
 	  loop:true
 	});
 
+	function setMicandVideoAllowed() {
+		if(myStream){
+			setVideoAllowed(true);
+			setMicAllowed(true);
+		}		
+	}
+
+	function addMediaStream(stream) {
+	  activeStreams.push(stream);
+	}
+
+	function closeAllMediaStreams() {
+	  activeStreams.forEach((stream) => {
+	    closeMediaStream(stream);
+	  });
+
+	  activeStreams.length = 0;
+	}
+
+	function closeMediaStream(stream) {
+	  if (!stream) return;
+
+	  const tracks = stream.getTracks();
+
+	  tracks.forEach((track) => {
+	    track.stop();
+	  });
+	}
+
 	useEffect(()=>{
-		if(groupCaller && !accepted){
+		if(groupCaller){
+			inGroupCall = true			
 			setLocalStream();
-			if(currentUser?.dialerRingtonePlay){
+			if(currentUser?.dialerRingtonePlay && !accepted){
 				play()
 			}
 		}
 	},[groupCaller])
+
+	useEffect(()=>{
+		if(acceptedCall){
+			stopAudio4();
+		}
+	},[acceptedCall])
+
+	useEffect(()=>{
+		if(changeVisibleOption){
+			setChangeVisibleOption(false)
+			setHideOptions(!hideOptions)
+		}
+	},[changeVisibleOption])
+
+	const hideTheOptions = () => {
+		setChangeVisibleOption(true)
+	}
 
 	const connectToCall = async() => {
 		if(groupCaller && !accepted){
@@ -102,20 +157,23 @@ export default function GroupVideoCall({
 		    navigator.getUserMedia({audio: true, video: { 
     			facingMode: "user" 
     		}}, function(stream) {
-    		if(myStream?.getTracks()){
-			    let tracks = myStream.getTracks();
-				tracks.forEach(function(track) {
-				   track.stop()
-				});
-			    myStream = stream
-		    	addOwnStreamToContainer(myStream)	
-		    	connectToCall()			
-		    }else{
-		    	myStream = stream
-		    	addOwnStreamToContainer(myStream);
-		    	connectToCall()					    					
-		    }		   	    
-	    }, errorCallback);
+    			addMediaStream(stream)
+	    		if(myStream){
+				    let tracks = myStream.getTracks();
+					tracks.forEach(function(track) {
+					   track.stop()
+					});
+				    myStream = stream
+				    setMicandVideoAllowed()
+			    	addOwnStreamToContainer(myStream)	
+			    	connectToCall()			
+			    }else{
+			    	myStream = stream
+				    setMicandVideoAllowed()			    	
+			    	addOwnStreamToContainer(myStream);
+			    	connectToCall()					    					
+			    }		   	    
+		    }, errorCallback);
 
 		}
 	}
@@ -144,49 +202,94 @@ export default function GroupVideoCall({
 		}
 	}
 
-	const acceptAndSendStream = async(id) => {
+	useEffect(()=>{
+		if(addToContainer2){
+			addStreamToContainer(addToContainer2?.userVideoStream,addToContainer2?.id,addToContainer2?.newDiv,
+					addToContainer2?.userName,addToContainer2?.userId);
+			setAddToContainer2('');
+		}
+	},[addToContainer2])
+
+	const acceptAndSendStream = async(id,userName,userId) => {
+		stopAudio4();
 		var errorCallback = function(e) {
 	    	console.log('Reeeejected!', e);
 	    };
 
-		if(navigator.getUserMedia){
-			navigator.getUserMedia({audio: true, video: { 
-    			facingMode: "user" 
-    		}},async function(stream) {
-    			let tracks = await myStream?.getTracks();
-				await tracks?.forEach(function(track) {
-				   track?.stop()
-				});
-    			myStream = stream
-				const call = myPeer.call(id, myStream);
-				peers[id] = call;
-				currentCall = call
-				call.on('stream',userVideoStream => {
-					addStreamToContainer(userVideoStream,id);
-					setLocalStreamToMiniVideo(myStream);
-				})	    
-				call.on('close',()=>{
-					call.close();
-				})
+	    if(myStream){
+	    	
+	    	const call = await myPeer.call(id, myStream);
+			peers[id] = call;
+			currentCall = call
+			
+			const newDiv = document.createElement('div');
+			call.on('stream',userVideoStream => {
+				console.log(userVideoStream)
+				let temp = {
+					userVideoStream,id,newDiv,userName,userId
+				}
+				setAddToContainer2(temp)
+			})	    
 
-	    	}, errorCallback);
-		}
+			call.on('close',()=>{
+				newDiv.remove()
+				setOpenMaxWindow(false)
+
+			})
+	    }else{
+			if(navigator.getUserMedia){
+				navigator.getUserMedia({audio: true, video: { 
+	    			facingMode: "user" 
+	    		}},async function(stream) {
+	    			addMediaStream(stream);
+	    			let tracks = await myStream?.getTracks();
+					await tracks?.forEach(function(track) {
+					   track?.stop()
+					});
+
+	    			myStream = stream
+				    setMicandVideoAllowed()
+					const call = myPeer.call(id, myStream);
+					
+					peers[id] = call;
+					currentCall = call
+					
+					const newDiv = document.createElement('div');
+					call.on('stream',userVideoStream => {
+						let temp = {
+							userVideoStream,id,newDiv,userName,userId
+						}
+						setAddToContainer2(temp)
+						setLocalStreamToMiniVideo(myStream);
+					})	    
+					call.on('close',()=>{
+						newDiv.remove()
+						setOpenMaxWindow(false)
+
+					})
+
+		    	}, errorCallback);
+			}	    	
+	    }
+
 		
 
 	}
 
 	useEffect(()=>{
 		socket.on('new-group-user',({user,peerId})=>{
-			setNewUserAlert(user)
-			acceptAndSendStream(peerId);
-			setShowNewUserAlert(true);
 			stopAudio4();
+			inGroupCall = true;
+			setNewUserAlert(user)
+			acceptAndSendStream(peerId,user.name,user.id);
+			setShowNewUserAlert(true);
+			setAcceptedCall(true);
 			setTimeout(()=>{
 				setShowNewUserAlert(false)
 			},4000)	
 		});
 		socket.on('incoming-group-call',({peerId,roomId,user})=>{
-			if(!inCall){
+			if(!inCall && !inGroupCall){
 				const data = {
 					roomId,user,peerId,group:true
 				}
@@ -200,12 +303,48 @@ export default function GroupVideoCall({
 				socket.emit('user-in-call',{currUser,user});
 			}
 		})
+		socket.on('user-left-group',({userId,user,peerId})=>{
+			if(peers[peerId]) peers[peerId].close();
+			setUserLeftAlert(user);
+			setShowUserLeftAlert(true)
+			setTimeout(()=>{
+				setShowUserLeftAlert(false)
+			},4000)	
+		})
+		socket.on('stop-ring-group',({id,peerId})=>{
+			setStopRing(id)
+		})
+		socket.on('user-already-in-call',({currUser})=>{
+			setUserAlreadyInCall(currUser);
+			setShowUserAlreadyInCall(true)
+			setTimeout(()=>{
+				setShowUserAlreadyInCall(false)
+			},4000)
+		})
 
 		return ()=>{
 			socket.off('incoming-group-call')
 			socket.off('new-group-user')
+			socket.off('user-left-group')
+			socket.off('stop-ring-group')
 		}
 	},[])
+
+	useEffect(()=>{
+		if(stopRing){
+			const id = stopRing;
+			setStopRing('');
+			stopTheRingFun(id);
+		}
+	},[stopRing])
+
+	const stopTheRingFun = async(id) => {
+
+		if(alertTheUserForIncomingCall?.roomId  === id){
+			setAlertTheUserForIncomingCall('');			
+		}
+
+	}
 
 	useEffect(()=>{
 
@@ -256,6 +395,7 @@ export default function GroupVideoCall({
 				   track?.stop()
 				});
 			    myStream = stream;
+				setMicandVideoAllowed()
 			    setLocalStreamToMiniVideo(myStream)		    
 			});			
 		}
@@ -266,7 +406,6 @@ export default function GroupVideoCall({
 
 	  const videoTrack = myStream.getVideoTracks()[0];
 	  if(videoTrack.getSettings().facingMode === 'user'){
-	  	
 
 		navigator.getUserMedia({
 		  audio: true,
@@ -274,6 +413,8 @@ export default function GroupVideoCall({
 		    facingMode: { exact: "environment" },
 		  },
 		},function(stream){
+	  		setCurrentFacingMode('environment')
+	  		addMediaStream(stream);
 			if(currentCall){
 				currentCall.peerConnection.getSenders().forEach((sender) => {
 			    if(sender.track.kind === "audio" && stream.getAudioTracks().length > 0){
@@ -289,16 +430,18 @@ export default function GroupVideoCall({
 			   track.stop()
 			});
 		    myStream = stream;
+			setMicandVideoAllowed()
 		    setLocalStreamToMiniVideo(myStream)		    
 		    
 		});
 
 	  }else{
 	  	
-
 		navigator.getUserMedia({audio: true, video: { 
 			facingMode: "user" 
 		}},async function(stream) {
+	  		setCurrentFacingMode('user')	  	
+	  		addMediaStream(stream)
 			if(currentCall){
 				currentCall.peerConnection.getSenders().forEach((sender) => {
 			    if(sender.track.kind === "audio" && stream.getAudioTracks().length > 0){
@@ -314,6 +457,7 @@ export default function GroupVideoCall({
 			   track.stop()
 			});
 		    myStream = stream;
+			setMicandVideoAllowed()		    
 		    setLocalStreamToMiniVideo(myStream)		    
 		})
 	  }
@@ -321,16 +465,33 @@ export default function GroupVideoCall({
 
 	const stopCall = async() => {
 		let currRoomId = currentRoomId; 
-		socket.emit('user-left',{roomId:currRoomId,userId:currentUser._id});
-		stopAudio4()
-		// video2.muted = true;
-		// video2.src = "";
 
+		socket.emit('user-left-group',{
+			roomId:currRoomId,
+			userId:currentUser._id, 
+			peerId:currentGroupPeerId,
+			user:{
+				name:currentUser.name,
+				image:currentUser.image
+			}
+		});
+		stopAudio4()
+
+		const parent = document.getElementById("streamContainer")
+		while (parent.firstChild) {
+		    parent.firstChild.remove()
+		}
+
+		closeAllMediaStreams();
 		let tracks = myStream?.getTracks();
 		tracks?.forEach(function(track) {
 		   track?.stop()
 		});
-		setInCall(false);
+		inGroupCall = false;
+		setOpenMaxWindow(false)
+
+		myStream = '';
+		setMicandVideoAllowed()
 
 		if(peers[remotePeerIdGroup]){
 			peers[remotePeerIdGroup].close();
@@ -347,76 +508,238 @@ export default function GroupVideoCall({
 		setCurrentGroupCaller('');
 		setRemotePeerIdGroup('');
 		setCurrentRoomId('');
-		socket.emit('stop-ring',{groupCaller:currGroupCaller, roomId:currRoomId})
+		socket.emit('stop-ring-group',{callerId:currGroupCaller, roomId:currRoomId, peerId:currentGroupPeerId})
 	}
 
 	const addOwnStreamToContainer = async(userVideoStream) => {
 		const newDiv = document.createElement("div");
 
 		newDiv.classList.add('bg-black', 'xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
-		,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center')
+		,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center','relative')
 		let video = document.createElement('video')
 		video.srcObject = userVideoStream;
 		video.muted = true;
-		video.addEventListener('click',(e)=>{
-			setHideOptions(!hideOptions)
+		newDiv.addEventListener('click',(e)=>{
+			hideTheOptions()
 		})
 
-		video.id = "miniGroupStream"
+		let maxDiv = document.createElement('div');
+		maxDiv.classList.add("absolute", "right-1" ,"bottom-2", "p-[6px]", "hover:scale-105", "transition-all", "duration-200" ,"ease-in-out", 
+			"rounded-full", "cursor-pointer", "bg-black/30", "backdrop-blur-sm", "text-white",'z-50')
+
+		maxDiv.addEventListener('click',()=>{
+			setOpenMaxWindow(true);
+			let maxVideo = document.getElementById('videoMaxStream');
+			maxVideo.srcObject = video.srcObject;
+			maxVideo.muted = true
+			maxVideo.autoplay = true;
+
+			maxVideo.onloadedmetadata = function(){
+				maxVideo.play()
+			}
+		})
+
+		const iconElement = <FiMaximize className="h-5 w-5 text-white" />;
+		ReactDOM.render(iconElement, maxDiv);	
+
+		newDiv.appendChild(maxDiv)
+
+		video.setAttribute('id','miniGroupStream')
 		
 		video.onloadedmetadata = function(){
 			video.play()
 		}
-		video.classList.add('h-full', 'w-full', 'object-cover', 'object-center','bg-red-500')
+		video.classList.add('h-full', 'w-full', 'object-cover', 'object-center','bg-black')
 		newDiv.appendChild(video);
-		console.log(newDiv)
-		document.getElementById('streamContainer').append(newDiv);;
+				
+		document.getElementById('streamContainer').append(newDiv);
+		styleByChild()
 
 	}
 
-	const addStreamToContainer = async(userVideoStream,id) => {
-		const newDiv = document.createElement("div");
+	const addStreamToContainer = async(userVideoStream,id,newDiv,userName,userId) => {
+		if(!newDiv){
 
-		newDiv.setAttribute('id',id);
-		newDiv.classList.add('bg-black', 'xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
-		,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center')
-		let video = document.createElement('video')
-		video.srcObject = userVideoStream;
+			const newDiv = document.createElement("div");
+			newDiv.setAttribute('id',id);
+			newDiv.setAttribute('name',userId);
+			newDiv.classList.add('bg-black', 'xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
+			,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center','relative')
+			let video = document.createElement('video')
+			video.srcObject = userVideoStream;
 
-		video.addEventListener('click',(e)=>{
-			setHideOptions(!hideOptions)
-		})
+			newDiv.addEventListener('click',(e)=>{
+				hideTheOptions()
+			})
+			
+			let maxDiv = document.createElement('div');
+			maxDiv.classList.add("absolute", "right-1" ,"bottom-2", "p-[6px]", "hover:scale-105", "transition-all", "duration-200" ,"ease-in-out", 
+				"rounded-full", "cursor-pointer", "bg-black/30", "backdrop-blur-sm", "text-white",'z-50')
 
-		video.onloadedmetadata = function(){
-			video.play()
+			maxDiv.addEventListener('click',()=>{
+				setOpenMaxWindow(true);
+				let maxVideo = document.getElementById('videoMaxStream');
+				maxVideo.srcObject = video.srcObject;
+				maxVideo.muted = true
+				maxVideo.autoplay = true;
+
+				maxVideo.onloadedmetadata = function(){
+					maxVideo.play()
+				}
+			})
+
+			const iconElement = <FiMaximize className="h-5 w-5 text-white" />;
+			ReactDOM.render(iconElement, maxDiv);
+			
+			newDiv.appendChild(maxDiv)
+
+			video.classList.add('h-full', 'w-full', 'object-cover', 'object-center','bg-black')
+			newDiv.appendChild(video);
+			document.getElementById('streamContainer').append(newDiv);
+			document.getElementById('streamContainer').scrollIntoView({ behavior: 'smooth', block: 'end' });
+			styleByChild()
+			
+			video.onloadedmetadata = function(){
+				video.play()
+			}
+
+		}else{
+
+			newDiv.setAttribute('name',userId);			
+			newDiv.setAttribute('id',id);
+			newDiv.classList.add('bg-black', 'xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
+			,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center','relative')
+			let video = document.createElement('video')
+			video.srcObject = userVideoStream;
+
+			newDiv.addEventListener('click',(e)=>{
+				hideTheOptions()
+			})
+
+			let maxDiv = document.createElement('div');
+			maxDiv.classList.add("absolute", "right-1" ,"bottom-2", "p-[6px]", "hover:scale-105", "transition-all", "duration-200" ,"ease-in-out", 
+				"rounded-full", "cursor-pointer", "bg-black/30", "backdrop-blur-sm", "text-white",'z-50')
+
+			maxDiv.addEventListener('click',()=>{
+				setOpenMaxWindow(true);
+				let maxVideo = document.getElementById('videoMaxStream');
+				maxVideo.srcObject = video.srcObject;
+				maxVideo.muted = true
+				maxVideo.autoplay = true;
+
+				maxVideo.onloadedmetadata = function(){
+					maxVideo.play()
+				}
+			})
+
+			const iconElement = <FiMaximize className="h-5 w-5 text-white" />;
+			ReactDOM.render(iconElement, maxDiv);
+
+			newDiv.appendChild(maxDiv)
+			
+			video.classList.add('h-full', 'w-full', 'object-cover', 'object-center','bg-black')
+			newDiv.appendChild(video);
+			document.getElementById('streamContainer').append(newDiv);
+			document.getElementById('streamContainer').scrollIntoView({ behavior: 'smooth', block: 'end' });
+			styleByChild()
+			
+			video.onloadedmetadata = function(){
+				video.play()
+			}
 		}
-		video.classList.add('h-full', 'w-full', 'object-cover', 'object-center')
-		newDiv.appendChild(video);
-		document.getElementById('streamContainer').append(newDiv);
-
 	}
 
 	const addStreamToContainer2 = async(stream) => {
-		const newDiv = document.createElement("div");
+		if(!stream.newDiv){
 
-		newDiv.setAttribute('id',stream?.id);
-		newDiv.classList.add('bg-black', 'xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
-		,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center')
-		let video = document.createElement('video')
-		video.srcObject = stream?.userVideoStream;
+			const newDiv = document.createElement("div");
+			newDiv.setAttribute('id',stream?.id);
+			newDiv.classList.add('xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
+			,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center','relative')
+			let video = document.createElement('video')
+			
+			video.srcObject = stream?.userVideoStream;
 
-		video.addEventListener('click',(e)=>{
-			setHideOptions(!hideOptions)
-		})
+			newDiv.addEventListener('click',(e)=>{
+				hideTheOptions()
+			})
 
-		video.onloadedmetadata = function(){
-			video.play()
+			let maxDiv = document.createElement('div');
+			maxDiv.classList.add("absolute", "right-1" ,"bottom-2", "p-[6px]", "hover:scale-105", "transition-all", "duration-200" ,"ease-in-out", 
+				"rounded-full", "cursor-pointer", "bg-black/30", "backdrop-blur-sm", "text-white",'z-50')
+
+			maxDiv.addEventListener('click',()=>{
+				setOpenMaxWindow(true);
+				let maxVideo = document.getElementById('videoMaxStream');
+				maxVideo.srcObject = video?.srcObject;
+				maxVideo.muted = true
+				maxVideo.autoplay = true;
+
+				maxVideo.onloadedmetadata = function(){
+					maxVideo.play()
+				}
+			})
+
+			const iconElement = <FiMaximize className="h-5 w-5 text-white" />;
+			ReactDOM.render(iconElement, maxDiv);
+
+			newDiv.appendChild(maxDiv)
+
+			video.classList.add('h-full', 'w-full', 'object-cover', 'object-center','bg-black')
+			newDiv.append(video);
+
+			document.getElementById('streamContainer').append(newDiv);
+			document.getElementById('streamContainer').scrollIntoView({ behavior: 'smooth', block: 'end' });
+			styleByChild()
+
+			video.onloadedmetadata = function(){
+				video.play()
+			}			
+		}else{
+
+			stream.newDiv.setAttribute('id',stream?.id);
+			stream.newDiv.classList.add('xs:h-[230px]', 'h-[250px]', 'md:w-[32%]', 'xs:w-[48%]', 'overflow-hidden'
+			,'w-[98%]', 'rounded-2xl', 'flex', 'items-center', 'justify-center','relative')
+			let video = document.createElement('video')
+			
+			video.srcObject = stream?.userVideoStream;
+
+			stream?.newDiv?.addEventListener('click',(e)=>{
+				hideTheOptions()
+			})
+
+			let maxDiv = document.createElement('div');
+			maxDiv.classList.add("absolute", "right-1" ,"bottom-2", "p-[6px]", "hover:scale-105", "transition-all", "duration-200" ,"ease-in-out", 
+				"rounded-full", "cursor-pointer", "bg-black/30", "backdrop-blur-sm", "text-white",'z-50')
+
+			maxDiv.addEventListener('click',()=>{
+				setOpenMaxWindow(true);
+				let maxVideo = document.getElementById('videoMaxStream');
+				maxVideo.srcObject = video.srcObject;
+				maxVideo.muted = true
+				maxVideo.autoplay = true;
+
+				maxVideo.onloadedmetadata = function(){
+					maxVideo.play()
+				}
+			})
+
+			const iconElement = <FiMaximize className="h-5 w-5 text-white" />;
+			ReactDOM.render(iconElement, maxDiv);
+
+			stream.newDiv.appendChild(maxDiv)
+
+			video.classList.add('h-full', 'w-full', 'object-cover', 'object-center','bg-black')
+			stream.newDiv.append(video);
+
+			document.getElementById('streamContainer').append(stream.newDiv);
+			document.getElementById('streamContainer').scrollIntoView({ behavior: 'smooth', block: 'end' });
+			styleByChild()
+
+			video.onloadedmetadata = function(){
+				video.play()
+			}			
 		}
-		video.classList.add('h-full', 'w-full', 'object-cover', 'object-center')
-		newDiv.appendChild(video);
-		console.log(newDiv)
-		document.getElementById('streamContainer').append(newDiv);
-
 	}
 
 	useEffect(() => {
@@ -428,41 +751,75 @@ export default function GroupVideoCall({
 				callId = id;
 				setCurrentGroupPeerId(id)
 			})
+
 			myPeer = peer
 
-			myPeer.on('call',call=>{
+			myPeer.on('call',async function(call){
+				let constraints = {
+					audio:true,
+					video:{
+						facingMode:'user'
+					}
+				}
 				var errorCallback = function(e) {
 			    	console.log('Reeeejected!', e);
 			    };
-				if(navigator.getUserMedia){
-					navigator.getUserMedia({audio:true,video:{
-						facingMode:'user'
-					}},async function(stream){
-						let tracks = await myStream?.getTracks();
-						await tracks?.forEach(function(track) {
-						   track?.stop()
-						});
-						peers[call.peer] = call;
-						myStream = stream;
-						call.answer(myStream);
-						currentCall = call;
+				if(!myStream){
+					try{
+						navigator?.getUserMedia(constraints,async function(stream){
+		  					addMediaStream(stream)
+							myStream = stream
+							setMicandVideoAllowed()
 
-						call.on('stream',userVideoStream=>{
-							stopAudio4()
-							setAcceptedCall(true);
-							let userStream = {
-								userVideoStream,id:call.peer
-							}
-							setAddToContainer(userStream);
-						})
+							peers[call.peer] = call;
+						
+							call.answer(myStream);
+							currentCall = call;
+							
+							let newDiv = document.createElement('div')
+							call.on('stream',userVideoStream=>{
+								stopAudio4()
+								setAcceptedCall(true);
+								let userStream = {
+									userVideoStream,id:call?.peer,newDiv
+								}
+								setAddToContainer(userStream);
+							})
 
-						call.on('close',()=>{
-							call.close();
-							console.log("user left")
-						})
+							call.on('close',()=>{
+								newDiv.remove()
+								setOpenMaxWindow(false)
+								console.log("user left")
+							})
 
-					},errorCallback)
+						},errorCallback)
+					}catch(ex){
+						errorCallback(ex)
+					}
+					
+				}else{
+					peers[call.peer] = call;
+					
+					call.answer(myStream);
+					currentCall = call;
+
+					let newDiv = document.createElement('div')
+					call.on('stream',userVideoStream=>{
+						stopAudio4()
+						setAcceptedCall(true);
+						let userStream = {
+							userVideoStream,id:call.peer,newDiv
+						}
+						setAddToContainer(userStream);
+					})
+
+					call.on('close',()=>{
+						newDiv.remove();
+						setOpenMaxWindow(false)
+						console.log("user left")
+					})
 				}
+				
 			})
 		})
 	}, [])
@@ -473,7 +830,34 @@ export default function GroupVideoCall({
 		}
 	},[addToContainer])
 
+	const styleByChild = () => {
+		// const parentElement = document.getElementById('streamContainer');
+	   
+	    // const childDivElements = parentElement.querySelectorAll('div');
 
+	    // if(childDivElements.length > 0){
+		//     const numberOfChildren = childDivElements?.length;
+
+		//     switch(numberOfChildren){
+		//     	case 1:
+		//     		parentElement.classList.add('items-center');
+		//     		parentElement.classList.remove('mt-[50px]')
+		//     		break;
+		//     	case 2:
+		//     		parentElement.classList.remove('items-center');
+		//     		parentElement.classList.add('mt-[50px]')
+		//     		break;
+		//     	default:
+		//     		parentElement.classList.add('items-center');
+		//     		parentElement.classList.remove('mt-[50px]')
+		//     		break;
+
+		//     }	    	
+	    // }
+
+	}
+
+	
 
 
 
@@ -497,11 +881,11 @@ export default function GroupVideoCall({
 				</div>
 
 				<div 
+				onClick={()=>setHideOptions(!hideOptions)}		
 				className={`h-full relative p-[2%] w-full mx-auto 
-				overflow-y-scroll flex items-center justify-center scrollbar-none`}>
+				 flex items-center justify-center `}>
 					<div 
-					onClick={()=>setHideOptions(!hideOptions)}		
-					id="streamContainer" className="h-full w-full md:gap-[2%] gap-[3%] flex flex-wrap items-center justify-center">
+					id="streamContainer" className="h-full overflow-y-scroll scrollbar-none md:py-0 py-10 w-full md:gap-[2%] gap-[3%] z-30 flex flex-wrap items-center justify-center">
 						
 						
 
@@ -509,7 +893,7 @@ export default function GroupVideoCall({
 					</div>
 					
 					<div className={`grid-cols-2 grid w-[12%] md:w-[10%] ${acceptedCall ? 'hidden' : 'block'} aspect-square 
-					rounded-full overflow-hidden absolute m-auto right-2 bottom-10`}>
+					rounded-full overflow-hidden absolute m-auto right-2 bottom-10 z-40`}>
 						{
 							currentGroupCaller?.image?.map((img,j)=>{
 								if(currentGroupCaller.image.length === 3){
@@ -536,7 +920,7 @@ export default function GroupVideoCall({
 
 
 				<div className={`absolute flex xs:gap-8 gap-5 ${hideOptions ? '-bottom-[10%]' : 'md:bottom-3 bottom-5'} items-center  
-				left-0 right-0 mx-auto justify-center transition-all duration-300 ease-in-out flex-wrap`}>
+				left-0 right-0 mx-auto justify-center z-50 transition-all duration-300 ease-in-out flex-wrap`}>
 					<div 
 					onClick={()=>{if(myStream) switchCamera()}}
 					className={`${videoAllowed ? 'bg-sky-500' : 'bg-gray-500/50'} select-none outline-none transition-all duration-200 ease-in-out p-2 rounded-full cursor-pointer`}>						
@@ -579,6 +963,42 @@ export default function GroupVideoCall({
 				</div>	
 			</div>
 
+			<div className={`fixed ${openMaxWindow ? 'h-full w-full' : 'h-0 w-0'} left-0 bg-black/30 
+			backdrop-blur-md top-0 right-0 bottom-0 m-auto z-30 flex items-center justify-center transition-all
+			duration-300 ease-in-out`}>
+				<div className={`sm:h-[85%] h-full relative sm:rounded-2xl md:aspect-[16/9] mx-auto aspect-[9/16] overflow-hidden`}>
+					<div 
+					onClick={()=>{
+						setOpenMaxWindow(false);
+						let videoElement = document.getElementById('videoMaxStream');
+						videoElement.srcObject = null;
+						videoElement.src = ''
+					}}
+					className={`absolute right-2 hover:scale-110 transition-all duration-300 
+ 					ease-in-out rounded-full cursor-pointer bg-black/20 backdrop-blur-sm text-white 
+ 					cursor-pointer z-30 ${!hideOptions ? 'top-2' : '-top-[100px]'} p-1 h-8 w-8`}>	
+ 						<FiMinimize2 className='h-full w-full text-white'/>
+					</div>
+					<div 
+					onClick={()=>setHideOptions(!hideOptions)}					
+					className={`absolute h-full w-full top-0 left-0 sm:rounded-2xl transition-all duration-300 xs:hidden bg-gradient-to-t from-black/40 via-transparent to-transparent
+					ease-in-out 
+					${!hideOptions ? 'opacity-100' : 'opacity-0'}`}/>
+					<video id="videoMaxStream" 
+					onClick={()=>setHideOptions(!hideOptions)}
+					className="h-full w-full object-cover object-center bg-black sm:rounded-2xl" src=""></video>
+				</div>
+
+			</div>
+
+
+
+
+
+
+
+
+
 
 		</div>
 
@@ -603,3 +1023,14 @@ export default function GroupVideoCall({
 // 		)
 // 	})
 // }
+
+
+
+// <div className='bg-black xs:h-[230px] h-[250px] md:w-[32%] xs:w-[48%] overflow-hidden w-[98%] 
+// 						rounded-2xl flex items-center justify-center relative'>
+// 							<video className="h-full w-full object-cover object-center bg-black" src="sample-mp4-file.mp4"></video>
+// 							<div className="absolute right-1 bottom-2 p-[6px] hover:scale-105 transition-all duration-200 
+// 							ease-in-out rounded-full cursor-pointer bg-black/30 backdrop-blur-sm text-white">
+// 								<FiMaximize className='h-5 w-5 text-white'/>
+// 							</div>
+// 						</div>	

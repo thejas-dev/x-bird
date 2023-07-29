@@ -218,7 +218,8 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 						{
 							bookmarkTweets.map((main,j)=>(
 								<div key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-								border-gray-300/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/40 dark:border-gray-800/70 transition-all z-0 duration-200 ease-in cursor-pointer`}>
+								border-gray-300/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/40 dark:border-gray-800/70 transition-all no_highlights
+								z-0 duration-200 ease-in cursor-pointer`}>
 									<img src={main.user.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
 									<div className="flex flex-col w-full overflow-hidden">
 										<div className='flex gap-1 w-full shrink truncate justify-between' >
@@ -239,7 +240,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 												className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
 												<h1 
 												onClick={()=>{
-													window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+													window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 													setCurrentWindow('tweet')
 												}}
 												className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
@@ -252,14 +253,14 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 										</div>
 										<div 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 										}}
 										className="w-full text-lg">
 											<h1 className="w-full text-gray-900 dark:text-gray-200 select-none break-words">{main.text}</h1>
 										</div>	
 										<div 
 										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);setCurrentWindow('tweet')
+											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 										}}
 										className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
 											{
@@ -277,7 +278,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 										<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
 											<div 
 											onClick={()=>{
-												window.history.replaceState({id:100},'Tweet',`?tweet=${main._id}`);
+												window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 												setCurrentWindow('tweet')
 											}}
 											className="flex group md:gap-[6px] gap-[3px] items-center">
@@ -372,9 +373,9 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 						<div className="flex flex-col relative gap-8 w-auto select-none">
 							<img src="https://abs.twimg.com/responsive-web/client-web/book-in-bird-cage-400x200.v1.366bcfc9.png" alt=""
 							className=""/>
-							<div className="flex absolute gap-[10px] top-[100%] flex-col">
-								<h1 className="text-3xl md:text-start text-center dark:text-gray-200 text-black font-bold">Save Tweets for later</h1>
-								<h1 className="text-md text-center md:text-start text-gray-600">Don’t let the good ones fly away! Bookmark Tweets to easily find them again in the future.</h1>
+							<div className="flex px-5 gap-[10px] flex-col">
+								<h1 className="text-3xl md:text-start text-center dark:text-gray-200 text-black font-bold">Save trends for later</h1>
+								<h1 className="text-md text-center md:text-start text-gray-600">Don’t let the good ones fly away! Bookmark Trends to easily find them again in the future.</h1>
 							</div>
 						</div>
 					</div>

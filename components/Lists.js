@@ -591,7 +591,7 @@ export default function Lists({currentWindow,setCurrentWindow}) {
 						
 					</div>
 					<img src={currentList?.backgroundImage || "https://th.bing.com/th/id/R.e33a470fc45adbdec1ea3ea7508893a2?rik=pqdkXe7Fm13ZYQ&riu=http%3a%2f%2fsocialmediainvestigation.com%2fwp-content%2fuploads%2f2015%2f07%2fiStock_000027835386Large.jpg&ehk=jFjZ4j6dWie5Tvxfna%2b1MA4%2b3qV2JH62SjdhP6VgR6A%3d&risl=&pid=ImgRaw&r=0"} 
-					alt="" className="w-full h-[310px] mt-[60px]" />
+					alt="" className="w-full  mt-[60px]" />
 					<div className="w-full flex flex-col items-center mt-3">
 						<h1 className="text-xl font-bold text-black dark:text-gray-100">{currentList?.name}</h1>
 						<div 
@@ -732,7 +732,7 @@ export default function Lists({currentWindow,setCurrentWindow}) {
 						currentUser?.lists?.map((list,j)=>(
 							<div key={j} 
 							onClick={()=>{setCurrentList(list);setListOpen(true)}}
-							className="w-full hover:bg-gray-200/40 hover:bg-gray-800/50 cursor-pointer transition-all duration-200
+							className="w-full hover:bg-gray-200/40 dark:hover:bg-gray-800/50 cursor-pointer transition-all duration-200
 							ease-in-out flex items-center gap-4 px-3 py-2 rounded-xl">
 								<div className="p-3 rounded-lg bg-sky-300/50 dark:bg-sky-700/50">
 									<RiFileList3Line className="h-8 w-8 text-blue-700 dark:text-blue-300"/>

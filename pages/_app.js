@@ -7,7 +7,8 @@ export default function App({ Component, pageProps: { session, ...pageProps} }) 
   return (
   <>
   <Head>
-    <title>TNS-BIRD</title>
+    <title>Trend.zio</title>
+    <link rel="shortcut icon" href="./favicon.ico"/>
   </Head>
   <SessionProvider session={session}>
   	<RecoilRoot>

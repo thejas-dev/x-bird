@@ -3,8 +3,6 @@ import TwitterApi from  'twitter-api-v2'
 export default async function handler(req, res) {
 	let {refreshToken} = req.query;
 
-	const CLIENT_ID = 'SjFRRG40N1JrN3FnTjhVc05MNzk6MTpjaQ'
-  	const	CLIENT_SECRET = 'Wzx7zLqLV9rS3QbAftLpOawY3ZGAbLJyL2RlSVsnuiNObOEGPG'
 
 	const client = new TwitterApi({ clientId: CLIENT_ID, clientSecret: CLIENT_SECRET });
 	console.log(refreshToken)
@@ -82,3 +80,78 @@ export default function handler(req, res) {
   }
  
 }
+
+
+
+
+
+// async function getLink() {
+	// 	// body...
+	// 	// const authLink = await client.generateAuthLink(CALLBACK_URL);
+	// 	if(localStorage.getItem('temporary')){
+	// 		makeClient();
+	// 	}else if(localStorage.getItem('x-bird-refresh')){
+	// 		refreshClient();
+	// 	}else{
+	// 		goToTwitterLink();			
+	// 	}	
+	// }
+
+	// const goToTwitterLink = async() => {
+	// 	const { url, codeVerifier, state } = client.generateOAuth2AuthLink(CALLBACK_URL, { scope: ['tweet.read', 'users.read', 'offline.access'] });
+	// 		// const authLink = await client.generateAuthLink(CALLBACK_URL, { linkMode: 'authorize' });
+
+	// 		localStorage.setItem('temporary',codeVerifier);
+	// 		// const link = authLink.url;
+	// 		location = url
+	// }
+
+	// const makeClient = async() => {
+	// 	if(!location.search){
+	// 		goToTwitterLink()
+	// 		return
+	// 	}
+	// 	const code = location.search.split('&')[1].split('=')[1]
+	// 	const state = location.search.split('&')[0].split('=')[1]
+	// 	const codeVerifier = localStorage.getItem('temporary');
+	// 	localStorage.removeItem('temporary');
+	// 	fetch(`http://localhost:3000/api/callback?state=${state}&code=${code}&codeVerifier=${codeVerifier}`).then((res)=>{
+	// 		return res.json()
+	// 	}).then(async(data)=>{
+	// 		console.log(data);
+	// 		setId(data.userObject.id)
+	// 		setAccessToken(data.accessToken);
+	// 		setRefreshToken(data.refreshToken);
+	// 		localStorage.setItem('x-bird-refresh',data.refreshToken);
+	// 		getFollowings(data.userObject.id)
+	// 	}).catch(err=>{
+	// 		console.log(err.message)
+	// 	})
+	// }
+	
+
+	// const refreshClient = async() => {
+	// 	const refreshClient = localStorage.getItem('x-bird-refresh');
+	// 	fetch(`http://localhost:3000/api/refreshUser?refreshToken=${refreshClient}`,{
+	// 		method:'POST'
+	// 	}).then((res)=>res.json()).then((data)=>{
+	// 		console.log(data,data.userObject);
+	// 		setId(data.userObject.id);
+	// 		setAccessToken(data.accessToken);
+	// 		setRefreshToken(data.refreshToken);
+	// 		localStorage.setItem('x-bird-refresh',data.refreshToken);
+	// 	}).catch(err=>{
+	// 		console.log(err.message)
+	// 		goToTwitterLink()
+	// 	})
+	// }
+
+	// const getFollowings = async() => {
+	// 	fetch(`http://localhost:3000/api/following?id=${id}&accessToken=${accessToken}`).then((res)=>{
+	// 		return res.json()
+	// 	}).then(async(data)=>{
+	// 		console.log(data)
+	// 	}).catch(err=>{
+	// 		console.log(err.message);
+	// 	})
+	// }

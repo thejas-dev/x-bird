@@ -2,7 +2,7 @@ import {BiArrowBack} from 'react-icons/bi';
 import {useRecoilState} from 'recoil'
 import {currentUserState} from '../atoms/userAtom'
 import {useState,useEffect} from 'react';
-import {updateNotifySettings,dialerRingtonePlayUpdate} from '../utils/ApiRoutes';
+import {updateNotifySettings,dialerRingtonePlayUpdate,updateThemeChangeInfo} from '../utils/ApiRoutes';
 import axios from 'axios';
 import {AiOutlineRight} from 'react-icons/ai';
 import {signOut} from 'next-auth/react'
@@ -190,6 +190,7 @@ export default function Notification({currentWindow,setCurrentWindow,setShowThem
 					<button 
 					onClick={()=>{
 						localStorage.removeItem('xbird')
+						sessionStorage.removeItem('trendzio-auth')
 						setCurrentUser('');
 						signOut();
 					}}

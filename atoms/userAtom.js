@@ -120,6 +120,11 @@ export const inCallState = atom({
 	default:false
 })
 
+export const inGroupCallState = atom({
+	key:"inGroupCallState",
+	default:false
+})
+
 export const groupCallerState = atom({
 	key:"groupCallerState",
 	default:''
@@ -128,4 +133,19 @@ export const groupCallerState = atom({
 export const currentGroupPeerState = atom({
 	key:"currentGroupPeerState",
 	default:""
+})
+
+export const currentHeadingState = atom({
+	key:"currentHeadingState",
+	default:'For you'
+})
+
+export const needToRefetchState = atom({
+	key:"needToRefetchState",
+	default:false
+})
+
+export const mainFeedNotAddedState = atom({
+	key:"mainFeedNotAddedState",
+	default:true
 })
