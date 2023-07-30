@@ -984,7 +984,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										}
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-700/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] sm:group-hover:bg-green-300/30 sm:dark:group-hover:bg-green-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
 											<AiOutlineRetweet id={`retweet-${j}`} className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
 											${main.retweetedBy.some(element=>{
 												if(element.id === currentUser?._id){
@@ -1013,7 +1013,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										}
 									}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] sm:group-hover:bg-pink-300/30 sm:dark:group-hover:bg-pink-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
 											{
 												main?.likes?.some(element=>{
 													if(element.id === currentUser?._id){
@@ -1157,7 +1157,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div 
 									onClick={()=>retweetThisLikedTweet(j)}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-700/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] sm:group-hover:bg-green-300/30 sm:dark:group-hover:bg-green-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
 											<AiOutlineRetweet className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
 											${main.retweetedBy.some(element=>{
 												if(element.id === currentUser?._id){
@@ -1181,7 +1181,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div
 									onClick={()=>{likeThisLikeTweet(j);makeMePink(j)}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] sm:group-hover:bg-pink-300/30 sm:dark:group-hover:bg-pink-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
 											{
 												main.likes.some(element=>{
 													if(element.id === currentUser?._id){
@@ -1334,7 +1334,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div 
 									onClick={()=>retweetThisTweet(j)}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-green-300/30 dark:group-hover:bg-green-700/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] sm:group-hover:bg-green-300/30 sm:dark:group-hover:bg-green-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
 											<AiOutlineRetweet className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
 											${main.retweetedBy.some(element=>{
 												if(element.id === currentUser?._id){
@@ -1358,7 +1358,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									<div
 									onClick={()=>{likeThisRetweet(j);makeMePink(j)}}
 									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
+										<div className="p-[10px] sm:group-hover:bg-pink-300/30 sm:dark:group-hover:bg-pink-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
 											{
 												main.likes.some(element=>{
 													if(element.id === currentUser?._id){
