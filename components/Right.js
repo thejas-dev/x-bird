@@ -1499,7 +1499,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							onSubmit={(e)=>sendMessage(e)}
 							value={messageText}
 							onChange={(e)=>{setMessageText(e.target.value)}}
-							className="outline-none bg-transparent placeholder:text-gray-500 text-black text-md w-full" 
+							className="outline-none bg-transparent placeholder:text-gray-500 text-black dark:text-gray-200 text-md w-full" 
 							placeholder="Start a new message"/>
 						</div>
 						<div 
