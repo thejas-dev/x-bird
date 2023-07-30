@@ -83,6 +83,12 @@ export default function Main() {
 	});
 
 	useEffect(()=>{
+		if(currentWindow !== 'Profile'){
+			setDisplayUser('');
+		}
+	},[currentWindow])
+
+	useEffect(()=>{
 		if(notify && currentUser?.notify && currentUser?.notifyVibrate){
 			navigator.vibrate([
 			  200, 100, 200, 50

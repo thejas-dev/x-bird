@@ -33,9 +33,10 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	const [loading,setLoading] = useState(true);
 	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
 	const [postLoading,setPostLoading] = useState(false);
-	
+
 	const fetchTweets = async() => {
-		if(displayUser){
+		if(displayUser && displayUser?.tweets?.length > 0){
+			setPostLoading(true)
 			setCurrentUserTweets([]);
 			let tweet = []
 			for(let i = 0; i<displayUser?.tweets?.length; i++){
@@ -43,27 +44,37 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				tweet = [...tweet,data.post[0]];
 				if((i+1) === displayUser?.tweets?.length){
 					setCurrentUserTweets(tweet);
+					setTweetFetched(true);
+					setPostLoading(false)
 				}
 			}
 		}
 	}
 
 	const fetchLikes = async() => {
-		if(displayUser){
+		if(displayUser && displayUser?.likes?.length > 0){
+			setPostLoading(true)
 			setCurrentUserLikes([]);
 			for(let i = 0; i<displayUser?.likes?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${displayUser.likes[i]._id}`);
 				setCurrentUserLikes(currentUserLikes=>[...currentUserLikes,data.post[0]]);
+				if(i===0){
+					setPostLoading(false)					
+				}
 			}
 		}
 	}
 
 	const fetchRetweets = async() => {
-		if(displayUser){
+		if(displayUser && displayUser?.retweets?.length > 0){
+			setPostLoading(true)
 			setCurrentUserRetweets([]);
 			for(let i = 0; i<displayUser?.retweets?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${displayUser.retweets[i]}`);
 				setCurrentUserRetweets(currentUserRetweets=>[...currentUserRetweets,data.post[0]]);
+				if(i===0){
+					setPostLoading(false)					
+				}
 			}
 		}
 	}
@@ -122,7 +133,6 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			if(!tweetFetched && currentUserTweets?.length < 1){
 				setCurrentUserTweets([]);
 				fetchTweets()
-				setTweetFetched(true);
 			}
 			const check = displayUser?.followers?.some(element=>{
 				if(element.id === currentUser?._id){
@@ -403,7 +413,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 	useEffect(()=>{
 		if(currentHeading === 'Trends'){
-
+			fetchTweets()
 		}else if(currentHeading === 'Likes') {
 			fetchLikes();
 		}else{
@@ -821,8 +831,16 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 					))
 				}
 			</div>
-			<div className="flex flex-col w-full mb-10">
-				{	
+			<div className="flex flex-col w-full relative">
+				<div className={`min-h-[200px] top-0 w-full backdrop-blur-lg bg-white/50 dark:bg-[#100C08] flex items-center justify-center 
+				absolute z-20 ${postLoading ? 'right-0' : '-right-[100%]'} transition-all duration-300 ease-in-out`}>
+					<span className="loader4">
+						<img src="https://ik.imagekit.io/d3kzbpbila/thejashari_QSzOWJHFV?updatedAt=1690659361414" 
+						className="absolute -rotate-[45deg] h-[46px] w-[46px] top-0 bottom-0 left-0 right-0 m-auto" alt=""/>
+					</span>
+				</div>
+
+				{		
 					currentHeading === 'Trends' ?
 					currentUserTweets?.map((main,j)=>(
 						<div key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
@@ -1308,7 +1326,9 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 					))
 				}
-
+				<div className={`h-full bg-sky-100/30 dark:bg-gray-800/30 pt-14 w-full flex flex-col items-center justify-center`} >
+					<div class="iloader"></div>
+				</div>
 			</div>
 		</div>
 

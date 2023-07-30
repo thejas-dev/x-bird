@@ -187,6 +187,7 @@ export default function Home({providers,session2}) {
 	const registerAccountNGA = async() => {
 		if (/@gmail\.com$/.test(ngaGmail)) {
 			if(ngaPassword === ngaConfirmPassword){
+				setLoading(true)
 				const {data} = await axios.post(checkNGA,{
 					email:ngaGmail
 				})
@@ -197,10 +198,11 @@ export default function Home({providers,session2}) {
 					setCurrentWindow('accountset')
 					setCreatingNGAAccount(true);
 					setAccountAlreadyExist(false);
-					setPasswordNotMatch(false)					
+					setLoading(false)
 				}else{
 					setAccountAlreadyExist(true);
-					setPasswordNotMatch(false)
+					setPasswordNotMatch(false);
+					setLoading(false)
 				}
 			}else{
 				setPasswordNotMatch(true)
