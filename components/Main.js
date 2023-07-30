@@ -24,7 +24,8 @@ import axios from 'axios';
 import Lists from './Lists'
 import {useRecoilState} from 'recoil'
 import {currentChatState,chatsState,currentUserState,mainFeedState,displayUserState,
-	showLoginNowState,showClipboardState,themeState,homeState,callerIdState,needToRefetchState
+	showLoginNowState,showClipboardState,themeState,homeState,callerIdState,needToRefetchState,
+	soundAllowedState,maxImageState,showMaxImageState
 	} from '../atoms/userAtom'
 import ImageKit from "imagekit"
 import Notifications from './Notifications';
@@ -74,7 +75,10 @@ export default function Main() {
 	const [currentGroupCaller,setCurrentGroupCaller] = useState('');
 	const [acceptedCall,setAcceptedCall] = useState(false);
 	const [callerId,setCallerId] = useRecoilState(callerIdState);
-	const [needToRefetch,setNeedToRefetch] = useRecoilState(needToRefetchState)
+	const [needToRefetch,setNeedToRefetch] = useRecoilState(needToRefetchState);
+	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
+	const [maxImage,setMaxImage] = useRecoilState(maxImageState);
+	const [showMaxImage,setShowMaxImage] = useRecoilState(showMaxImageState)					
 	const router = useRouter();
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -86,6 +90,7 @@ export default function Main() {
 		if(currentWindow !== 'Profile'){
 			setDisplayUser('');
 		}
+		setSoundAllowed(false);
 	},[currentWindow])
 
 	useEffect(()=>{
@@ -421,6 +426,23 @@ export default function Main() {
 			imageUploading={imageUploading} updateCategoriesFunction={updateCategoriesFunction} categoryList={categoryList} setCategoryList={setCategoryList}
 			currentUser={currentUser}
 			/>
+
+			<div className={`fixed dark:bg-black/70 bg-white/20 backdrop-blur-md ${showMaxImage ? 'h-full w-full' : 'h-0 w-0'}
+			m-auto z-50 overflow-hidden transition-all duration-200 ease-in`}>
+				<div className="h-full flex items-center justify-center w-full relative p-2">
+					<div onClick={()=>setShowMaxImage(false)}
+					className="absolute md:top-4 top-2 left-2 md:left-5 rounded-full dark:bg-gray-800/70 bg-gray-300/70
+					transition-all duration-300 ease-in-out cursor-pointer p-1 dark:hover:bg-gray-700/70">
+						<RxCross2 className="text-black dark:text-gray-200 h-6 w-6 z-50"/>
+
+					</div>
+					<div className="h-auto rounded-md overflow-hidden h-[80%] max-w-6xl flex items-center justify-center">
+						<img src={maxImage} alt="" className="max-h-full w-full"/>
+					</div>
+
+				</div>	
+
+			</div>
 
 			<div className={`fixed w-[180px] text-center bg-green-500 left-0 px-3 py-2 right-0 mx-auto rounded-full border-[1px] border-gray-300/50 ${showClipboard ? 'bottom-3' : '-bottom-[100%]'}
 			transition-all duration-200 ease-in-out z-50`}>

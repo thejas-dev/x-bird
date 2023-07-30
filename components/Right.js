@@ -1,7 +1,8 @@
 import {FiSearch} from 'react-icons/fi'
 import {useRecoilState} from 'recoil'
 import {currentChatState,currentUserState,chatsState,mainFeedState,
-	callerIdState,groupCallerState,inCallState,currentHeadingState} from '../atoms/userAtom'
+	callerIdState,groupCallerState,inCallState,currentHeadingState,
+	maxImageState,showMaxImageState} from '../atoms/userAtom'
 import {HiOutlineChevronDoubleDown,HiOutlineArrowLeft,HiOutlineArrowDown} from 'react-icons/hi';
 import {RiMailAddLine,RiSendPlane2Line} from 'react-icons/ri';
 import {CiMicrophoneOn} from 'react-icons/ci';
@@ -18,6 +19,7 @@ import {searchProfile,sendMsgRoute,updateUserChats,getAllMsgRoute,host,getUserBy
 import axios from 'axios';
 import EmojiPicker from 'emoji-picker-react';
 import {io} from 'socket.io-client';
+import {CgImage} from 'react-icons/cg';
 import {socket} from '../service/socket';
 import DateDiff from 'date-diff';
 import GifPicker from 'gif-picker-react';
@@ -67,7 +69,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	const [inCall,setInCall] = useRecoilState(inCallState);
 	const [showScrollBottom,setShowScrollBottom] = useState(false);
 	const [currentHeading,setCurrentHeading] = useRecoilState(currentHeadingState)
-
+	const [maxImage,setMaxImage] = useRecoilState(maxImageState);
+	const [showMaxImage,setShowMaxImage] = useRecoilState(showMaxImageState)
 
 	const [whoToFollow,setWhoToFollow] = useState([
 		{
@@ -1389,10 +1392,20 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 										duration-100 ease-out`}>
 											{
 												msg?.message?.includes('media.tenor.com') ?
-												<img src={msg.message} className={`${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
+												<img 
+												onClick={()=>{
+													setMaxImage(msg.message)
+													setShowMaxImage(true)
+												}}
+												src={msg.message} className={`cursor-pointer ${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
 												:
 												msg?.message?.includes('ik.imagekit.io/d3kzbpbila/Images') ? 
-												<img src={msg?.message} className={`${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
+												<img 
+												onClick={()=>{
+													setMaxImage(msg.message)
+													setShowMaxImage(true)
+												}}
+												src={msg?.message} className={`cursor-pointer ${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
 												:
 												<h1 className={`${msg.fromSelf ? 'text-white' : 'text-black dark:text-white'} text-md break-all`}>{msg.message}</h1>
 											}
@@ -1799,10 +1812,20 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 														duration-100 ease-out`}>
 															{
 																msg.message.includes('media.tenor.com') ?
-																<img src={msg.message} className={`${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
+																<img 
+																onClick={()=>{
+																	setMaxImage(msg.message)
+																	setShowMaxImage(true)
+																}}
+																src={msg.message} className={`cursor-pointer ${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
 																:
 																msg?.message?.includes('ik.imagekit.io/d3kzbpbila/Images') ? 
-																<img src={msg?.message} className={`${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
+																<img 
+																onClick={()=>{
+																	setMaxImage(msg.message)
+																	setShowMaxImage(true)
+																}}
+																src={msg?.message} className={`cursor-pointer ${msg.fromSelf ? 'text-white' : 'text-black'} rounded-xl shadow-lg`} />
 																:
 																<h1 className={`${msg.fromSelf ? 'text-white' : 'text-black dark:text-white'} text-md break-all`}>{msg.message}</h1>
 															}
@@ -1956,6 +1979,9 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 											</div>
 										</div>
 										<h1 className={`${chat.newMessage ? 'text-black dark:text-gray-200' : 'text-gray-500' } items-center gap-2 flex text-md`}>{
+											chat.lastChat.includes('https://ik.imagekit.io') ?
+											<span className="flex items-center gap-1" ><CgImage className="text-sky-500 h-4 w-4"/> Image</span>
+											:
 											chat?.lastChat?.length > 20 ?
 											chat?.lastChat?.substring(0,17) + '...'
 											:

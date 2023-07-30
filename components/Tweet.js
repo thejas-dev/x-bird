@@ -10,7 +10,7 @@ import {findPostRoute} from '../utils/ApiRoutes';
 import {FaRegComment} from 'react-icons/fa';
 import axios from 'axios'
 import millify from 'millify';
-import {currentUserState,loaderState,showLoginNowState,showClipboardState} from '../atoms/userAtom';
+import {currentUserState,loaderState,showLoginNowState,showClipboardState,soundAllowedState} from '../atoms/userAtom';
 import {useRecoilState} from 'recoil'
 import {getPostByIdRoute,updateUser,updatedPostRoute,updateUserRetweets,updateUserBookmarks} from '../utils/ApiRoutes';
 import EmojiPicker from 'emoji-picker-react';
@@ -19,8 +19,11 @@ import ImageKit from "imagekit";
 import DateDiff from 'date-diff';
 import CommentCard from './CommentCard';
 import GifPicker from 'gif-picker-react';
+import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 let imageUrl = [];
+let audio;
 
 export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,openOverlay,
 	overlayFor,setOverlayFor}) {
@@ -38,6 +41,10 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 	const [gifInput,setGifInput] = useState(false);
 	const [gifWidth,setGifWidth] = useState('31em');	
 	const [showClipboard,setShowClipboard] = useRecoilState(showClipboardState);
+	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
+	const [haveAudio,setHaveAudio] = useState(false);
+	const [audioPlaying,setAudioPlaying] = useState(false);
+	const [audioUrl,setAudioUrl] = useState('');
 	const [liked,setLiked] = useState(false);
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -66,6 +73,49 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 		}
 	},[])
 
+	const play = () => {
+		if(audio){
+			audio.play()
+		}
+	}
+
+	const stop = () => {
+		if(audio){
+			audio.pause()
+			audio.currentTime = 0;
+		}
+	}
+
+	const loadAudio = () => {
+		audio = new Audio();
+		if(currentPost?.audio){			 
+			audio.loop = true;
+			audio.src = currentPost?.audio
+		}
+	}
+
+	useEffect(()=>{
+		if(currentPost?.audio){
+			setHaveAudio(true);
+			setAudioUrl(currentPost?.audio)
+			loadAudio()
+		}
+	},[currentPost])
+
+	useEffect(()=>{
+		if(soundAllowed){
+			if(currentPost?.audio && !audioPlaying){
+				play()
+				setAudioPlaying(true)
+			}
+		}else{
+			if(currentPost?.audio){
+				setAudioPlaying(false)
+				stop()
+			}
+		}
+	},[soundAllowed])
+
 	useEffect(()=>{
 		function autoResize() {
 			this.style.height = 'auto',
@@ -75,7 +125,9 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 		if(ele){
 			ele.addEventListener('input',autoResize,false);
 		}
-
+		return () => {
+			stop()
+		}
 	},[])
 
 	const calDate = (date) => {
@@ -649,7 +701,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 				<div className="pt-3 w-full">
 					<h1 className="w-full break-words text-lg text-black dark:text-gray-200">{currentPost?.text}</h1>
 				</div>
-				<div className={`rounded-2xl mt-3 grid rounded-2xl ${currentPost?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
+				<div className={`rounded-2xl mt-3 grid relative rounded-2xl ${currentPost?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
 					{
 						currentPost?.images?.length>0 &&
 						currentPost?.images?.map((ur,i)=>(
@@ -660,6 +712,22 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						</div>
 						))
 
+					}
+					{
+						haveAudio &&
+						<div 
+						onClick={()=>{setSoundAllowed(!soundAllowed);stop()}}
+						className="absolute z-30 right-2 bottom-2 rounded-full p-1 bg-black/40 cursor-pointer
+						transition-all duration-200 ease-in-out hover:bg-black/50 flex items-center justify-center
+						backdrop-blur-md h-6 w-6">
+							{
+								soundAllowed ? 
+								<FontAwesomeIcon icon={faVolumeHigh} className="h-full w-full text-white"/>
+								:
+								<FontAwesomeIcon icon={faVolumeXmark} className="h-full w-full text-white" />
+							}
+
+						</div>
 					}
 				</div>
 				<div className="mt-2 flex">

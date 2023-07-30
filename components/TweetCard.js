@@ -1,17 +1,17 @@
 import {useRef,useState,useEffect} from 'react'
 import {useIsVisible} from '../hooks/useIsVisible';
-import {showClipboardState,searchTextState,soundAllowedState,imPlayingState} from '../atoms/userAtom';
-import {useSound} from 'use-sound';
+import {showClipboardState,searchTextState,soundAllowedState,imPlayingState,
+	maxImageState,showMaxImageState} from '../atoms/userAtom';
 import {useRecoilState} from 'recoil'
 import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-
+import {motion} from 'framer-motion'
 
 let audio;
 
 export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,FaRegComment,millify,
 	AiOutlineRetweet,retweetThisTweet,makeMeSpin,likeThisTweet,makeMePink,AiFillHeart,AiOutlineHeart,
-	BsFillShareFill,BsGraphUpArrow,currentUser,viewThisTweet
+	BsFillShareFill,BsGraphUpArrow,currentUser,viewThisTweet,currentWindow
 }) {
 	const ref = useRef()
 	const isIntersecting = useIsVisible(ref)
@@ -19,14 +19,12 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const [searchText,setSearchText] = useRecoilState(searchTextState);
 	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
 	const [imPlaying,setImPlaying] = useRecoilState(imPlayingState);
+	const [showMaxImage,setShowMaxImage] = useRecoilState(showMaxImageState)					
+	const [maxImage,setMaxImage] = useRecoilState(maxImageState)
 	const [liked,setLiked] = useState(false);
 	const [haveAudio,setHaveAudio] = useState(false);
 	const [audioPlaying,setAudioPlaying] = useState(false);
 	const [audioUrl,setAudioUrl] = useState('');
-	
-	// const [play, { stop:stopAudio8 }] = useSound(audioUrl,{
-	//   loop:true,format: "mp3"
-	// });			
 
 	const play = () => {
 		if(audio){
@@ -43,25 +41,23 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 
 	const loadAudio = () => {
 		audio = new Audio();
-		if(main?.audio){
-			 audio.addEventListener("loadedmetadata", function () {
-	          const duration = audio.duration;
-	          if (duration > 30) {
-	            console.log("Audio duration cannot exceed 30 seconds.");
-	          } else {
-	            console.log("Audio duration is within the allowed limit.");
-	          }
-	        });
+		if(main?.audio){			 
 			audio.loop = true;
 			audio.src = main?.audio
 		}
 	}
 
 	useEffect(()=>{
+		return ()=> {
+			stopAudio8();
+			setImPlaying(false);
+		}
+	},[])
+
+	useEffect(()=>{
 		if(isIntersecting){
 			viewThisTweet(j)
 			if(soundAllowed && !audioPlaying && main?.audio && !imPlaying){
-				console.log("i ran")
 				play()		
 				setAudioPlaying(true)
 				setImPlaying(true)
@@ -110,9 +106,26 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		}
 	},[main])
 
+	// useEffect(()=>{
+	// 	if(currentWindow){
+	// 		setHaveAudio(false);
+	// 		stopAudio8();
+	// 		setAudioPlaying(false)
+	// 		setImPlaying(false);
+	// 	}
+	// },[currentWindow])
+
 
 	return(
-		<div ref={ref} key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
+		<motion.div 
+		initial={{
+			opacity:0,
+		}}
+		whileInView={{opacity:1}}
+		transition={{duration:0.3}}
+		viewport={{ once: true }}
+
+		ref={ref} key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
 		border-gray-300/70 select-none dark:border-gray-800/70 hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all z-0 duration-200 
 		no_highlights ease-in cursor-pointer`}>
 			<img 
@@ -197,9 +210,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							main?.images?.map((ur,i)=>(
 							<div 
 							onClick={()=>{
-								stopAudio8()
-								setSoundAllowed(false);
-								window.history.replaceState({id:100},'Tweet',`?trend=${main?._id}`);setCurrentWindow('tweet');
+								setMaxImage(ur);
+								setShowMaxImage(true)
 							}}
 							className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 								<div className="absolute h-full w-full z-10 transition-all duration-200 
@@ -214,12 +226,13 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						<div 
 						onClick={()=>{setSoundAllowed(!soundAllowed);stopAudio8()}}
 						className="absolute z-30 right-2 bottom-2 rounded-full p-1 bg-black/40 cursor-pointer
-						transition-all duration-200 ease-in-out hover:bg-black/50">
+						transition-all duration-200 ease-in-out hover:bg-black/50 flex items-center justify-center
+						backdrop-blur-md h-6 w-6">
 							{
 								soundAllowed ? 
-								<FontAwesomeIcon icon={faVolumeHigh} className="max-h-4 w-4 text-white"/>
+								<FontAwesomeIcon icon={faVolumeHigh} className="h-full w-full text-white"/>
 								:
-								<FontAwesomeIcon icon={faVolumeXmark} className="max-h-4 w-4 text-white" />
+								<FontAwesomeIcon icon={faVolumeXmark} className="h-full w-full text-white" />
 							}
 
 						</div>
@@ -326,7 +339,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 
 
 			</div>	
-		</div>
+		</motion.div>
 
 
 	)

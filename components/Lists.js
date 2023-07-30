@@ -625,7 +625,7 @@ export default function Lists({currentWindow,setCurrentWindow}) {
 										
 									
 										return (
-										<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} calDate={calDate}
+										<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} calDate={calDate} currentWindow={currentWindow}
 										BsThreeDots={BsThreeDots} FaRegComment={FaRegComment} millify={millify} AiOutlineRetweet={AiOutlineRetweet}
 										retweetThisTweet={retweetThisTweet} makeMeSpin={makeMeSpin} likeThisTweet={likeThisTweet} makeMePink={makeMePink}
 										AiFillHeart={AiFillHeart} AiOutlineHeart={AiOutlineHeart} currentUser={currentUser}

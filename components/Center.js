@@ -807,8 +807,8 @@ export default function Center({setCurrentWindow,currentWindow}) {
 								
 							
 								return (
-								<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} calDate={calDate}
-								BsThreeDots={BsThreeDots} FaRegComment={FaRegComment} millify={millify} AiOutlineRetweet={AiOutlineRetweet}
+								<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} currentWindow={currentWindow} 
+								calDate={calDate} BsThreeDots={BsThreeDots} FaRegComment={FaRegComment} millify={millify} AiOutlineRetweet={AiOutlineRetweet}
 								retweetThisTweet={retweetThisTweet} makeMeSpin={makeMeSpin} likeThisTweet={likeThisTweet} makeMePink={makeMePink}
 								AiFillHeart={AiFillHeart} AiOutlineHeart={AiOutlineHeart} currentUser={currentUser}
 								BsGraphUpArrow={BsGraphUpArrow} BsFillShareFill={BsFillShareFill} viewThisTweet={viewThisTweet}

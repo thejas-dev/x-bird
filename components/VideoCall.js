@@ -11,6 +11,7 @@ import { useId } from "react";
 import {socket} from '../service/socket'
 import { v4 as uuidv4 } from 'uuid';
 import {useSound} from 'use-sound';
+import {FiVideoOff} from 'react-icons/fi';
 
 let myPeer;
 let myStream;
@@ -43,6 +44,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 	const [screenSharing,setScreenSharing] = useState(false);
 	const [screenSharingSupported,setScreenSharingSupported] = useState(false);
 	// const [inGroupCall,setInGroupCall] = useRecoilState(inGroupCallState)
+	const [permissionGranted,setPermissionGranted] = useState(true);
 	const [stopAudio,setStopAudio] = useState(false);
 
 	const [play2, { stop:stopAudio3 }] = useSound('dialer.mp3',{
@@ -302,6 +304,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 
 	const connectToCall = async() => {
 		if(callerId && !accepted){
+			setPermissionGranted(true)
 			const roomId = await uuidv4()
 			setCurrentRoomId(roomId)
 			socket.emit('add-user-to-room',{
@@ -370,6 +373,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 	const setVideoToLocalStream = async() => {
 	    var errorCallback = function(e) {
 	    	// console.log('Reeeejected!', e);
+	    	setPermissionGranted(false);
 	    };
 
 	    var video = document.getElementById('videoMainStream');
@@ -379,6 +383,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
     			facingMode: "user" 
     		}}, function(stream) {
 		    if(myStream?.getTracks()){
+		    	setPermissionGranted(true)
 			    let tracks = myStream.getTracks();
 				tracks.forEach(function(track) {
 				   track.stop()
@@ -387,6 +392,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 		    	video.srcObject = myStream;
 				connectToCall();
 		    }else{
+		    	setPermissionGranted(true)		    	
 		    	myStream = stream
 		    	video.srcObject = myStream;
 				connectToCall();
@@ -535,7 +541,14 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 				</div>
 
 				<div className={`sm:h-[85%] h-full relative sm:rounded-2xl md:aspect-[16/9] mx-auto aspect-[9/16] overflow-hidden`}>
-					
+					{
+						!permissionGranted && 
+						<div className="h-full w-full top-0 left-0 z-30 bg-gray-900 flex items-center justify-center flex-col">
+							<FiVideoOff className="h-[100px] w-[100px] text-gray-200"/>
+							<h1 className="md:text-xl text-lg mt-4 text-gray-200">Camera blocked/Not allowed</h1>
+							<p className="md:text-lg text-md text-gray-600">Could not connect to call</p>
+						</div>
+					}
 					<div 
 					onClick={()=>setHideOptions(!hideOptions)}					
 					className={`absolute h-full w-full top-0 left-0 sm:rounded-2xl transition-all duration-300 xs:hidden bg-gradient-to-t from-black/40 via-transparent to-transparent

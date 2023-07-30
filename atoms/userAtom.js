@@ -159,3 +159,13 @@ export const imPlayingState = atom({
 	key:"imPlayingState",
 	default:false
 })
+
+export const maxImageState = atom({
+	key:"maxImageState",	
+	default:''
+})
+
+export const showMaxImageState = atom({
+	key:"showMaxImageState",
+	default:false
+})

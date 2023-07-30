@@ -13,6 +13,7 @@ import {useState,useEffect} from 'react';
 import {socket} from '../service/socket'
 import {FiMaximize,FiMinimize2} from 'react-icons/fi';
 import ReactDOM from 'react-dom';
+import {FiVideoOff} from 'react-icons/fi';
 
 let myPeer;
 let myStream;
@@ -60,6 +61,7 @@ export default function GroupVideoCall({
 	const [stopRing,setStopRing] = useState(false);
 	const [changeVisibleOption,setChangeVisibleOption] = useState(false);
 	const [openMaxWindow,setOpenMaxWindow] = useState(false);
+	const [permissionGranted,setPermissionGranted] = useState(true);
 	const [maxVideoSource,setMaxVideoSource] = useState('');
 	const [play, { stop:stopAudio4 }] = useSound('dialer.mp3',{
 	  loop:true
@@ -149,7 +151,8 @@ export default function GroupVideoCall({
 
 	const setLocalStream = async() => {
 		var errorCallback = function(e) {
-	    	console.log('Reeeejected!', e);
+	    	setPermissionGranted(false);
+	    	console.log('Reeeejected',e)
 	    };
 
 	    
@@ -158,6 +161,7 @@ export default function GroupVideoCall({
     			facingMode: "user" 
     		}}, function(stream) {
     			addMediaStream(stream)
+	    		setPermissionGranted(true);
 	    		if(myStream){
 				    let tracks = myStream.getTracks();
 					tracks.forEach(function(track) {
@@ -166,10 +170,12 @@ export default function GroupVideoCall({
 				    myStream = stream
 				    setMicandVideoAllowed()
 			    	addOwnStreamToContainer(myStream)	
+	    			setPermissionGranted(true);
 			    	connectToCall()			
 			    }else{
 			    	myStream = stream
 				    setMicandVideoAllowed()			    	
+	    			setPermissionGranted(true);
 			    	addOwnStreamToContainer(myStream);
 			    	connectToCall()					    					
 			    }		   	    
@@ -483,14 +489,18 @@ export default function GroupVideoCall({
 		}
 
 		closeAllMediaStreams();
-		let tracks = myStream?.getTracks();
-		tracks?.forEach(function(track) {
-		   track?.stop()
-		});
+		
+		if(myStream){
+			let tracks = myStream?.getTracks();
+			tracks?.forEach(function(track) {
+			   track?.stop()
+			});
+			myStream = '';			
+		}
+
 		inGroupCall = false;
 		setOpenMaxWindow(false)
 
-		myStream = '';
 		setMicandVideoAllowed()
 
 		if(peers[remotePeerIdGroup]){
@@ -885,13 +895,21 @@ export default function GroupVideoCall({
 				className={`h-full relative p-[2%] w-full mx-auto 
 				 flex items-center justify-center `}>
 					<div 
-					id="streamContainer" className="h-full overflow-y-scroll scrollbar-none md:py-0 py-10 w-full md:gap-[2%] gap-[3%] z-30 flex flex-wrap items-center justify-center">
+					id="streamContainer" className="h-full overflow-y-scroll scrollbar-none md:py-0 py-10 w-full 
+					md:gap-[2%] relative gap-[3%] z-30 flex flex-wrap items-center justify-center">
 						
 						
 
 						
 					</div>
-					
+					{
+						!permissionGranted &&
+						<div className="h-full absolute w-full top-0 left-0 z-30 bg-gray-900 flex items-center justify-center flex-col">
+							<FiVideoOff className="h-[100px] w-[100px] text-gray-200"/>
+							<h1 className="md:text-xl text-lg mt-4 text-gray-200">Camera blocked/Not allowed</h1>
+							<p className="md:text-lg text-md text-gray-600">Could not connect to call</p>
+						</div>
+					}
 					<div className={`grid-cols-2 grid w-[12%] md:w-[10%] ${acceptedCall ? 'hidden' : 'block'} aspect-square 
 					rounded-full overflow-hidden absolute m-auto right-2 bottom-10 z-40`}>
 						{

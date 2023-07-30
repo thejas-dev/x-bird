@@ -12,6 +12,7 @@ import {getPostByIdRoute,updatedPostRoute,getUserByIdRoute,updateUser,updateUser
 	updateUserFollowing,updateUserFollowers} from '../utils/ApiRoutes';
 import DateDiff from 'date-diff';
 import axios from 'axios'
+import {motion} from 'framer-motion'
 import {socket} from '../service/socket';
 
 let userTweets = [];
@@ -843,7 +844,14 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				{		
 					currentHeading === 'Trends' ?
 					currentUserTweets?.map((main,j)=>(
-						<div key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
+						<motion.div 
+						initial={{
+							opacity:0,
+						}}
+						whileInView={{opacity:1}}
+						transition={{duration:0.4}}
+						viewport={{ once: true }}
+						key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
 						border-gray-300/70 dark:border-gray-700/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/50 
 						transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
 							<img 
@@ -1003,13 +1011,20 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 
 							</div>	
-						</div>
+						</motion.div>
 
 					))
 					:
 					currentHeading === 'Likes' ? 
 					currentUserLikes?.map((main,j)=>(
-						<div key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
+						<motion.div 
+						initial={{
+							opacity:0,
+						}}
+						whileInView={{opacity:1}}
+						transition={{duration:0.4}}
+						viewport={{ once: true }}
+						key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
 						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 
 						transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
 							<img onClick={()=>{
@@ -1158,12 +1173,19 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 
 							</div>	
-						</div>
+						</motion.div>
 
 					))
 					:
 					currentUserRetweets?.map((main,j)=>(
-						<div key={j} className={`w-full border-b-[1.6px] p-3 pt-7 relative flex basis-auto md:gap-4 sm:gap-2 gap-2 
+						<motion.div 
+						initial={{
+							opacity:0,
+						}}
+						whileInView={{opacity:1}}
+						transition={{duration:0.4}}
+						viewport={{ once: true }}
+						key={j} className={`w-full border-b-[1.6px] p-3 pt-7 relative flex basis-auto md:gap-4 sm:gap-2 gap-2 
 						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 
 						transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
 						<div 
@@ -1322,13 +1344,20 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 
 							</div>	
-						</div>
+						</motion.div>
 
 					))
 				}
-				<div className={`h-full bg-sky-100/30 dark:bg-gray-800/30 pt-14 w-full flex flex-col items-center justify-center`} >
+				<motion.div 
+				initial={{
+					opacity:0,
+				}}
+				whileInView={{opacity:1}}
+				transition={{duration:0.4}}
+				viewport={{ once: true }}
+				className={`h-full bg-sky-100/30 dark:bg-gray-800/30 pt-14 w-full flex flex-col items-center justify-center`} >
 					<div class="iloader"></div>
-				</div>
+				</motion.div>
 			</div>
 		</div>
 
