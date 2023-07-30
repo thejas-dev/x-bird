@@ -102,10 +102,15 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		let res = main?.likes?.some(element=>{
 			if(element?.id === currentUser?._id){
 				return true;
-				setLiked(true)
+				
 			}
 			return false
 		})
+		if(res){
+			setLiked(true)
+		}else{
+			setLiked(false);
+		}
 		return res
 	}
 
