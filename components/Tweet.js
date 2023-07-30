@@ -656,7 +656,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 							<div className="absolute h-full w-full z-10 transition-all duration-200 
 							ease-in-out group-hover:bg-gray-500/10"/>
-							<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
+							<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
 						</div>
 						))
 

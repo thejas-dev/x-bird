@@ -150,7 +150,7 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 									</div>
 
 								</div>
-								<h1 className={`${chat.newMessage ? 'text-black' : 'text-gray-500' } items-center gap-2 flex text-md`}>{
+								<h1 className={`${chat.newMessage ? 'text-black dark:text-gray-200' : 'text-gray-500' } items-center gap-2 flex text-md`}>{
 									chat.lastChat.includes('https://ik.imagekit.io') ?
 									<span className="flex items-center gap-1" ><CgImage className="text-sky-500 h-4 w-4"/> Image</span>
 									:
@@ -227,7 +227,7 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 									</div>
 
 								</div>
-								<h1 className={`${chat.newMessage ? 'text-black' : 'text-gray-500' } items-center gap-2 flex text-md`}>{
+								<h1 className={`${chat?.newMessage ? 'text-black dark:text-gray-200' : 'text-gray-500' } items-center gap-2 flex text-md`}>{
 									chat.lastChat.includes('https://ik.imagekit.io') ?
 									<span className="flex items-center gap-1" ><CgImage className="text-sky-500 h-4 w-4"/> Image</span>
 									:

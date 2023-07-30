@@ -1955,7 +1955,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 												<h1 className="select-none text-gray-500 text-lg whitespace-nowrap"> - {calDate(chat?.updatedMsg)}</h1>
 											</div>
 										</div>
-										<h1 className={`${chat.newMessage ? 'text-black' : 'text-gray-500' } items-center gap-2 flex text-md`}>{
+										<h1 className={`${chat.newMessage ? 'text-black dark:text-gray-200' : 'text-gray-500' } items-center gap-2 flex text-md`}>{
 											chat?.lastChat?.length > 20 ?
 											chat?.lastChat?.substring(0,17) + '...'
 											:

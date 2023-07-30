@@ -128,7 +128,7 @@ export default function Main() {
 	useEffect(()=>{
 		if(location.search){
 			const searches = location.search.split('=')
-			if(searches.includes('?tweet')){
+			if(searches.includes('?trend')){
 				setCurrentWindow('tweet');
 			}else if(searches.includes('?profile')){
 				setCurrentWindow('Profile');

@@ -832,7 +832,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				}
 			</div>
 			<div className="flex flex-col w-full relative">
-				<div className={`min-h-[200px] top-0 w-full backdrop-blur-lg bg-white/50 dark:bg-[#100C08] flex items-center justify-center 
+				<div className={`h-full top-0 w-full backdrop-blur-lg bg-white/50 dark:bg-[#100C08]/40 flex items-center justify-center 
 				absolute z-20 ${postLoading ? 'right-0' : '-right-[100%]'} transition-all duration-300 ease-in-out`}>
 					<span className="loader4">
 						<img src="https://ik.imagekit.io/d3kzbpbila/thejashari_QSzOWJHFV?updatedAt=1690659361414" 
@@ -900,7 +900,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 												<div className="absolute h-full w-full z-10 transition-all duration-200 
 												ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10"/>
-												<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
+												<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
 											</div>
 											))
 
@@ -1064,7 +1064,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 												<div className="absolute h-full w-full z-10 transition-all duration-200 
 												ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10"/>
-												<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
+												<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
 											</div>
 											))
 
@@ -1228,7 +1228,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 												<div className="absolute h-full w-full z-10 transition-all duration-200 
 												ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10 "/>
-												<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out"/>
+												<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
 											</div>
 											))
 

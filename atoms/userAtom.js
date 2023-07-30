@@ -149,3 +149,13 @@ export const mainFeedNotAddedState = atom({
 	key:"mainFeedNotAddedState",
 	default:true
 })
+
+export const soundAllowedState = atom({
+	key:"soundAllowedState",
+	default:false
+})
+
+export const imPlayingState = atom({
+	key:"imPlayingState",
+	default:false
+})

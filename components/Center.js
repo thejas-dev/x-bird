@@ -1,7 +1,7 @@
 import {FiChevronDown,FiChevronUp} from 'react-icons/fi';
 import {useState,useEffect,useRef} from 'react';
 import {BsCardImage,BsEmojiSmile,BsGraphUpArrow,BsFillShareFill,BsThreeDots,BsFillPeopleFill} from 'react-icons/bs';
-import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart} from 'react-icons/ai';
+import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart,AiOutlinePlusCircle} from 'react-icons/ai';
 import {TbGif} from 'react-icons/tb';
 import {FaRegComment} from 'react-icons/fa';
 import {useRecoilState} from 'recoil';
@@ -51,12 +51,24 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [tweetPublic,setTweetPublic] = useState(true);
 	const [openTweetVisiblityTab,setOpenTweetVisiblityTab] = useState(false);
 	const [firstTimeFeed,setFirstTimeFeed] = useState(false);
+	const [audioUrl,setAudioUrl] = useState('');
+	const [path6,setPath6] = useState('');
+	const [audioFileName,setAudioFileName] = useState('');
+	const [warnAboutAudio,setWarnAboutAudio] = useState('');
 
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
 	    privateKey : process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE,
 	    urlEndpoint : process.env.NEXT_PUBLIC_IMAGEKIT_ENDPOINT
 	});
+
+	const audioPathCheck = (path) =>{
+		if(path){
+			if(path.split('/').includes('data:audio')){
+				return true;
+			}
+		}
+	}
 
 	const pathCheck = (path) =>{
 		if(path){
@@ -116,12 +128,34 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		} 
 	}
 
-	const uploadImage = (i=0) => {
+	const uploadAudioAndTweet = async(imageArray) => {
+		imagekit.upload({
+		    file : audioUrl, //required
+		    folder:"Audios",
+		    fileName : 'trendzio', 
+		    extensions: [
+		        {
+		            name: "google-auto-tagging",
+		            maxTags: 5,
+		            minConfidence: 95
+		        }
+	    	]  //required
+		}).then(response => {
+			tweetNow(imageArray,response.url);
+			setAudioUrl('');
+		}).catch(error => {
+			setLoader(false)
+		    setWarnAboutAudio('Unsupported audio file type. Please select an audio file in MP3, WAV, OGG format, etc.')
+		    setTimeout(()=>{setWarnAboutAudio('')},5000)
+		});
 
+	}
+
+	const uploadImage = (i=0) => {
 		imagekit.upload({
 		    file : url[i], //required
 		    folder:"Images",
-		    fileName : 'x-bird', 
+		    fileName : 'trendzio', 
 		    extensions: [
 		        {
 		            name: "google-auto-tagging",
@@ -131,8 +165,13 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	    	]  //required
 		}).then(response => {
 			if(i+1 === url.length){
-				tweetNow([...imageUrl,response.url])
-				imageUrl = [...imageUrl,response.url];	
+				if(audioUrl){
+					uploadAudioAndTweet([...imageUrl,response.url]);
+					imageUrl = [...imageUrl,response.url];
+				}else{
+					tweetNow([...imageUrl,response.url])
+					imageUrl = [...imageUrl,response.url];					
+				}
 			}else{
 				imageUrl = [...imageUrl,response.url];
 				uploadImage(i+1)
@@ -168,21 +207,80 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		setUrl(newArr);
 	}
 
-	useEffect(()=>{
-		const image_input = document.querySelector('#file1');
-		if(image_input){
-			setPath('');
-			image_input.addEventListener('change',()=>{
-				const reader = new FileReader();
+	// useEffect(()=>{
+	// 	const image_input = document.querySelector('#file1');
+	// 	if(image_input){
+	// 		setPath('');
+	// 		image_input.addEventListener('change',()=>{
+	// 			const reader = new FileReader();
 			
-				reader.addEventListener('load',()=>{
-					setUrl2(reader.result);
-				});
-				reader.readAsDataURL(image_input.files[0]);
-			})
-		}
+	// 			reader.addEventListener('load',()=>{
+	// 				setUrl2(reader.result);
+	// 			});
+	// 			reader.readAsDataURL(image_input.files[0]);
+	// 		})
+	// 	}
 	
-	},[path])
+	// },[path])
+
+
+	const url6Setter = async() => {
+		const audio_input = document.querySelector('#audioFile');
+		setAudioFileName(audio_input?.files[0]?.name)
+		if(audio_input){
+			
+		    const file = audio_input.files[0];
+		    const audio = new Audio();
+
+		    audio.addEventListener('loadedmetadata', () => {
+		      const durationInSeconds = audio.duration;
+		      if (durationInSeconds > 31) {
+		      	setPath6('');
+		        // File duration is longer than 30 seconds
+		        setWarnAboutAudio("Audio file should be 30 seconds or less.");
+		       	setTimeout(()=>{setWarnAboutAudio('')},5000)
+		       	setAudioUrl('');
+		      } else {
+		        // File duration is within the allowed limit
+		        const reader = new FileReader();
+		        reader.addEventListener('load', () => {
+		          if (audioPathCheck(reader.result)) {
+		            setAudioUrl(reader.result);
+		            setPath6('');
+		          }
+		        });
+		        reader.readAsDataURL(file);
+		      }
+		    });
+
+		    audio.src = URL.createObjectURL(file);	
+		}
+	}
+
+	const url3Setter = async() => {
+		const image_input = document.querySelector('#file1');
+
+		const readNextImage = (index) => {
+		  if (index >= image_input.files.length) {
+			setPath('');		
+		    return;
+		  }
+
+		  const file = image_input.files[index];
+		  const reader = new FileReader();
+		  reader.addEventListener('load', () => {
+		  	if(reader.result){
+		    	setUrl2(reader.result);
+		  	}
+		    readNextImage(index + 1);
+		  });
+
+		  reader.readAsDataURL(file);
+		};
+
+		readNextImage(0);
+	}
+
 
 	useEffect(()=>{
 		fetchTimeLine();
@@ -264,7 +362,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	},[url2])
 
 	const openFileInput = () => {
-		if(url.length<4){
+		if(url.length<4 && !loader){
 			document.getElementById('file1').click();
 		}
 	}
@@ -282,7 +380,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		}
 	}
 
-	const tweetNow = async(imageArray) => {
+	const tweetNow = async(imageArray,audioArray) => {
 		const text = tweetText || '';
 		const user = {
 			id:currentUser._id,
@@ -291,8 +389,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 			username:currentUser.username
 		}	
 		const images = url.length>0 ? imageArray : [];	
-		const {data} = await axios.post(createTweet,{text,user,images,public:tweetPublic});
+		const audio = audioArray ? audioArray : '';
+		const {data} = await axios.post(createTweet,{text,user,images,audio,public:tweetPublic});
 		setUrl([]);
+		setAudioUrl('');
 		imageUrl = []
 		setTweetText('');
 		setLoader(false);
@@ -300,7 +400,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		const tweets = [data.post._id,...currentUser.tweets]
 		const res = await axios.post(`${updateUserTweets}/${currentUser._id}`,{
 			tweets
-		})
+		});
 		setCurrentUser(res.data.obj);
 	}
 
@@ -501,6 +601,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 
 	const openEmojiInput = () => setEmojiInput(!emojiInput)
 
+	const openAudioInput = () => document.getElementById('audioFile').click()
 
 	
 
@@ -559,7 +660,11 @@ export default function Center({setCurrentWindow,currentWindow}) {
 						<div className=" w-full mt-2 flex flex-col">
 							<div className="flex">
 								<div 
-								onClick={()=>setOpenTweetVisiblityTab(!openTweetVisiblityTab)}
+								onClick={()=>{
+									if(!loader){
+										setOpenTweetVisiblityTab(!openTweetVisiblityTab)
+									}
+								}}
 								className="cursor-pointer relative rounded-full border-[1px] border-gray-400/60 py-[2px] px-3 gap-2 flex items-center text-sky-500">
 									<div className={`absolute ${openTweetVisiblityTab ? 'top-[32px]' : '-top-[1000px]'} z-30 left-0 overflow-hidden transition-all duration-300 ease-in-out rounded-xl flex flex-col
 									bg-white dark:bg-gray-800/30 dark:backdrop-blur-lg border-[1.4px] dark:border-gray-700/50 border-gray-300/50`}>
@@ -594,7 +699,11 @@ export default function Center({setCurrentWindow,currentWindow}) {
 							<div className="mt-4 w-full peer">
  								<textarea type="text" id="tweetArea"
  								value={tweetText}
- 								onChange={(e)=>setTweetText(e.target.value)}
+ 								onChange={(e)=>{
+ 									if(!loader){
+ 										setTweetText(e.target.value)
+ 									}
+ 								}}
  								className={`text-xl resize-none overflow-hidden h-7 w-full placeholder:text-gray-500 ${loader ? 'text-gray-400/70 dark:text-gray-700/70' : 'text-gray-900 dark:text-gray-100'} bg-transparent outline-none`}
  								placeholder="Create a trend?!"
  								/>
@@ -609,11 +718,11 @@ export default function Center({setCurrentWindow,currentWindow}) {
 											ease-in-out group-hover:bg-black/30"/>
 											<div 
 											onClick={()=>removeImage(i)}
-											className="rounded-full p-1 hover:bg-red-600 transition-all 
-											duration-200 ease-out bg-gray-800 absolute top-[6px] z-20 left-[6px]">
+											className={`rounded-full p-1 hover:bg-red-600 transition-all ${loader && 'hidden'} 
+											duration-200 ease-out bg-gray-800 absolute top-[6px] z-20 left-[6px]`}>
 												<RxCross2 className="md:h-5 h-4 w-4 md:w-5 text-white"/>
 											</div>
-											<img src={ur} alt="" className="select-none w-full aspect-square transition-all duration-300 ease-in-out group-hover:scale-90"/>
+											<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out group-hover:scale-90"/>
 										</div>
 										))
 									}
@@ -621,14 +730,35 @@ export default function Center({setCurrentWindow,currentWindow}) {
 								</div>
 
 							}
+							{
+								url?.length > 0 &&
+								<div className="flex">
+									<div 
+									onClick={()=>{if(!loader) {openAudioInput()}}}
+									className="border-[1.3px] flex items-center border-sky-500 text-sky-500 w-auto mt-4 gap-1 font-semibold
+									rounded-full px-2 py-1 hover:bg-gray-200/50 dark:hover:bg-gray-800/70 transition-all duration-300 ease-in-out cursor-pointer">
+										<AiOutlinePlusCircle className={`h-5 w-5 text-sky-500`}/> {audioUrl ? audioFileName : 'Add Song'}
+									</div>
+									<input type="file" id="audioFile" accept="audio/*" 
+									value={path6} 
+									onChange={(e)=>{setPath6(e.target.value);url6Setter()}}
+									hidden
+									/>
+								</div>
+							}
+							
+							
+							<span className={` text-md font-semibold overflow-hidden ${warnAboutAudio ? 'w-full h-auto mt-4' : 'h-0 w-0'} transition-all duration-300
+							ease-in-out text-red-500`}>{warnAboutAudio}</span>
+							
 							<div className="mt-4 h-[1px] w-full dark:bg-gray-500/80 peer-focus-within:bg-sky-500/70 bg-gray-200/80"/>
 							<div className="flex items-center justify-between py-3">
 								<div className="flex items-center">
 									<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">
-										<BsCardImage onClick={openFileInput} className={`h-5 w-5 ${url.length<4 ? 'text-sky-500':'text-gray-500'} `}/>
+										<BsCardImage onClick={openFileInput} className={`h-5 w-5 ${url.length<4 && !loader ? 'text-sky-500':'text-gray-500'} `}/>
 										<input type="file" id="file1" accept="image/*" 
-										value={path}
-										onChange={(e)=>setPath(e.target.value)}
+										value={path} multiple="true"
+										onChange={(e)=>{setPath(e.target.value);url3Setter()}}
 										hidden
 										/>
 									</div>
@@ -641,7 +771,9 @@ export default function Center({setCurrentWindow,currentWindow}) {
 											emojiInput &&
 											<div className="absolute top-10 -left-[75px] z-30">
 												<EmojiPicker theme="dark" onEmojiClick={(emoji)=>{
-													setTweetText((tweetText)=>{return tweetText+' '+emoji.emoji})
+													if(!loader){
+														setTweetText((tweetText)=>{return tweetText+''+emoji.emoji})
+													}
 												}}/>
 											</div>											
 										}

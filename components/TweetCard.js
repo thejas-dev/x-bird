@@ -1,24 +1,96 @@
 import {useRef,useState,useEffect} from 'react'
 import {useIsVisible} from '../hooks/useIsVisible';
-import {showClipboardState,searchTextState} from '../atoms/userAtom';
+import {showClipboardState,searchTextState,soundAllowedState,imPlayingState} from '../atoms/userAtom';
+import {useSound} from 'use-sound';
 import {useRecoilState} from 'recoil'
+import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+
+
+let audio;
 
 export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,FaRegComment,millify,
 	AiOutlineRetweet,retweetThisTweet,makeMeSpin,likeThisTweet,makeMePink,AiFillHeart,AiOutlineHeart,
 	BsFillShareFill,BsGraphUpArrow,currentUser,viewThisTweet
-
 }) {
 	const ref = useRef()
 	const isIntersecting = useIsVisible(ref)
 	const [showClipboard,setShowClipboard] = useRecoilState(showClipboardState);
-	const [searchText,setSearchText] = useRecoilState(searchTextState)
+	const [searchText,setSearchText] = useRecoilState(searchTextState);
+	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
+	const [imPlaying,setImPlaying] = useRecoilState(imPlayingState);
 	const [liked,setLiked] = useState(false);
+	const [haveAudio,setHaveAudio] = useState(false);
+	const [audioPlaying,setAudioPlaying] = useState(false);
+	const [audioUrl,setAudioUrl] = useState('');
+	
+	// const [play, { stop:stopAudio8 }] = useSound(audioUrl,{
+	//   loop:true,format: "mp3"
+	// });			
+
+	const play = () => {
+		if(audio){
+			audio.play()
+		}
+	}
+
+	const stopAudio8 = () => {
+		if(audio){
+			audio.pause()
+			audio.currentTime = 0;
+		}
+	}
+
+	const loadAudio = () => {
+		audio = new Audio();
+		if(main?.audio){
+			 audio.addEventListener("loadedmetadata", function () {
+	          const duration = audio.duration;
+	          if (duration > 30) {
+	            console.log("Audio duration cannot exceed 30 seconds.");
+	          } else {
+	            console.log("Audio duration is within the allowed limit.");
+	          }
+	        });
+			audio.loop = true;
+			audio.src = main?.audio
+		}
+	}
 
 	useEffect(()=>{
 		if(isIntersecting){
 			viewThisTweet(j)
-		}		
+			if(soundAllowed && !audioPlaying && main?.audio && !imPlaying){
+				console.log("i ran")
+				play()		
+				setAudioPlaying(true)
+				setImPlaying(true)
+			}
+		}else{
+			if(main?.audio && audioPlaying){
+				stopAudio8()
+				setAudioPlaying(false)
+				setImPlaying(false)				
+			}
+
+		}
 	},[isIntersecting])
+
+	useEffect(()=>{
+		if(soundAllowed){
+			if(isIntersecting && main?.audio && !audioPlaying && !imPlaying){
+				play()
+				setAudioPlaying(true)
+				setImPlaying(true)				
+			}
+		}else{
+			if(main?.audio){
+				setAudioPlaying(false)
+				stopAudio8()
+				setImPlaying(false)
+			}
+		}
+	},[soundAllowed])
 
 	const isLiked = () => {
 		let res = main?.likes?.some(element=>{
@@ -30,6 +102,14 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		return res
 	}
 
+	useEffect(()=>{
+		if(main?.audio){
+			setHaveAudio(true);
+			setAudioUrl(main?.audio)
+			loadAudio()
+		}
+	},[main])
+
 
 	return(
 		<div ref={ref} key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
@@ -38,6 +118,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 			<img 
 			onClick={()=>{
 				setCurrentWindow('Profile')
+				setSoundAllowed(false)
+				stopAudio8()
 				window.history.replaceState({id:100},'Default',`?profile=${main?.user?.id}`);
 			}}
 			src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
@@ -47,6 +129,9 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						<h1 
 						onClick={()=>{
 							setCurrentWindow('Profile')
+							setSoundAllowed(false)
+							stopAudio8()
+
 							window.history.replaceState({id:100},'Default',`?profile=${main?.user?.id}`);
 						}}
 						className="text-lg truncate font-semibold text-black dark:text-gray-100 select-none hover:cursor-pointer hover:underline">
@@ -55,12 +140,16 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						<h1 
 						onClick={()=>{
 							setCurrentWindow('Profile')
+							stopAudio8()
+							setSoundAllowed(false);
 							window.history.replaceState({id:100},'Default',`?profile=${main.user.id}`);
 						}}
 						className="text-gray-500 text-md truncate select-none hidden sm:block">@{main?.user?.username}</h1>
 						<h1 
 						onClick={()=>{
 							window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+							stopAudio8()
+							setSoundAllowed(false);
 							setCurrentWindow('tweet')
 						}}
 						className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
@@ -80,6 +169,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							return <span key={j}> <a 
 							onClick={()=>{
 								window.history.replaceState({id:100},'Explore');
+								stopAudio8()
+								setSoundAllowed(false);
 								setSearchText(txt);
 								setCurrentWindow('Explore')
 							}}
@@ -89,6 +180,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							return <span key={j}> <a 
 							onClick={()=>{
 								window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+								stopAudio8()
+								setSoundAllowed(false);
 								setCurrentWindow('tweet')
 							}} key={j} > {txt}</a></span>
 							
@@ -96,25 +189,47 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					})}</h1>
 				</div>	
 				<div 
-				onClick={()=>{
-					window.history.replaceState({id:100},'Tweet',`?trend=${main?._id}`);setCurrentWindow('tweet')
-				}}
-				className={`rounded-2xl ${main?.images?.length>0 && 'mt-3'} grid rounded-2xl ${main?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
+				
+				className={`rounded-2xl ${main?.images?.length>0 && 'mt-3'} grid rounded-2xl ${main?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} 
+				gap-1 overflow-hidden relative z-10`}>
 					{
 						main?.images?.length>0 &&
 							main?.images?.map((ur,i)=>(
-							<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
+							<div 
+							onClick={()=>{
+								stopAudio8()
+								setSoundAllowed(false);
+								window.history.replaceState({id:100},'Tweet',`?trend=${main?._id}`);setCurrentWindow('tweet');
+							}}
+							className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 								<div className="absolute h-full w-full z-10 transition-all duration-200 
 								ease-in-out group-hover:bg-gray-500/10"/>
-								<img src={ur} alt="" className="select-none w-full transition-all duration-300 ease-in-out"/>
+								<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
 							</div>
 							))
 
+					}
+					{
+						haveAudio &&
+						<div 
+						onClick={()=>{setSoundAllowed(!soundAllowed);stopAudio8()}}
+						className="absolute z-30 right-2 bottom-2 rounded-full p-1 bg-black/40 cursor-pointer
+						transition-all duration-200 ease-in-out hover:bg-black/50">
+							{
+								soundAllowed ? 
+								<FontAwesomeIcon icon={faVolumeHigh} className="max-h-4 w-4 text-white"/>
+								:
+								<FontAwesomeIcon icon={faVolumeXmark} className="max-h-4 w-4 text-white" />
+							}
+
+						</div>
 					}
 				</div>
 				<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
 					<div 
 					onClick={()=>{
+						stopAudio8()
+						setSoundAllowed(false);
 						window.history.replaceState({id:100},'Tweet',`?trend=${main?._id}`);
 						setCurrentWindow('tweet')
 					}}
