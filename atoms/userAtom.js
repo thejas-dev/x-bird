@@ -72,7 +72,7 @@ export const searchTextState = atom({
 
 export const themeState = atom({
 	key:"themeState",
-	default:'light'
+	default:'dark'
 })
 
 export const homeState = atom({
