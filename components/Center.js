@@ -165,7 +165,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		        }
 			]
 		}).then(response=>{
-			console.log(response.url)
+			// console.log(response.url)
 			tweetNowWithVideo(response.url);
 			setVideoUrl('');
 		}).catch(error => {
