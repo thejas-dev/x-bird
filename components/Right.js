@@ -187,7 +187,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	}
 
 	const sendNotify = async(newData) => {
-		console.log(newData)
+		// console.log(newData)
 		const {data} = await axios.get(`${getUserByIdRoute}/${newData.from}`);
 		const dat = {
 			user:data.user,
@@ -1836,7 +1836,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 															<span
 															onClick={()=>{
 																showSeenPeoples(msg.seenBy);
-																console.log(msg.seenBy.includes(currentUser._id))
+																
 															}}
 															>{
 																j+1 === messages.length && msg.fromSelf &&

@@ -11,7 +11,6 @@ export default function SignInComponent({loading,id,name,setName,setUsername,cur
 	const [path3,setPath3] = useState('');
 	const [showSignUp,setShowSingUp] = useState(false);
 
-	useEffect(()=>{console.log(finalLoading)},[finalLoading])
 
 
 	return (

@@ -166,7 +166,7 @@ export default function Lists({currentWindow,setCurrentWindow}) {
 		const {data} = await axios.post(getAllListMemPosts,{
 			following:listMembersIds
 		})
-		console.log(data.postsWithData);
+		// console.log(data.postsWithData);
 		setListMembersTweets(data.postsWithData);
 	}
 

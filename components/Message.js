@@ -64,7 +64,7 @@ export default function Message({currentWindow,setCurrentWindow,newMessageSearch
 		if(searchValue){
 			let resChats = [];
 			for(let i = 0; i<=chats.length; i++){
-				console.log(chats[i])
+				// console.log(chats[i])
 				if(chats[i]?.name?.toLowerCase().includes(searchValue.toLowerCase())){
 					resChats.push(chats[i])
 				}

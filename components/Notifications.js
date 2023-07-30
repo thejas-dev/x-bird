@@ -78,7 +78,7 @@ export default function Notification({currentWindow,setCurrentWindow,setShowThem
 		const {data} = await axios.post(`${dialerRingtonePlayUpdate}/${currentUser._id}`,{
 			dialerRingtonePlay:value
 		})
-		console.log(data.user)
+		// console.log(data.user)
 		setCurrentUser(data.user);
 	}
 
