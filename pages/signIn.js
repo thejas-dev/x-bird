@@ -165,11 +165,13 @@ export default function Home({providers,session2}) {
 	
 	const loginAccountNGA = async() => {
 		if (/@gmail\.com$/.test(ngaGmail)) {
+			setLoading(true);		
 			const {data} = await axios.post(loginNGARoute,{
 				email:ngaGmail,password:ngaPassword
 			})
 			if(data.status === false){
 				setIncorrectPass(true);
+				setLoading(false);
 			}else{
 				setIncorrectPass(false);
 				let tempdata = {email:ngaGmail,password:ngaPassword}
@@ -178,6 +180,7 @@ export default function Home({providers,session2}) {
 			}		    
 		}else{
 			setNgaGmail('');
+			setLoading(false);
 		}
 	}
 
