@@ -9,11 +9,12 @@ import {BsGraphUpArrow,BsFillShareFill,BsThreeDots} from 'react-icons/bs';
 import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart} from 'react-icons/ai';
 import {MdOutlineLocationOn} from 'react-icons/md';
 import {getPostByIdRoute,updatedPostRoute,getUserByIdRoute,updateUser,updateUserRetweets,
-	updateUserFollowing,updateUserFollowers} from '../utils/ApiRoutes';
+	updateUserFollowing,updateUserFollowers,removePost,updateUserTweets} from '../utils/ApiRoutes';
 import DateDiff from 'date-diff';
 import axios from 'axios'
 import {motion} from 'framer-motion'
 import {socket} from '../service/socket';
+import ReactPlayer from 'react-player'
 
 let userTweets = [];
 
@@ -42,11 +43,13 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			let tweet = []
 			for(let i = 0; i<displayUser?.tweets?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${displayUser.tweets[i]}`);
-				tweet = [...tweet,data.post[0]];
-				if((i+1) === displayUser?.tweets?.length){
-					setCurrentUserTweets(tweet);
-					setTweetFetched(true);
-					setPostLoading(false)
+				if(data.post[0]){
+					tweet = [...tweet,data.post[0]];
+					if((i+1) === displayUser?.tweets?.length){
+						setCurrentUserTweets(tweet);
+						setTweetFetched(true);
+						setPostLoading(false)
+					}					
 				}
 			}
 		}
@@ -689,6 +692,26 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	}
 
 
+	const deleteThisOwnTweet = async(j) => {
+		let tweets = [...currentUser.tweets];
+		const idx = await tweets.findIndex(element=>{
+			if(element === currentUserTweets[j]._id){
+				return true
+			}
+			return false
+		})
+		tweets.splice(idx,1);
+		setPostLoading(true);
+		const res = await axios.post(`${updateUserTweets}/${currentUser._id}`,{
+			tweets
+		});
+		const {data} = await axios.post(removePost,{
+			id:currentUserTweets[j]._id
+		})
+		fetchTweets()
+
+	}
+
 	return (
 		<div className="lg:w-[44.6%] relative  md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 scrollbar-none overflow-y-scroll">
 			<div className={`h-full w-full absolute flex items-center justify-center bg-white dark:bg-[#100C08] z-30 ${accountFound && 'hidden'}`}>
@@ -886,8 +909,28 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											calDate(main.createdAt)
 										}</h1>
 									</div>
-									<div className="p-1 rounded-full md:hover:bg-sky-300/20 dark:md:hover:bg-sky-800/20 transition-all duration-200 ease-in-out group">
-										<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
+									<div className="p-1 relative rounded-full md:hover:bg-sky-300/20 dark:md:hover:bg-sky-800/20 transition-all duration-200 ease-in-out group">
+										<div 
+										id={`post-${j}`}
+										onClick={()=>{
+											deleteThisOwnTweet(j);
+										}}
+										className="absolute px-2 py-1 rounded-xl backdrop-blur-lg border-[1px] 
+										right-8 z-50 top-0 bottom-0 my-auto flex items-center justify-center border-red-500 
+										text-black dark:text-gray-200 hidden font-semibold hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out">
+											Delete Post
+										</div>
+										<BsThreeDots 
+										onClick={()=>{
+											let btn = document.getElementById(`post-${j}`)
+											if(btn.classList.value.includes('hidden')){
+												btn.classList.remove('hidden');
+											}else{
+												btn.classList.add('hidden')
+											}
+
+										}}
+										className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
 									</div>
 								</div>
 								<div 
@@ -912,6 +955,12 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											</div>
 											))
 
+									}
+									{
+										main?.videos &&
+										<div className="relative rounded-md mt-2 overflow-hidden">												
+											<ReactPlayer url={main?.videos} controls={true} width='100%' height='100%'/>								
+										</div>
 									}
 								</div>
 								<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
@@ -1084,6 +1133,12 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											))
 
 									}
+									{
+										main?.videos &&
+										<div className="relative rounded-md mt-2 overflow-hidden">												
+											<ReactPlayer url={main?.videos} controls={true} width='100%' height='100%'/>								
+										</div>
+									}
 								</div>
 								<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
 									<div 
@@ -1254,6 +1309,12 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 											</div>
 											))
 
+									}
+									{
+										main?.videos &&
+										<div className="relative rounded-md mt-2 overflow-hidden">												
+											<ReactPlayer url={main?.videos} controls={true} width='100%' height='100%'/>								
+										</div>
 									}
 								</div>
 								<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">

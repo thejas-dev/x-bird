@@ -6,6 +6,7 @@ import {useRecoilState} from 'recoil'
 import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {motion} from 'framer-motion'
+import ReactPlayer from 'react-player'
 
 let audio;
 
@@ -14,6 +15,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	BsFillShareFill,BsGraphUpArrow,currentUser,viewThisTweet,currentWindow
 }) {
 	const ref = useRef()
+	const playerRef = useRef(null);
 	const isIntersecting = useIsVisible(ref)
 	const [showClipboard,setShowClipboard] = useRecoilState(showClipboardState);
 	const [searchText,setSearchText] = useRecoilState(searchTextState);
@@ -24,7 +26,14 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const [liked,setLiked] = useState(false);
 	const [haveAudio,setHaveAudio] = useState(false);
 	const [audioPlaying,setAudioPlaying] = useState(false);
-	const [audioUrl,setAudioUrl] = useState('');
+
+	const handlePlay = () => {
+	    playerRef.current?.getInternalPlayer()?.play();
+	  };
+
+	  const handlePause = () => {
+	    playerRef.current?.getInternalPlayer()?.pause();
+	  };
 
 	const play = () => {
 		if(audio){
@@ -44,7 +53,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		if(main?.audio){			 
 			audio.loop = true;
 			audio.src = main?.audio
-		}
+		}			
+		
 	}
 
 	useEffect(()=>{
@@ -58,7 +68,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		if(isIntersecting){
 			viewThisTweet(j)
 			if(soundAllowed && !audioPlaying && main?.audio && !imPlaying){
-				play()		
+				play()	
 				setAudioPlaying(true)
 				setImPlaying(true)
 			}
@@ -66,7 +76,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 			if(main?.audio && audioPlaying){
 				stopAudio8()
 				setAudioPlaying(false)
-				setImPlaying(false)				
+				setImPlaying(false)	
 			}
 
 		}
@@ -101,19 +111,10 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	useEffect(()=>{
 		if(main?.audio){
 			setHaveAudio(true);
-			setAudioUrl(main?.audio)
 			loadAudio()
 		}
 	},[main])
 
-	// useEffect(()=>{
-	// 	if(currentWindow){
-	// 		setHaveAudio(false);
-	// 		stopAudio8();
-	// 		setAudioPlaying(false)
-	// 		setImPlaying(false);
-	// 	}
-	// },[currentWindow])
 
 
 	return(
@@ -122,7 +123,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 			opacity:0,
 		}}
 		whileInView={{opacity:1}}
-		transition={{duration:0.3}}
+		transition={{duration:0.4}}
 		viewport={{ once: true }}
 
 		ref={ref} key={j} className={`w-full ${j===0 ? 'border-b-[1.6px]':'border-y-[1.6px]'} p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
@@ -222,9 +223,24 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 
 					}
 					{
+						main?.videos &&
+						<div className="relative rounded-md mt-2 overflow-hidden">												
+							<ReactPlayer ref={playerRef} url={main?.videos} controls={true} width='100%' height='100%'/>								
+						</div>
+					}
+					{
 						haveAudio &&
 						<div 
-						onClick={()=>{setSoundAllowed(!soundAllowed);stopAudio8()}}
+						onClick={()=>{
+							if(!soundAllowed){
+								play();
+								setImPlaying(true);
+								setAudioPlaying(true)
+							}else{
+								stopAudio8()
+							}
+							setSoundAllowed(!soundAllowed);
+						}}
 						className="absolute z-30 right-2 bottom-2 rounded-full p-1 bg-black/40 cursor-pointer
 						transition-all duration-200 ease-in-out hover:bg-black/50 flex items-center justify-center
 						backdrop-blur-md h-6 w-6">

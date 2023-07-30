@@ -2,7 +2,7 @@ import {FiChevronDown,FiChevronUp} from 'react-icons/fi';
 import {useState,useEffect,useRef} from 'react';
 import {BsCardImage,BsEmojiSmile,BsGraphUpArrow,BsFillShareFill,BsThreeDots,BsFillPeopleFill} from 'react-icons/bs';
 import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart,AiOutlinePlusCircle} from 'react-icons/ai';
-import {TbGif} from 'react-icons/tb';
+import {MdVideoLibrary} from 'react-icons/md';
 import {FaRegComment} from 'react-icons/fa';
 import {useRecoilState} from 'recoil';
 import {BiWorld} from 'react-icons/bi';
@@ -22,7 +22,7 @@ import EmojiPicker from 'emoji-picker-react';
 import DateDiff from 'date-diff';
 import {socket} from '../service/socket';
 import TweetCard from './TweetCard'
-
+import ReactPlayer from 'react-player'
 
 let imageUrl = [];
 
@@ -55,6 +55,8 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [path6,setPath6] = useState('');
 	const [audioFileName,setAudioFileName] = useState('');
 	const [warnAboutAudio,setWarnAboutAudio] = useState('');
+	const [path8,setPath8] = useState('');
+	const [videoUrl,setVideoUrl] = useState('');
 
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -72,13 +74,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 
 	const pathCheck = (path) =>{
 		if(path){
-			if(path.split('.').includes('jpg')){
-				return true;
-			}else if(path.split('.').includes('jpeg')){
-				return true;
-			}else if(path.split('.').includes('png')){
+			if(path.split('/').includes('data:image')){
 				return true;
 			}
+			return false
 		}
 	}
 
@@ -149,6 +148,31 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		    setTimeout(()=>{setWarnAboutAudio('')},5000)
 		});
 
+	}
+
+	const uploadVideo = () => {
+
+
+		imagekit.upload({
+			file:videoUrl,
+			folder:"Videos",
+			fileName:'trendzio',
+			extensions:[
+				{
+		            name: "google-auto-tagging",
+		            maxTags: 5,
+		            minConfidence: 95
+		        }
+			]
+		}).then(response=>{
+			console.log(response.url)
+			tweetNowWithVideo(response.url);
+			setVideoUrl('');
+		}).catch(error => {
+			setLoader(false);
+		    setWarnAboutAudio(error.message);
+			setTimeout(()=>{setWarnAboutAudio('')},5000)
+		});
 	}
 
 	const uploadImage = (i=0) => {
@@ -223,6 +247,68 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	
 	// },[path])
 
+	// const url8Setter = async() => {
+	// 	const videoElementTemp = document.getElementById('file8')
+	// 	const video_input = videoElementTemp.files[0];
+	// 	  if (video_input) {
+	// 	    // Check if the file is a video format
+	// 	    if (video_input.type.startsWith('video/')) {
+	// 	      // Create a video element to load the selected video
+	// 	      const videoElement = document.createElement('video');
+	// 	      videoElement.preload = 'metadata';
+
+	// 	      // Set the video file as the source of the video element
+	// 	      videoElement.src = URL.createObjectURL(video_input);
+
+	// 	      // Wait for the video metadata to be loaded
+	// 	      videoElement.addEventListener('loadedmetadata', () => {
+	// 	        // Check the duration of the video
+	// 	        if (videoElement.duration <= 60) {
+	// 	          // Update the state with the video URL
+	// 	          setVideoUrl(videoElement.src);
+	// 			  setPath8('');		          
+	// 	        } else {
+	// 			  setPath8('');
+	// 	          setWarnAboutAudio('Video duration exceeds maximum of 1 minute.');
+	// 			  setTimeout(()=>{setWarnAboutAudio('')},5000)
+	// 	        }
+	// 	      });
+
+	// 	      // Release the URL object once the video is no longer needed
+	// 	      videoElement.addEventListener('ended', () => {
+	// 	        URL.revokeObjectURL(videoElement.src);
+	// 	      });
+	// 	    } else {
+	// 	      console.log('Invalid video format. Please upload a valid video.');
+	// 	    }
+	// 	  }
+	// }	
+
+	const url8Setter = async () => {
+	  const videoElementTemp = document.getElementById('file8');
+	  const video_input = videoElementTemp.files[0];
+	  if (video_input) {
+	    // Check if the file is a video format
+	    if (video_input.type.startsWith('video/')) {
+	      // Create a FileReader
+	      const reader = new FileReader();
+
+	      // Set up the onload event handler to convert video to base64
+	      reader.onload = () => {
+	        // The result property contains the base64 string
+	        const base64String = reader.result;
+	        setVideoUrl(base64String); // Assign the base64 string to videoUrl
+	        setPath8('');
+	      };
+
+	      // Read the video file as Data URL (which will be the base64 representation)
+	      reader.readAsDataURL(video_input);
+	    } else {
+	      console.log('Invalid video format. Please upload a valid video.');
+	    }
+	  }
+	};
+
 
 	const url6Setter = async() => {
 		const audio_input = document.querySelector('#audioFile');
@@ -231,29 +317,34 @@ export default function Center({setCurrentWindow,currentWindow}) {
 			
 		    const file = audio_input.files[0];
 		    const audio = new Audio();
+		    if(file){
+		    	audio.addEventListener('loadedmetadata', () => {
+			      const durationInSeconds = audio.duration;
+			      if (durationInSeconds > 31) {
+			      	setPath6('');
+			        // File duration is longer than 30 seconds
+			        setWarnAboutAudio("Audio file should be 30 seconds or less.");
+			       	setTimeout(()=>{setWarnAboutAudio('')},5000)
+			       	setAudioUrl('');
+			      } else {
+			        // File duration is within the allowed limit
+			        const reader = new FileReader();
+			        reader.addEventListener('load', () => {
+			          if (audioPathCheck(reader.result)) {
+			            setAudioUrl(reader.result);
+			            setPath6('');
+			          }else{
+			          	setPath6('');
+			          	setAudioUrl('');
+			          }
+			        });
+			        reader.readAsDataURL(file);
+			      }
+			    });
 
-		    audio.addEventListener('loadedmetadata', () => {
-		      const durationInSeconds = audio.duration;
-		      if (durationInSeconds > 31) {
-		      	setPath6('');
-		        // File duration is longer than 30 seconds
-		        setWarnAboutAudio("Audio file should be 30 seconds or less.");
-		       	setTimeout(()=>{setWarnAboutAudio('')},5000)
-		       	setAudioUrl('');
-		      } else {
-		        // File duration is within the allowed limit
-		        const reader = new FileReader();
-		        reader.addEventListener('load', () => {
-		          if (audioPathCheck(reader.result)) {
-		            setAudioUrl(reader.result);
-		            setPath6('');
-		          }
-		        });
-		        reader.readAsDataURL(file);
-		      }
-		    });
-
-		    audio.src = URL.createObjectURL(file);	
+			    audio.src = URL.createObjectURL(file);	
+		    }
+		    
 		}
 	}
 
@@ -269,7 +360,8 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		  const file = image_input.files[index];
 		  const reader = new FileReader();
 		  reader.addEventListener('load', () => {
-		  	if(reader.result){
+		  	if(reader.result && pathCheck(reader.result)){
+		  		// console.log(reader.result,pathCheck(reader.result))
 		    	setUrl2(reader.result);
 		  	}
 		    readNextImage(index + 1);
@@ -362,22 +454,49 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	},[url2])
 
 	const openFileInput = () => {
-		if(url.length<4 && !loader){
+		if(url.length<4 && !loader && !videoUrl){
 			document.getElementById('file1').click();
 		}
 	}
 
 	const tweet = async() => {
 		if(currentUser){
-			if(tweetText.length > 2 || url.length>0){
+			if(tweetText.length > 2 || url.length>0 || videoUrl){
 				setLoader(true);
 				if(url.length>0){
-					uploadImage()				
+					uploadImage();				
+				}else if(videoUrl){
+					uploadVideo();
 				}else{
 					tweetNow();
 				}
 			}			
 		}
+	}
+
+	const tweetNowWithVideo = async(videoArray) => {
+		const text = tweetText || '';
+		const user = {
+			id:currentUser._id,
+			name:currentUser.name,
+			image:currentUser.image,
+			username:currentUser.username
+		}	
+		const images = [];	
+		const audio = '';
+		const videos = videoArray;
+		const {data} = await axios.post(createTweet,{text,user,images,audio,videos,public:tweetPublic});
+		setUrl([]);
+		setAudioUrl('');
+		imageUrl = []
+		setTweetText('');
+		setLoader(false);
+		setMainFeed(mainFeed=>[data.post,...mainFeed]);
+		const tweets = [data.post._id,...currentUser.tweets]
+		const res = await axios.post(`${updateUserTweets}/${currentUser._id}`,{
+			tweets
+		});
+		setCurrentUser(res.data.obj);
 	}
 
 	const tweetNow = async(imageArray,audioArray) => {
@@ -390,7 +509,8 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		}	
 		const images = url.length>0 ? imageArray : [];	
 		const audio = audioArray ? audioArray : '';
-		const {data} = await axios.post(createTweet,{text,user,images,audio,public:tweetPublic});
+		const videos = '';
+		const {data} = await axios.post(createTweet,{text,user,images,audio,videos,public:tweetPublic});
 		setUrl([]);
 		setAudioUrl('');
 		imageUrl = []
@@ -746,6 +866,18 @@ export default function Center({setCurrentWindow,currentWindow}) {
 									/>
 								</div>
 							}
+							{
+								videoUrl && 	
+								<div className="relative rounded-md mt-2 overflow-hidden">
+									<div 
+									onClick={()=>setVideoUrl('')}
+									className={`rounded-full p-1 hover:bg-red-600 transition-all ${loader && 'hidden'} 
+									duration-200 ease-out bg-gray-800 absolute top-[10px] z-20 left-[6px]`}>
+										<RxCross2 className="md:h-5 h-4 w-4 md:w-5 text-white"/>
+									</div>							
+									<ReactPlayer url={videoUrl} controls={true} width='100%' height='100%'/>								
+								</div>
+							}
 							
 							
 							<span className={` text-md font-semibold overflow-hidden ${warnAboutAudio ? 'w-full h-auto mt-4' : 'h-0 w-0'} transition-all duration-300
@@ -755,7 +887,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 							<div className="flex items-center justify-between py-3">
 								<div className="flex items-center">
 									<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">
-										<BsCardImage onClick={openFileInput} className={`h-5 w-5 ${url.length<4 && !loader ? 'text-sky-500':'text-gray-500'} `}/>
+										<BsCardImage onClick={openFileInput} className={`h-5 w-5 ${(url.length<4 && !loader && !videoUrl) ? 'text-sky-500':'text-gray-500'} `}/>
 										<input type="file" id="file1" accept="image/*" 
 										value={path} multiple="true"
 										onChange={(e)=>{setPath(e.target.value);url3Setter()}}
@@ -763,7 +895,17 @@ export default function Center({setCurrentWindow,currentWindow}) {
 										/>
 									</div>
 									<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">
-										<TbGif className="h-5 w-5 text-sky-500"/>
+										<MdVideoLibrary onClick={()=>{
+											if(url.length < 1 && !loader){
+												document.getElementById('file8').click()
+											}
+										}}
+										className={`h-5 w-5 ${url.length > 0 && !loader ? 'text-gray-500' : 'text-sky-500'}`}/>
+										<input type="file" id="file8" accept="video/*" 
+										value={path8} multiple="true"
+										onChange={(e)=>{setPath8(e.target.value);url8Setter()}}
+										hidden
+										/>
 									</div>
 									<div className="relative cursor-pointer hidden sm:block rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">
 										<BsEmojiSmile onClick={openEmojiInput} className="h-5 w-5 text-sky-500 z-30"/>
@@ -778,16 +920,16 @@ export default function Center({setCurrentWindow,currentWindow}) {
 											</div>											
 										}
 									</div>
-									<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">
+									<div className="cursor-pointer rounded-full p-2 opacity-50 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">
 										<MdSchedule className="h-5 w-5 text-sky-500"/>
 									</div>
-									<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">
+									<div className="cursor-pointer rounded-full p-2 opacity-50 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">
 										<HiOutlineLocationMarker className="h-5 w-5 text-sky-500"/>
 									</div>
 								</div>
 								<button 
 								onClick={()=>tweet()}
-								className={`px-5 py-[6px] select-none rounded-full text-white font-bold ${((tweetText.length>2 || url.length>0) && !loader) ? 'bg-sky-500 dark:bg-sky-500' : 'bg-sky-300 dark:bg-sky-900'}`}>
+								className={`px-5 py-[6px] select-none rounded-full text-white font-bold ${((tweetText.length>2 || url.length>0 || videoUrl) && !loader) ? 'bg-sky-500 dark:bg-sky-500' : 'bg-sky-300 dark:bg-sky-900'}`}>
 									Trend
 								</button>
 							</div>

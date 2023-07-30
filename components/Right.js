@@ -1603,7 +1603,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							}
 						</div>
 					</div>
-					<div className={`mt-5 rounded-2xl bg-gray-300/20 dark:bg-gray-700/30 flex flex-col overflow-hidden ${currentWindow === 'Explore' && 'hidden'}`}>
+					<div className={`mt-5 hidden rounded-2xl bg-gray-300/20 dark:bg-gray-700/30 flex flex-col overflow-hidden ${currentWindow === 'Explore' && 'hidden'}`}>
 						<h1 className="my-3 mx-4 text-xl text-black dark:text-gray-200 font-bold">What is happening</h1>
 						{
 							tempEventData.map((event,i)=>(
@@ -1664,8 +1664,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 									window.history.replaceState({id:100},'Default',`?profile=${who?._id}`);
 									setNeedToReloadProfile(true)
 								}}
-								className="p-4 flex justify-between hover:bg-gray-200 dark:hover:bg-gray-800/30
-								transition-all duration-200 ease-in-out cursor-pointer gap-2" key={i}>
+								className={`p-4 flex justify-between hover:bg-gray-200 dark:hover:bg-gray-800/30
+								transition-all duration-200 ease-in-out cursor-pointer gap-2`} key={i}>
 									<div className="flex gap-2 items-center overflow-hidden">
 										<img src={who.image} className="h-12 w-12 rounded-xl"/>
 										<div className="flex flex-col gap-[2px] overflow-hidden">

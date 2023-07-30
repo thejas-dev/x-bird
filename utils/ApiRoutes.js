@@ -1,4 +1,4 @@
-export const host = "https://x-bird-server.vercel.app";
+export const host = "http://192.168.1.7:3333";
 
 export const registerRoute = `${host}/api/auth/register`;
 export const loginRoute = `${host}/api/auth/login`;
@@ -8,6 +8,7 @@ export const checkNGA = `${host}/api/auth/checkNGA`;
 export const createTweet = `${host}/api/auth/createPost`;
 export const getAllPosts = `${host}/api/auth/getAllPosts`;
 export const getPostByIdRoute = `${host}/api/auth/getPostByIdRoute`;
+export const removePost = `${host}/api/auth/removePost`;
 export const updatedPostRoute  = `${host}/api/auth/updatedPostRoute`;
 export const updateUser = `${host}/api/auth/updateUser`;
 export const findPostRoute = `${host}/api/auth/findPostRoute`;
