@@ -627,68 +627,70 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const retweetThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${mainFeed[j]._id}`);
-			const post = data.post[0];
-			let retweetedBy = post.retweetedBy;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			// console.log(likes,user)
-			const check = retweetedBy.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data.post[0]){
+				const post = data.post[0];
+				let retweetedBy = post.retweetedBy;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			// console.log(check)
-			if(!check){
-				retweetedBy.push(user);
-			}else{
-				const idx = retweetedBy.findIndex(element=>{
+				// console.log(likes,user)
+				const check = retweetedBy.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				retweetedBy.splice(idx,1);
-			}
-			const updatedPost = {...post, 'retweetedBy':retweetedBy }
-			const res = await axios.post(`${updatedPostRoute}/${mainFeed[j]._id}`,updatedPost);
-			let main = [...mainFeed];
-			main[j] = res.data.obj;
-			setMainFeed(main);
-
-			const check2 = await currentUser.retweets.some(element=>{
-				if(element === res.data.obj._id){
-					return true;
+				// console.log(check)
+				if(!check){
+					retweetedBy.push(user);
+				}else{
+					const idx = retweetedBy.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					retweetedBy.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const retweets = [res.data.obj._id, ...currentUser.retweets];
-				// const tweets = [data.post._id,...currentUser.tweets]
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.retweets.findIndex(element=>{
+				const updatedPost = {...post, 'retweetedBy':retweetedBy }
+				const res = await axios.post(`${updatedPostRoute}/${mainFeed[j]._id}`,updatedPost);
+				let main = [...mainFeed];
+				main[j] = res.data.obj;
+				setMainFeed(main);
+
+				const check2 = await currentUser.retweets.some(element=>{
 					if(element === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let retweets = [...currentUser.retweets];
-				await retweets.splice(idx,1);
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const retweets = [res.data.obj._id, ...currentUser.retweets];
+					// const tweets = [data.post._id,...currentUser.tweets]
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.retweets.findIndex(element=>{
+						if(element === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let retweets = [...currentUser.retweets];
+					await retweets.splice(idx,1);
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',mainFeed[j]._id)				
 			}
-			socket.emit('refetch-post',mainFeed[j]._id)
 		}else{
 			setShowLoginNow(true)
 		}

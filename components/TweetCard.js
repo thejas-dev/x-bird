@@ -102,6 +102,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		let res = main?.likes?.some(element=>{
 			if(element?.id === currentUser?._id){
 				return true;
+				setLiked(true)
 			}
 			return false
 		})
@@ -301,16 +302,16 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					</div>
 					<div
 					onClick={()=>{
-						likeThisTweet(j);
 						if(currentUser){
 							makeMePink(j)
 							setLiked(!liked)
+							likeThisTweet(j);
 						}
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">
 						<div className="p-[10px] group-hover:bg-pink-300/30 dark:group-hover:bg-pink-700/30 transition-all duration-200 ease-in-out rounded-full">
 							{
-								isLiked() ? 
+								(isLiked() || liked) ? 
 								<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 dark:group-hover:text-pink-600 transition-all duration-200 ease-in-out w-5 text-pink-600
 								focus:scale-75 transition-all duration-800 ease-in-out
 								"/>
