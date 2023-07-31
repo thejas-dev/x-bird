@@ -408,7 +408,8 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 				onClick={()=>setOpenSidebar(true)}
 				className="left-3 absolute top-3 cursor-pointer left-5 h-8 w-8 rounded-full"/>
 				<center>
-					<img src="twitter-icon.png" className="h-9 cursor-pointer w-9"/>
+					<img src="https://ik.imagekit.io/d3kzbpbila/thejashari_QSzOWJHFV?updatedAt=1690659361414" 
+					className="h-9 cursor-pointer w-9"/>
 				</center>
 			</div>
 			<div className="mt-2 xs:hidden block bg-gray-200/40 dark:bg-gray-700/40 w-full h-[1px]"/>
