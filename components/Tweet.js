@@ -21,6 +21,7 @@ import CommentCard from './CommentCard';
 import GifPicker from 'gif-picker-react';
 import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import ReactPlayer from 'react-player'
 
 let imageUrl = [];
 let audio;
@@ -713,6 +714,12 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						))
 
 					}
+                                        {
+										currentPost?.videos &&
+										<div className="relative rounded-md mt-2 overflow-hidden">												
+											<ReactPlayer url={currentPost?.videos} controls={true} width='100%' height='100%'/>								
+										</div>
+}
 					{
 						haveAudio &&
 						<div 
