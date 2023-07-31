@@ -540,7 +540,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 					<img src={userLeftAlert?.image} alt="" className="h-6 w-6 rounded-full" /> {userLeftAlert?.name} left
 				</div>
 
-				<div className={`sm:h-[85%] h-full relative sm:rounded-2xl md:aspect-[16/9] mx-auto aspect-[9/16] overflow-hidden`}>
+				<div className={`sm:h-[85%] h-full relative sm:rounded-2xl md:aspect-[16/9] mx-auto sm:aspect-[9/16] sm:w-auto w-full overflow-hidden`}>
 					{
 						!permissionGranted && 
 						<div className="h-full w-full top-0 left-0 z-30 bg-gray-900 flex items-center justify-center flex-col">

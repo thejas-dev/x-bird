@@ -88,7 +88,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 	useEffect(() => {
 	  const handleRouteChange = (url) => {
-	    findUserFun()
+	    findUserFun(url.split('=')[1])
+	    // console.log(url)
 	  };
 
 	  // Add the event listener for route changes
@@ -100,20 +101,20 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	  };
 	}, []);
 
-	const findUserFun = () => {
+	const findUserFun = (url) => {
 		setLoading(true);
-		if(router?.query?.profile && currentUser){
-			const id = router.query.profile;
+		if(url && currentUser){
+			const id = url;
 			if(id === currentUser._id){
 				setAccountFound(true);
 				setDisplayUser(currentUser);
 				setOwnAccount(true);
 				setLoading(false)
 			}else{
-				findUser();
+				findUserByUrl(url);
 			}
-		}else if(location.profile){
-			findUser()
+		}else if(url){
+			findUserByUrl(url)
 		}else{
 			setAccountFound(true);
 			setDisplayUser(currentUser);
@@ -156,6 +157,20 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		}
 	},[needToReloadProfile])
 
+	const findUserByUrl = async(url) => {
+		setLoading(true);
+		// console.log(location.search.split('=')[1])
+		const {data} = await axios.get(`${getUserByIdRoute}/${url}`);
+		if(data.status === false){
+			setAccountFound(false);
+			setLoading(false);
+		}else{
+			setAccountFound(true);
+			setDisplayUser(data?.user);
+			setLoading(false);
+		}
+	}
+
 	const findUser = async() => {
 		setLoading(true);
 		// console.log(location.search.split('=')[1])
@@ -163,7 +178,6 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(data.status === false){
 			setAccountFound(false);
 			setLoading(false);
-			router.push('/')
 		}else{
 			setAccountFound(true);
 			setDisplayUser(data?.user);
