@@ -40,13 +40,14 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(displayUser && displayUser?.tweets?.length > 0){
 			setPostLoading(true)
 			setCurrentUserTweets([]);
-			let tweet = []
+			// let tweet = []
 			for(let i = 0; i<displayUser?.tweets?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${displayUser.tweets[i]}`);
 				if(data.post[0]){
-					tweet = [...tweet,data.post[0]];
-					if((i+1) === displayUser?.tweets?.length){
-						setCurrentUserTweets(tweet);
+					setCurrentUserTweets(currentUserTweets => [...currentUserTweets,data.post[0]])
+					// tweet = [...tweet,data.post[0]];
+					if(i===0){
+						// setCurrentUserTweets(tweet);
 						setTweetFetched(true);
 						setPostLoading(false)
 					}					
