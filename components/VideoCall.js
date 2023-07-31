@@ -11,7 +11,7 @@ import { useId } from "react";
 import {socket} from '../service/socket'
 import { v4 as uuidv4 } from 'uuid';
 import {useSound} from 'use-sound';
-import {FiVideoOff} from 'react-icons/fi';
+import {FiVideoOff,FiMinimize2} from 'react-icons/fi';
 
 let myPeer;
 let myStream;
@@ -46,6 +46,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 	// const [inGroupCall,setInGroupCall] = useRecoilState(inGroupCallState)
 	const [permissionGranted,setPermissionGranted] = useState(true);
 	const [stopAudio,setStopAudio] = useState(false);
+	const [openMaxWindow,setOpenMaxWindow] = useState(false);
 
 	const [play2, { stop:stopAudio3 }] = useSound('dialer.mp3',{
 	  loop:true
@@ -558,7 +559,19 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 					onClick={()=>setHideOptions(!hideOptions)}
 					className="h-full w-full object-cover object-center bg-black sm:rounded-2xl" src=""></video>
 				</div>
-				<div className={`absolute overflow-hidden flex items-center justify-center md:aspect-[16/9] sm:h-[25%] h-[20%] 
+				<div 
+				onClick={()=>{
+					setOpenMaxWindow(true);
+					let maxVideo = document.getElementById('videoMaxStream');
+					maxVideo.srcObject = myStream;
+					maxVideo.muted = true
+					maxVideo.autoplay = true;
+
+					maxVideo.onloadedmetadata = function(){
+						maxVideo.play()
+					}
+				}}
+				className={`absolute overflow-hidden flex items-center justify-center md:aspect-[16/9] sm:h-[25%] h-[20%] 
 				bg-gray-800/50 backdrop-blur-sm right-3 md:right-8 rounded-xl ${hideOptions ? 'bottom-10' : 'bottom-14'}  
 				aspect-[9/16] transition-all duration-300 ease-in-out`}>
 					<video id="miniStream" 
@@ -613,7 +626,33 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 
 				</div>	
 			</div>
+			<div className={`fixed ${openMaxWindow && accepted ? 'h-full w-full' : 'h-0 w-0'} left-0 bg-black/30 
+			backdrop-blur-md top-0 right-0 bottom-0 m-auto z-30 flex items-center justify-center transition-all
+			duration-300 ease-in-out`}>
+				<div className={`sm:h-[85%] h-full relative sm:rounded-2xl md:aspect-[16/9] mx-auto sm:aspect-[9/16] sm:w-auto w-full overflow-hidden`}>
+					<div 
+					onClick={()=>{
+						setOpenMaxWindow(false);
+						let videoElement = document.getElementById('videoMaxStream');
+						videoElement.srcObject = null;
+						videoElement.src = ''
+					}}
+					className={`absolute right-2 hover:scale-110 transition-all duration-300 
+ 					ease-in-out rounded-full cursor-pointer bg-black/20 backdrop-blur-sm text-white 
+ 					cursor-pointer z-30 ${!hideOptions ? 'top-2' : '-top-[100px]'} p-1 h-8 w-8`}>	
+ 						<FiMinimize2 className='h-full w-full text-white'/>
+					</div>
+					<div 
+					onClick={()=>setHideOptions(!hideOptions)}					
+					className={`absolute h-full w-full top-0 left-0 sm:rounded-2xl transition-all duration-300 xs:hidden bg-gradient-to-t from-black/40 via-transparent to-transparent
+					ease-in-out 
+					${!hideOptions ? 'opacity-100' : 'opacity-0'}`}/>
+					<video id="videoMaxStream" 
+					onClick={()=>setHideOptions(!hideOptions)}
+					className="h-full w-full object-cover object-center bg-black sm:rounded-2xl" src=""></video>
+				</div>
 
+			</div>
 
 		</div>
 
