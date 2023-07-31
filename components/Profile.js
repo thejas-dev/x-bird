@@ -713,7 +713,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	}
 
 	return (
-		<div className="lg:w-[44.6%] relative  md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 scrollbar-none overflow-y-scroll">
+		<div className="lg:w-[44.6%] relative  md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 
+		dark:border-gray-600 scrollbar-none overflow-y-scroll overflow-x-hidden">
 			<div className={`h-full w-full absolute flex items-center justify-center bg-white dark:bg-[#100C08] z-30 ${accountFound && 'hidden'}`}>
 				<div className="flex flex-col relative gap-8 w-auto select-none">
 					<img src="https://abs.twimg.com/responsive-web/client-web/book-in-bird-cage-400x200.v1.366bcfc9.png" alt=""
