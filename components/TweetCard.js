@@ -2,6 +2,8 @@ import {useRef,useState,useEffect} from 'react'
 import {useIsVisible} from '../hooks/useIsVisible';
 import {showClipboardState,searchTextState,soundAllowedState,imPlayingState,
 	maxImageState,showMaxImageState} from '../atoms/userAtom';
+import {useRouter} from 'next/navigation'
+import {host} from '../utils/ApiRoutes'
 import {useRecoilState} from 'recoil'
 import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -25,6 +27,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const [maxImage,setMaxImage] = useRecoilState(maxImageState)
 	const [liked,setLiked] = useState(false);
 	const [haveAudio,setHaveAudio] = useState(false);
+	const router = useRouter();
 	const [audioPlaying,setAudioPlaying] = useState(false);
 
 	const handlePlay = () => {
@@ -133,10 +136,10 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		no_highlights ease-in cursor-pointer`}>
 			<img 
 			onClick={()=>{
-				setCurrentWindow('Profile')
 				setSoundAllowed(false)
 				stopAudio8()
-				window.history.replaceState({id:100},'Default',`?profile=${main?.user?.id}`);
+				let route = `/profile?profile=${main?.user?.id}`
+				router.push(route)
 			}}
 			src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
 			<div className="flex flex-col w-full overflow-hidden">
@@ -144,29 +147,29 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					<div className="flex gap-1 truncate shrink items-center ">
 						<h1 
 						onClick={()=>{
-							setCurrentWindow('Profile')
+							let route = `/profile?profile=${main?.user?.id}`
+							router.push(route)
 							setSoundAllowed(false)
 							stopAudio8()
 
-							window.history.replaceState({id:100},'Default',`?profile=${main?.user?.id}`);
 						}}
 						className="text-lg truncate font-semibold text-black dark:text-gray-100 select-none hover:cursor-pointer hover:underline">
 							{main?.user?.name}
 						</h1>
 						<h1 
 						onClick={()=>{
-							setCurrentWindow('Profile')
+							let route = `/profile?profile=${main?.user?.id}`
+							router.push(route)
 							stopAudio8()
 							setSoundAllowed(false);
-							window.history.replaceState({id:100},'Default',`?profile=${main.user.id}`);
 						}}
 						className="text-gray-500 text-md truncate select-none hidden sm:block">@{main?.user?.username}</h1>
 						<h1 
 						onClick={()=>{
-							window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 							stopAudio8()
 							setSoundAllowed(false);
-							setCurrentWindow('tweet')
+							let route = `/trend?trend=${main._id}`
+							router.push(route)
 						}}
 						className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
 							calDate(main.createdAt)
@@ -184,21 +187,20 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						if(txt[0] === '#'){
 							return <span key={j}> <a 
 							onClick={()=>{
-								window.history.replaceState({id:100},'Explore');
 								stopAudio8()
 								setSoundAllowed(false);
 								setSearchText(txt);
-								setCurrentWindow('Explore')
+								router.push('/explore')
 							}}
 								
 							className="text-sky-500 hover:underline" key={j} > {txt}</a></span>
 						}else{
 							return <span key={j}> <a 
 							onClick={()=>{
-								window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
 								stopAudio8()
 								setSoundAllowed(false);
-								setCurrentWindow('tweet')
+								let route = `/trend?trend=${main._id}`
+								router.push(route)
 							}} key={j} > {txt}</a></span>
 							
 						}
@@ -261,8 +263,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					onClick={()=>{
 						stopAudio8()
 						setSoundAllowed(false);
-						window.history.replaceState({id:100},'Tweet',`?trend=${main?._id}`);
-						setCurrentWindow('tweet')
+						let route = `/trend?trend=${main._id}`
+						router.push(route)
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">
 						<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
@@ -345,7 +347,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					</div>
 					<div 
 					onClick={()=>{
-						navigator.clipboard.writeText(location.toString() + '?trend=' + main._id)
+						navigator.clipboard.writeText(host + '/trend?trend=' + main._id)
 						setShowClipboard(true)
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">

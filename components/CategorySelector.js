@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react'
 import {RxCross2} from 'react-icons/rx';
 
+let data = []
 
 export default function CategorySelector({showCategorySelector,setShowCategorySelector,imageUploading,updateCategoriesFunction,
 	setCategoryList,categoryList,currentUser}) {
@@ -13,7 +14,8 @@ export default function CategorySelector({showCategorySelector,setShowCategorySe
 		}
 	},[addThisItem])
 
-	const data = [
+	useEffect(()=>{
+		data = [
 		{
 			title:'News'
 		},
@@ -54,6 +56,8 @@ export default function CategorySelector({showCategorySelector,setShowCategorySe
 			title:'Personal development'
 		}
 	]
+	},[])
+
 
 	const addToList = (j) => {
 		if(categoryList.includes(data[j].title)){

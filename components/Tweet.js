@@ -10,7 +10,8 @@ import {findPostRoute} from '../utils/ApiRoutes';
 import {FaRegComment} from 'react-icons/fa';
 import axios from 'axios'
 import millify from 'millify';
-import {currentUserState,loaderState,showLoginNowState,showClipboardState,soundAllowedState} from '../atoms/userAtom';
+import {currentUserState,loaderState,showLoginNowState,showClipboardState,soundAllowedState,
+	showMaxImageState,maxImageState} from '../atoms/userAtom';
 import {useRecoilState} from 'recoil'
 import {getPostByIdRoute,updateUser,updatedPostRoute,updateUserRetweets,updateUserBookmarks} from '../utils/ApiRoutes';
 import EmojiPicker from 'emoji-picker-react';
@@ -22,6 +23,7 @@ import GifPicker from 'gif-picker-react';
 import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ReactPlayer from 'react-player'
+import {useRouter} from 'next/navigation';
 
 let imageUrl = [];
 let audio;
@@ -45,8 +47,11 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
 	const [haveAudio,setHaveAudio] = useState(false);
 	const [audioPlaying,setAudioPlaying] = useState(false);
+	const [showMaxImage,setShowMaxImage] = useRecoilState(showMaxImageState)					
+	const [maxImage,setMaxImage] = useRecoilState(maxImageState)
 	const [audioUrl,setAudioUrl] = useState('');
 	const [liked,setLiked] = useState(false);
+	const router = useRouter()
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
 	    privateKey : process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE,
@@ -152,8 +157,14 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 		const fetchData = async() => {
 			try{
 				const {data} = await axios.get(`${findPostRoute}/${location.search.split('=')[1]}`);
-				setCurrentPost(data.post[0]);
+
+				if(data.post[0]){
+					setCurrentPost(data.post[0]);
+				}else{
+					router.push('/');
+				}
 			}catch(ex){
+				router.push('/');
 				setCurrentWindow('Home')
 			}
 		}
@@ -706,7 +717,12 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 					{
 						currentPost?.images?.length>0 &&
 						currentPost?.images?.map((ur,i)=>(
-						<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
+						<div 
+						onClick={()=>{
+							setMaxImage(ur);
+							setShowMaxImage(true)
+						}}
+						className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 							<div className="absolute h-full w-full z-10 transition-all duration-200 
 							ease-in-out group-hover:bg-gray-500/10"/>
 							<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
@@ -714,12 +730,12 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 						))
 
 					}
-                                        {
-										currentPost?.videos &&
-										<div className="relative rounded-md mt-2 overflow-hidden">												
-											<ReactPlayer url={currentPost?.videos} controls={true} width='100%' height='100%'/>								
-										</div>
-}
+                    {
+					currentPost?.videos &&
+					<div className="relative rounded-md mt-2 overflow-hidden">												
+						<ReactPlayer url={currentPost?.videos} controls={true} width='100%' height='100%'/>								
+					</div>
+					}
 					{
 						haveAudio &&
 						<div 

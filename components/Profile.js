@@ -14,7 +14,8 @@ import DateDiff from 'date-diff';
 import axios from 'axios'
 import {motion} from 'framer-motion'
 import {socket} from '../service/socket';
-import ReactPlayer from 'react-player'
+import ReactPlayer from 'react-player';
+import {useRouter} from 'next/router';
 
 let userTweets = [];
 
@@ -35,6 +36,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	const [loading,setLoading] = useState(true);
 	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
 	const [postLoading,setPostLoading] = useState(false);
+	const router = useRouter();
 
 	const fetchTweets = async() => {
 		if(displayUser && displayUser?.tweets?.length > 0){
@@ -84,12 +86,24 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		}
 	}
 
+	useEffect(() => {
+	  const handleRouteChange = (url) => {
+	    findUserFun()
+	  };
 
+	  // Add the event listener for route changes
+	  router.events.on('routeChangeComplete', handleRouteChange);
 
-	useEffect(()=>{
+	  // Remove the event listener when the component is unmounted to prevent memory leaks
+	  return () => {
+	    router.events.off('routeChangeComplete', handleRouteChange);
+	  };
+	}, []);
+
+	const findUserFun = () => {
 		setLoading(true);
-		if(location.search && currentUser){
-			const id = location.search.split('=')[1];
+		if(router?.query?.profile && currentUser){
+			const id = router.query.profile;
 			if(id === currentUser._id){
 				setAccountFound(true);
 				setDisplayUser(currentUser);
@@ -98,7 +112,30 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			}else{
 				findUser();
 			}
-		}else if(location.search){
+		}else if(location.profile){
+			findUser()
+		}else{
+			setAccountFound(true);
+			setDisplayUser(currentUser);
+			setOwnAccount(true);
+			setLoading(false)
+		}
+	}
+
+
+	useEffect(()=>{
+		setLoading(true);
+		if(router?.query?.profile && currentUser){
+			const id = router?.query?.profile;
+			if(id === currentUser._id){
+				setAccountFound(true);
+				setDisplayUser(currentUser);
+				setOwnAccount(true);
+				setLoading(false)
+			}else{
+				findUser();
+			}
+		}else if(router?.query?.profile){
 			findUser()
 		}else{
 			setAccountFound(true);
@@ -126,6 +163,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(data.status === false){
 			setAccountFound(false);
 			setLoading(false);
+			router.push('/')
 		}else{
 			setAccountFound(true);
 			setDisplayUser(data?.user);

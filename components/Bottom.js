@@ -10,7 +10,7 @@ import { HiOutlineMail, HiMail } from "react-icons/hi";
 import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
 import {useRecoilState} from 'recoil'
 import {currentChatState, currentUserState, sidebarState, bottomHideState} from '../atoms/userAtom'
-
+import {useRouter} from 'next/navigation';
 
 export default function Bottom({ setCurrentWindow, currentWindow }) {
   // body...
@@ -18,7 +18,7 @@ export default function Bottom({ setCurrentWindow, currentWindow }) {
   const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
   const [sideBar,setSideBar] = useRecoilState(sidebarState);
   const [bottomHide,setBottomHide] = useRecoilState(bottomHideState)
-
+  const router = useRouter()
   
 
   return (
@@ -30,7 +30,7 @@ export default function Bottom({ setCurrentWindow, currentWindow }) {
           if(currentWindow === 'Home'){
             document.getElementById('tweetArea').scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" });
           }
-          setCurrentWindow("Home")
+          router.push("/");
         }}
         className="p-[6px] cursor-pointer rounded-full hover:bg-gray-200/70 dark:hover:bg-gray-700/70 transition-all duration-200 ease-in-out"
       >
@@ -41,7 +41,7 @@ export default function Bottom({ setCurrentWindow, currentWindow }) {
         )}
       </div>
       <div
-        onClick={() => setCurrentWindow("Explore")}
+        onClick={() => router.push('/explore')}
         className="p-[6px] cursor-pointer rounded-full hover:bg-gray-200/70 dark:hover:bg-gray-700/70 transition-all duration-200 ease-in-out"
       >
         {currentWindow === "Explore" ? (
@@ -52,7 +52,7 @@ export default function Bottom({ setCurrentWindow, currentWindow }) {
       </div>
       <div
         onClick={() => {
-          setCurrentWindow("Messages");
+          router.push('/messages')
         }}
         className="p-[6px] cursor-pointer rounded-full hover:bg-gray-200/70 dark:hover:bg-gray-700/70 transition-all duration-200 ease-in-out"
       >
@@ -63,7 +63,7 @@ export default function Bottom({ setCurrentWindow, currentWindow }) {
         )}
       </div>
       <div
-        onClick={() => setCurrentWindow("Bookmarks")}
+        onClick={() => router.push('/bookmarks')}
         className="p-[6px] cursor-pointer rounded-full hover:bg-gray-200/70 dark:hover:bg-gray-700/70 transition-all duration-200 ease-in-out"
       >
         {currentWindow === "Bookmarks" ? (

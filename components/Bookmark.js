@@ -20,8 +20,10 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 	const [loading,setLoading] = useState(false);	
 
 	useEffect(()=>{
-		fetchBookmarks()
-	},[]);
+		if(currentUser){
+			fetchBookmarks()
+		}
+	},[currentUser]);
 
 	const makeMePink = (j) => {
 		const element = document.getElementById(`like-${j}`)
@@ -47,7 +49,7 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 	}
 
 	const fetchBookmarks = async() => {
-		if(currentUser.bookmarks.length>0){
+		if(currentUser?.bookmarks?.length>0){
 			setLoading(true)
 			setBookmarkTweets([]);
 			for(let i = 0; i<currentUser?.bookmarks?.length; i++){

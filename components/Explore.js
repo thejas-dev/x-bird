@@ -47,7 +47,7 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 	}
 
 	useEffect(()=>{
-		if(!currentUser?.showScrollInfo){
+		if(currentUser && !currentUser?.showScrollInfo){
 			setShowScrollInfo(true);
 			updateScrollInfoToUser()
 		}

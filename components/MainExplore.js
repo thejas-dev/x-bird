@@ -34,7 +34,7 @@ let inGroupCall = false;
 let inCall = false;
 
 export default function Main() {
-	const [currentWindow,setCurrentWindow] = useState('Home');
+	const [currentWindow,setCurrentWindow] = useState('Explore');
 	const [openOverlay,setOpenOverlay] = useState([]);
 	const [overlayFor,setOverlayFor] = useState('');
 	const [needToReloadProfile,setNeedToReloadProfile] = useState(false);
@@ -377,42 +377,9 @@ export default function Main() {
 	return(
 		<div className="h-[100%] flex w-full justify-center dark:bg-[#100C08]">
 			<Left currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} />
-			{
-				currentWindow === 'Messages'?
-				<Message currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} 
-				newMessageSearch={newMessageSearch} setNewMessageSearch={setNewMessageSearch} msgReveal={msgReveal} 
-				setMsgReveal={setMsgReveal}
-				/>
-				:
-				currentWindow === 'Explore'?
-				<Explore currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} />
-				:
-				currentWindow === 'tweet'?
-				<Tweet currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay} 
-				setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor} />
-				:
-				currentWindow === 'Profile'?
-				<Profile currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay} 
-				setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor}
-				needToReloadProfile={needToReloadProfile} setNeedToReloadProfile={setNeedToReloadProfile} editProfile={editProfile}
-				/>
-				:
-				currentWindow === 'Lists' ? 
-				<Lists currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay}
-				setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor}
-				/>
-				:
-				currentWindow === 'Bookmarks' ?
-				<Bookmark currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay}
-				setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor} />
-				:
-				currentWindow === 'Notifications' ? 
-				<Notifications currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} 
-				setShowCategorySelector={setShowCategorySelector} setShowThemeMenu={setShowThemeMenu}/>
-				:
-				<Center currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow}  />
-
-			}
+			
+			<Explore currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} />
+				
 			<Right currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} 
 			newMessageSearch={newMessageSearch} setNewMessageSearch={setNewMessageSearch} 
 			revealNotify={revealNotify} setRevealNotify={setRevealNotify} msgReveal={msgReveal} 
@@ -1046,42 +1013,3 @@ export default function Main() {
 // 
 // 
 // {}
-
-
-
-// {
-// 	currentWindow === 'Messages'?
-// 	<Message currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow} 
-// 	newMessageSearch={newMessageSearch} setNewMessageSearch={setNewMessageSearch} msgReveal={msgReveal} 
-// 	setMsgReveal={setMsgReveal}
-// 	/>
-// 	:
-// 	currentWindow === 'Explore'?
-// 	<Explore currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} />
-// 	:
-// 	currentWindow === 'tweet'?
-// 	<Tweet currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay} 
-// 	setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor} />
-// 	:
-// 	currentWindow === 'Profile'?
-// 	<Profile currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay} 
-// 	setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor}
-// 	needToReloadProfile={needToReloadProfile} setNeedToReloadProfile={setNeedToReloadProfile} editProfile={editProfile}
-// 	/>
-// 	:
-// 	currentWindow === 'Lists' ? 
-// 	<Lists currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay}
-// 	setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor}
-// 	/>
-// 	:
-// 	currentWindow === 'Bookmarks' ?
-// 	<Bookmark currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} openOverlay={openOverlay}
-// 	setOpenOverlay={setOpenOverlay} overlayFor={overlayFor} setOverlayFor={setOverlayFor} />
-// 	:
-// 	currentWindow === 'Notifications' ? 
-// 	<Notifications currentWindow={currentWindow} setCurrentWindow={setCurrentWindow} 
-// 	setShowCategorySelector={setShowCategorySelector} setShowThemeMenu={setShowThemeMenu}/>
-// 	:
-// 	<Center currentWindow  = {currentWindow} setCurrentWindow = {setCurrentWindow}  />
-
-// }

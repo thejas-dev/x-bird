@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import Main from '../components/Main';
+import MainProfile from '../components/MainProfile';
 import {useEffect,useState} from 'react'
 import {useRouter} from 'next/navigation'
 import {useRecoilState} from 'recoil'
@@ -10,11 +10,11 @@ import {getProviders,getSession,useSession} from 'next-auth/react'
 import {themeState} from '../atoms/userAtom'
 import Head from 'next/head'
 
-export default function Home({providers,session2}) {
+export default function Home() {
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
 	const router = useRouter();
 	const {data:session} = useSession();
-	const [loading,setLoading] = useState(true);
+	const [loading,setLoading] = useState(false);
 	const [theme,setTheme] = useRecoilState(themeState);
 	const [mediaStream,setMediaStream] = useState('');
 
@@ -23,8 +23,6 @@ export default function Home({providers,session2}) {
 			setTheme(localStorage.getItem('x-bird-theme'))
 		}
 	},[])
-
-
 
 	useEffect(()=>{
 		if(!currentUser){
@@ -95,7 +93,6 @@ export default function Home({providers,session2}) {
 	      setLoading(false);
 	    }
 	  }
-
 	  if(loading){
 	  	return (
 	  		<div className={`${theme}`}>
@@ -118,18 +115,8 @@ export default function Home({providers,session2}) {
 		    <title>Trend.zio</title>
 		    <link rel="shortcut icon" href="./favicon.ico"/>
 		  </Head>
-      <Main />
+      <MainProfile />
     </div>
   )
 }
 
-export async function getServerSideProps(context){
-	const providers = await getProviders();
-	const session2 = await getSession(context);
-	return{
-		props: {
-			providers,session2
-		}
-	}
-
-}

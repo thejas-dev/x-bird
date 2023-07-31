@@ -169,3 +169,13 @@ export const showMaxImageState = atom({
 	key:"showMaxImageState",
 	default:false
 })
+
+export const currentWindowState = atom({
+	key:"currentWindowState",
+	default:'Home'
+})
+
+export const msgRevealState = atom({
+	key:"msgRevealState",
+	default:false
+})

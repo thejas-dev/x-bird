@@ -23,7 +23,8 @@ import {CgImage} from 'react-icons/cg';
 import {socket} from '../service/socket';
 import DateDiff from 'date-diff';
 import GifPicker from 'gif-picker-react';
-import ImageKit from "imagekit"
+import ImageKit from "imagekit";
+import {useRouter} from 'next/navigation'
 
 let currentChatVar = undefined
 
@@ -70,7 +71,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 	const [showScrollBottom,setShowScrollBottom] = useState(false);
 	const [currentHeading,setCurrentHeading] = useRecoilState(currentHeadingState)
 	const [maxImage,setMaxImage] = useRecoilState(maxImageState);
-	const [showMaxImage,setShowMaxImage] = useRecoilState(showMaxImageState)
+	const [showMaxImage,setShowMaxImage] = useRecoilState(showMaxImageState);
+	const router = useRouter();
 
 	const [whoToFollow,setWhoToFollow] = useState([
 		{
@@ -1225,9 +1227,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							<img 
 							onClick={()=>{
 								if(!currentChat?.group){
-									setCurrentWindow('Profile')
-									window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
-									setCurrentChat('')													
+									let route = `/profile?profile=${currentChat._id}`;
+									router.push(route)													
 								}else{
 									let element = document.getElementById('groupInfoBox')
 									element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
@@ -1239,9 +1240,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							<div 
 							onClick={()=>{
 								if(!currentChat?.group){
-									setCurrentWindow('Profile')
-									window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
-									setCurrentChat('')													
+									let route = `/profile?profile=${currentChat._id}`;													
+									router.push(route)	
 								}else{
 									let element = document.getElementById('groupInfoBox')
 									element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
@@ -1272,9 +1272,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						<h1 
 						onClick={()=>{
 							if(!currentChat?.group){
-								setCurrentWindow('Profile')
-								window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
-								setCurrentChat('')													
+								let route = `/profile?profile=${currentChat._id}`;
+								router.push(route)														
 							}else{
 								let element = document.getElementById('groupInfoBox')
 								element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
@@ -1302,9 +1301,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						<div 
 						onClick={()=>{
 							if(!currentChat?.group){
-								setCurrentWindow('Profile')
-								window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);	
-								setCurrentChat('')													
+								let route = `/profile?profile=${currentChat._id}`;
+								router.push(route)				
 							}
 						}}
 						className="p-2 cursor-pointer rounded-full md:hover:bg-gray-600/10 dark:md:hover:bg-gray-800/10 transition-all duration-200 ease-in-out">
@@ -1337,8 +1335,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							<div id="groupInfoBox"
 							onClick={()=>{
 								if(!currentChat?.group){
-									setCurrentWindow('Profile')
-									window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);																
+									let route = `/profile?profile=${currentChat._id}`;
+									router.push(route)
 								}
 							}}
 							className="w-full hover:bg-gray-100 dark:hover:bg-gray-900 rounded-md transition-all duration-200 ease-in-out 
@@ -1587,8 +1585,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 								searchResult?.map((res,i)=>(
 									<div key={i}
 									onClick={()=>{
-										setCurrentWindow('Profile')
-										window.history.replaceState({id:100},'Default',`?profile=${res._id}`);
+										let route = `/profile?profile=${currentChat._id}`;
+										router.push(route)	
 										setNeedToReloadProfile(true)
 									}}
 									className="flex z-40  cursor-pointer gap-[7px] w-full px-2 w-full hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 ease-in-out py-3">
@@ -1647,8 +1645,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 						}
 						<div 
 						onClick={()=>{
-							setCurrentWindow('Explore')
-							setCurrentHeading('Trending')
+							router.push('/explore?query=Trending')
 						}}
 						className="flex justify-between cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/30 transition-all duration-200 ease-in-out p-4 w-full">
 							<h1 className="text-lg text-sky-500 font-semibold">Show more</h1>
@@ -1660,9 +1657,8 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							whoToFollow.map((who,i)=>(
 								<div 
 								onClick={()=>{
-									setCurrentWindow('Profile')
-									window.history.replaceState({id:100},'Default',`?profile=${who?._id}`);
-									setNeedToReloadProfile(true)
+									let route = `/profile?profile=${who?._id}`;
+									router.push(route)	
 								}}
 								className={`p-4 flex justify-between hover:bg-gray-200 dark:hover:bg-gray-800/30
 								transition-all duration-200 ease-in-out cursor-pointer gap-2`} key={i}>
@@ -1758,9 +1754,9 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 									<div 
 									onClick={()=>{
 										if(!currentChat?.group){
-											setCurrentWindow('Profile')
-											window.history.replaceState({id:100},'Default',`?profile=${currentChat._id}`);
+											let route = `/profile?profile=${currentChat._id}`;
 											setNeedToReloadProfile(true)																
+											router.push(route)	
 										}							
 									}}
 									className="w-full mt-2 hover:bg-gray-100 dark:hover:bg-gray-900/30 rounded-md transition-all duration-200 ease-in-out 
