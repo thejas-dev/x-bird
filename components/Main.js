@@ -25,7 +25,7 @@ import Lists from './Lists'
 import {useRecoilState} from 'recoil'
 import {currentChatState,chatsState,currentUserState,mainFeedState,displayUserState,
 	showLoginNowState,showClipboardState,themeState,homeState,callerIdState,needToRefetchState,
-	soundAllowedState,maxImageState,showMaxImageState,msgRevealState
+	soundAllowedState,maxImageState,showMaxImageState,msgRevealState,bottomHideState
 	} from '../atoms/userAtom'
 import ImageKit from "imagekit"
 import Notifications from './Notifications';
@@ -78,6 +78,7 @@ export default function Main() {
 	const [needToRefetch,setNeedToRefetch] = useRecoilState(needToRefetchState);
 	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
 	const [maxImage,setMaxImage] = useRecoilState(maxImageState);
+  	const [bottomHide,setBottomHide] = useRecoilState(bottomHideState)
 	const [showMaxImage,setShowMaxImage] = useRecoilState(showMaxImageState)					
 	const router = useRouter();
 	const imagekit = new ImageKit({
@@ -91,6 +92,7 @@ export default function Main() {
 			setDisplayUser('');
 		}
 		setSoundAllowed(false);
+		setBottomHide(false);
 	},[currentWindow])
 
 	// useEffect(() => {
