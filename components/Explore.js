@@ -77,10 +77,10 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 
 		ele.addEventListener('touchmove', function(e) {
 		  scrollY = startY - e.touches[0].clientY;
-		  if(scrollY > 40){
+		  if(scrollY > 20){
 		  	setBottomHide(true)
 		  }
-		  if(scrollY < -40){		  	
+		  if(scrollY < -20){		  	
 		  	setBottomHide(false)
 		  }
 		});
@@ -152,7 +152,7 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 	const fetchTrendingPosts = async() => {
 		setPostLoading(true)
 		const {data} = await axios.get(getTrendingPosts);
-		if(data.status){
+		if(data?.status){
 			setPostFound(true)
 			setSearchPost(data.trends);
 		}else{
@@ -182,66 +182,68 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 	const retweetThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${searchPost[j]._id}`);
-			const post = data.post[0];
-			let retweetedBy = post.retweetedBy;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			const check = retweetedBy.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let retweetedBy = post.retweetedBy;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			if(!check){
-				retweetedBy.push(user);
-			}else{
-				const idx = retweetedBy.findIndex(element=>{
+				const check = retweetedBy.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				retweetedBy.splice(idx,1);
-			}
-			const updatedPost = {...post, 'retweetedBy':retweetedBy }
-			const res = await axios.post(`${updatedPostRoute}/${searchPost[j]._id}`,updatedPost);
-			let main = [...searchPost];
-			main[j] = res.data.obj;
-			setSearchPost(main);
-
-			const check2 = await currentUser.retweets.some(element=>{
-				if(element === res.data.obj._id){
-					return true;
+				if(!check){
+					retweetedBy.push(user);
+				}else{
+					const idx = retweetedBy.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					retweetedBy.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const retweets = [res.data.obj._id, ...currentUser.retweets];
-				// const tweets = [data.post._id,...currentUser.tweets]
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.retweets.findIndex(element=>{
+				const updatedPost = {...post, 'retweetedBy':retweetedBy }
+				const res = await axios.post(`${updatedPostRoute}/${searchPost[j]._id}`,updatedPost);
+				let main = [...searchPost];
+				main[j] = res.data.obj;
+				setSearchPost(main);
+
+				const check2 = await currentUser.retweets.some(element=>{
 					if(element === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let retweets = [...currentUser.retweets];
-				await retweets.splice(idx,1);
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const retweets = [res.data.obj._id, ...currentUser.retweets];
+					// const tweets = [data.post._id,...currentUser.tweets]
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.retweets.findIndex(element=>{
+						if(element === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let retweets = [...currentUser.retweets];
+					await retweets.splice(idx,1);
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',searchPost[j]._id)	
 			}
-			socket.emit('refetch-post',searchPost[j]._id)
 		}else{
 			setShowLoginNow(true)
 		}
@@ -250,66 +252,67 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 	const likeThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${searchPost[j]._id}`);
-			const post = data.post[0];
-			let likes = post.likes;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			const check = likes.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let likes = post.likes;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			if(!check){
-				likes.push(user);
-			}else{
-				const idx = likes.findIndex(element=>{
+				const check = likes.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				likes.splice(idx,1);
-			}
-			const updatedPost = {...post, 'likes':likes }
-			const res = await axios.post(`${updatedPostRoute}/${searchPost[j]._id}`,updatedPost);
-			const main = [...searchPost];
-			main[j] = res.data.obj;
-			setSearchPost(main);
-
-			const check2 = await currentUser.likes.some(element=>{
-				if(element._id === res.data.obj._id){
-					return true;
+				if(!check){
+					likes.push(user);
+				}else{
+					const idx = likes.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					likes.splice(idx,1);
 				}
-				return false
-			})
+				const updatedPost = {...post, 'likes':likes }
+				const res = await axios.post(`${updatedPostRoute}/${searchPost[j]._id}`,updatedPost);
+				const main = [...searchPost];
+				main[j] = res.data.obj;
+				setSearchPost(main);
 
-			if(!check2){
-				const userLiked = [res.data.obj, ...currentUser.likes];
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.likes.findIndex(element=>{
+				const check2 = await currentUser.likes.some(element=>{
 					if(element._id === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let userLiked = [...currentUser.likes];
-				await userLiked.splice(idx,1);
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
+
+				if(!check2){
+					const userLiked = [res.data.obj, ...currentUser.likes];
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.likes.findIndex(element=>{
+						if(element._id === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let userLiked = [...currentUser.likes];
+					await userLiked.splice(idx,1);
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',searchPost[j]._id)
 			}
-			socket.emit('refetch-post',searchPost[j]._id)
-			
 		}else{
 			setShowLoginNow(true)
 		}
@@ -318,21 +321,23 @@ export default function Explore({currentWindow,setCurrentWindow}) {
 	const viewThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${searchPost[j]._id}`);
-			const post = data.post[0];
-			let views = post.views;
-			const check = views.some(element=>{
-				if(element === currentUser._id){
-					return true;
-				}
-				return false
-			})
-			if(!check){
-				views.push(currentUser._id);
-				const updatedPost = {...post, 'views':views}
-				const res = await axios.post(`${updatedPostRoute}/${searchPost[j]._id}`,updatedPost);
-				let main = [...searchPost];
-				main[j] = res.data.obj;
-				setSearchPost(main);
+			if(data?.post[0]){
+				const post = data.post[0];
+				let views = post.views;
+				const check = views.some(element=>{
+					if(element === currentUser._id){
+						return true;
+					}
+					return false
+				})
+				if(!check){
+					views.push(currentUser._id);
+					const updatedPost = {...post, 'views':views}
+					const res = await axios.post(`${updatedPostRoute}/${searchPost[j]._id}`,updatedPost);
+					let main = [...searchPost];
+					main[j] = res.data.obj;
+					setSearchPost(main);
+				}				
 			}
 		}
 	}

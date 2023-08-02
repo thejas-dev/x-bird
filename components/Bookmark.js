@@ -54,7 +54,9 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 			setBookmarkTweets([]);
 			for(let i = 0; i<currentUser?.bookmarks?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${currentUser.bookmarks[i]}`);
-				setBookmarkTweets(bookmarkTweets=>[...bookmarkTweets,data.post[0]]);
+				if(data?.post[0]){
+					setBookmarkTweets(bookmarkTweets=>[...bookmarkTweets,data.post[0]]);
+				}
 				if(i+1 === currentUser?.bookmarks?.length){
 					setLoading(false);
 				}
@@ -70,156 +72,160 @@ export default function Bookmark({currentWindow,setCurrentWindow,openOverlay,set
 	const retweetThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${bookmarkTweets[j]._id}`);
-			const post = data.post[0];
-			let retweetedBy = post.retweetedBy;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			// console.log(likes,user)
-			const check = retweetedBy.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let retweetedBy = post.retweetedBy;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			// console.log(check)
-			if(!check){
-				retweetedBy.push(user);
-			}else{
-				const idx = retweetedBy.findIndex(element=>{
+				// console.log(likes,user)
+				const check = retweetedBy.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				retweetedBy.splice(idx,1);
-			}
-			const updatedPost = {...post, 'retweetedBy':retweetedBy }
-			const res = await axios.post(`${updatedPostRoute}/${bookmarkTweets[j]._id}`,updatedPost);
-			const main = [...bookmarkTweets];
-			main[j] = res.data.obj;
-			setBookmarkTweets(main);
-
-			const check2 = await currentUser.retweets.some(element=>{
-				if(element === res.data.obj._id){
-					return true;
+				// console.log(check)
+				if(!check){
+					retweetedBy.push(user);
+				}else{
+					const idx = retweetedBy.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					retweetedBy.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const retweets = [res.data.obj._id, ...currentUser.retweets];
-				// const tweets = [data.post._id,...currentUser.tweets]
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.retweets.findIndex(element=>{
+				const updatedPost = {...post, 'retweetedBy':retweetedBy }
+				const res = await axios.post(`${updatedPostRoute}/${bookmarkTweets[j]._id}`,updatedPost);
+				const main = [...bookmarkTweets];
+				main[j] = res.data.obj;
+				setBookmarkTweets(main);
+
+				const check2 = await currentUser.retweets.some(element=>{
 					if(element === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let retweets = [...currentUser.retweets];
-				await retweets.splice(idx,1);
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const retweets = [res.data.obj._id, ...currentUser.retweets];
+					// const tweets = [data.post._id,...currentUser.tweets]
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.retweets.findIndex(element=>{
+						if(element === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let retweets = [...currentUser.retweets];
+					await retweets.splice(idx,1);
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}
 			}
-			
 		}
 	}
 
 	const likeThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${bookmarkTweets[j]._id}`);
-			const post = data.post[0];
-			let likes = post.likes;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			// console.log(likes,user)
-			const check = likes.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let likes = post.likes;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			// console.log(check)
-			if(!check){
-				likes.push(user);
-			}else{
-				const idx = likes.findIndex(element=>{
+				// console.log(likes,user)
+				const check = likes.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				likes.splice(idx,1);
-			}
-			const updatedPost = {...post, 'likes':likes }
-			const res = await axios.post(`${updatedPostRoute}/${bookmarkTweets[j]._id}`,updatedPost);
-			const main = [...bookmarkTweets];
-			main[j] = res.data.obj;
-			setBookmarkTweets(main);
-
-			const check2 = await currentUser.likes.some(element=>{
-				if(element._id === res.data.obj._id){
-					return true;
+				// console.log(check)
+				if(!check){
+					likes.push(user);
+				}else{
+					const idx = likes.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					likes.splice(idx,1);
 				}
-				return false
-			})
+				const updatedPost = {...post, 'likes':likes }
+				const res = await axios.post(`${updatedPostRoute}/${bookmarkTweets[j]._id}`,updatedPost);
+				const main = [...bookmarkTweets];
+				main[j] = res.data.obj;
+				setBookmarkTweets(main);
 
-			if(!check2){
-				const userLiked = [res.data.obj, ...currentUser.likes];
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.likes.findIndex(element=>{
+				const check2 = await currentUser.likes.some(element=>{
 					if(element._id === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let userLiked = [...currentUser.likes];
-				await userLiked.splice(idx,1);
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
+
+				if(!check2){
+					const userLiked = [res.data.obj, ...currentUser.likes];
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.likes.findIndex(element=>{
+						if(element._id === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let userLiked = [...currentUser.likes];
+					await userLiked.splice(idx,1);
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}
 			}
-			
 		}
 	}
 
 	const viewThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${bookmarkTweets[j]._id}`);
-			const post = data.post[0];
-			let views = post.views;
-			const check = views.some(element=>{
-				if(element === currentUser._id){
-					return true;
-				}
-				return false
-			})
-			if(!check){
-				views.push(currentUser._id);
-				const updatedPost = {...post, 'views':views}
-				const res = await axios.post(`${updatedPostRoute}/${bookmarkTweets[j]._id}`,updatedPost);
-				let main = [...bookmarkTweets];
-				main[j] = res.data.obj;
-				setMainFeed(main);
+			if(data.post[0]){
+				const post = data.post[0];
+				let views = post.views;
+				const check = views.some(element=>{
+					if(element === currentUser._id){
+						return true;
+					}
+					return false
+				})
+				if(!check){
+					views.push(currentUser._id);
+					const updatedPost = {...post, 'views':views}
+					const res = await axios.post(`${updatedPostRoute}/${bookmarkTweets[j]._id}`,updatedPost);
+					let main = [...bookmarkTweets];
+					main[j] = res.data.obj;
+					setMainFeed(main);
+				}				
 			}
 		}
 	}

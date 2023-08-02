@@ -1,6 +1,7 @@
 import {useState,useEffect} from 'react';
 import {useRecoilState} from 'recoil'
-import {currentUserState,displayUserState,showLoginNowState} from '../atoms/userAtom'
+import {currentUserState,displayUserState,showLoginNowState,searchTextState,
+	soundAllowedState} from '../atoms/userAtom'
 import {HiOutlineArrowLeft} from 'react-icons/hi';
 import {AiOutlineLink,AiOutlineCalendar} from 'react-icons/ai';
 import {FaRegComment} from 'react-icons/fa';
@@ -35,6 +36,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	const [tweetFetched,setTweetFetched] = useState(false);	
 	const [loading,setLoading] = useState(true);
 	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
+	const [searchText,setSearchText] = useRecoilState(searchTextState);
+	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
 	const [postLoading,setPostLoading] = useState(false);
 	const router = useRouter();
 
@@ -45,15 +48,15 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			// let tweet = []
 			for(let i = 0; i<displayUser?.tweets?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${displayUser.tweets[i]}`);
-				if(data.post[0]){
+				if(data?.post[0]){
 					setCurrentUserTweets(currentUserTweets => [...currentUserTweets,data.post[0]])
 					// tweet = [...tweet,data.post[0]];
-					if(i===0){
-						// setCurrentUserTweets(tweet);
-						setTweetFetched(true);
-						setPostLoading(false)
-					}					
 				}
+				if(i===0){
+					// setCurrentUserTweets(tweet);
+					setTweetFetched(true);
+					setPostLoading(false)
+				}					
 			}
 		}
 	}
@@ -64,7 +67,9 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			setCurrentUserLikes([]);
 			for(let i = 0; i<displayUser?.likes?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${displayUser.likes[i]._id}`);
-				setCurrentUserLikes(currentUserLikes=>[...currentUserLikes,data.post[0]]);
+				if(data?.post[0]){
+					setCurrentUserLikes(currentUserLikes=>[...currentUserLikes,data.post[0]]);
+				}
 				if(i===0){
 					setPostLoading(false)					
 				}
@@ -78,7 +83,9 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			setCurrentUserRetweets([]);
 			for(let i = 0; i<displayUser?.retweets?.length; i++){
 				const {data} = await axios.get(`${getPostByIdRoute}/${displayUser.retweets[i]}`);
-				setCurrentUserRetweets(currentUserRetweets=>[...currentUserRetweets,data.post[0]]);
+				if(data?.post[0]){
+					setCurrentUserRetweets(currentUserRetweets=>[...currentUserRetweets,data.post[0]]);
+				}
 				if(i===0){
 					setPostLoading(false)					
 				}
@@ -102,6 +109,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	}, []);
 
 	const findUserFun = (url) => {
+
 		setLoading(true);
 		if(url && currentUser){
 			const id = url;
@@ -138,14 +146,19 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			}
 		}else if(router?.query?.profile){
 			findUser()
-		}else{
+		}else if(currentUser){
 			setAccountFound(true);
 			setDisplayUser(currentUser);
 			setOwnAccount(true);
 			setLoading(false)
+		}else if(location.search){
+			let id = location.search.split('=')[1]
+			findUserFun(id)
+		}else{
+			setLoading(false);
+			setAccountFound(false);
 		}
 	},[])
-	// console.log(currentUser)
 
 	useEffect(()=>{
 		if(needToReloadProfile){
@@ -175,7 +188,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		setLoading(true);
 		// console.log(location.search.split('=')[1])
 		const {data} = await axios.get(`${getUserByIdRoute}/${location.search.split('=')[1]}`);
-		if(data.status === false){
+		if(data?.status === false){
 			setAccountFound(false);
 			setLoading(false);
 		}else{
@@ -217,7 +230,37 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		}	
 	},[displayUser])
 
-
+	useEffect(()=>{
+		if(displayUser){
+			if(!tweetFetched && currentUserTweets?.length < 1){
+				setCurrentUserTweets([]);
+				fetchTweets()
+			}
+			const check = displayUser?.followers?.some(element=>{
+				if(element.id === currentUser?._id){
+					return true;
+				}
+				return false
+			})		
+			if(check){
+				setUserFollowing(true);
+			}else{
+				setUserFollowing(false);
+			}
+			if(displayUser._id === currentUser._id){
+				setOwnAccount(true);
+			}else{
+				setOwnAccount(false)
+			}
+			if(currentHeading === 'Trends'){
+				
+			}else if(currentHeading === 'Likes') {
+				fetchLikes();
+			}else{
+				fetchRetweets()
+			}
+		}	
+	},[])
 
 	const calDate = (date) => {
 		const date1 = new Date();
@@ -268,66 +311,68 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(displayUser){
 			let tweets = currentUserLikes;
 			const {data} = await axios.get(`${getPostByIdRoute}/${currentUserLikes[j]._id}`);
-			const post = data.post[0];
-			let likes = post.likes;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			// console.log(likes,user)
-			const check = likes.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let likes = post.likes;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			// console.log(check)
-			if(!check){
-				likes.push(user);
-			}else{
-				const idx = likes.findIndex(element=>{
+				// console.log(likes,user)
+				const check = likes.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				likes.splice(idx,1);
-			}
-			const updatedPost = {...post, 'likes':likes }
-			const res = await axios.post(`${updatedPostRoute}/${currentUserLikes[j]._id}`,updatedPost);
-			tweets[j] = res.data.obj;
-			setCurrentUserLikes(tweets);
-
-			const check2 = await currentUser.likes.some(element=>{
-				if(element._id === res.data.obj._id){
-					return true;
+				// console.log(check)
+				if(!check){
+					likes.push(user);
+				}else{
+					const idx = likes.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					likes.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const userLiked = [res.data.obj, ...currentUser.likes];
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.likes.findIndex(element=>{
+				const updatedPost = {...post, 'likes':likes }
+				const res = await axios.post(`${updatedPostRoute}/${currentUserLikes[j]._id}`,updatedPost);
+				tweets[j] = res.data.obj;
+				setCurrentUserLikes(tweets);
+
+				const check2 = await currentUser.likes.some(element=>{
 					if(element._id === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let userLiked = [...currentUser.likes];
-				await userLiked.splice(idx,1);
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const userLiked = [res.data.obj, ...currentUser.likes];
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.likes.findIndex(element=>{
+						if(element._id === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let userLiked = [...currentUser.likes];
+					await userLiked.splice(idx,1);
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',currentUserLikes[j]._id)				
 			}
-			socket.emit('refetch-post',currentUserLikes[j]._id)
 		}
 	}
 
@@ -335,66 +380,68 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(displayUser && currentUser){
 			let tweets = currentUserTweets;
 			const {data} = await axios.get(`${getPostByIdRoute}/${currentUserTweets[j]._id}`);
-			const post = data.post[0];
-			let likes = post.likes;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			// console.log(likes,user)
-			const check = likes.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let likes = post.likes;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			// console.log(check)
-			if(!check){
-				likes.push(user);
-			}else{
-				const idx = likes.findIndex(element=>{
+				// console.log(likes,user)
+				const check = likes.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				likes.splice(idx,1);
-			}
-			const updatedPost = {...post, 'likes':likes }
-			const res = await axios.post(`${updatedPostRoute}/${currentUserTweets[j]._id}`,updatedPost);
-			tweets[j] = res.data.obj;
-			setCurrentUserTweets(tweets);
-
-			const check2 = await currentUser.likes.some(element=>{
-				if(element._id === res.data.obj._id){
-					return true;
+				// console.log(check)
+				if(!check){
+					likes.push(user);
+				}else{
+					const idx = likes.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					likes.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const userLiked = [res.data.obj, ...currentUser.likes];
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.likes.findIndex(element=>{
+				const updatedPost = {...post, 'likes':likes }
+				const res = await axios.post(`${updatedPostRoute}/${currentUserTweets[j]._id}`,updatedPost);
+				tweets[j] = res.data.obj;
+				setCurrentUserTweets(tweets);
+
+				const check2 = await currentUser.likes.some(element=>{
 					if(element._id === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let userLiked = [...currentUser.likes];
-				await userLiked.splice(idx,1);
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const userLiked = [res.data.obj, ...currentUser.likes];
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.likes.findIndex(element=>{
+						if(element._id === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let userLiked = [...currentUser.likes];
+					await userLiked.splice(idx,1);
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',currentUserTweets[j]._id)
 			}
-			socket.emit('refetch-post',currentUserTweets[j]._id)
 		}else{
 			setShowLoginNow(true)
 		}
@@ -405,66 +452,68 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(displayUser){
 			let tweets = currentUserRetweets;
 			const {data} = await axios.get(`${getPostByIdRoute}/${currentUserRetweets[j]._id}`);
-			const post = data.post[0];
-			let likes = post.likes;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			// console.log(likes,user)
-			const check = likes.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let likes = post.likes;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			// console.log(check)
-			if(!check){
-				likes.push(user);
-			}else{
-				const idx = likes.findIndex(element=>{
+				// console.log(likes,user)
+				const check = likes.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				likes.splice(idx,1);
-			}
-			const updatedPost = {...post, 'likes':likes }
-			const res = await axios.post(`${updatedPostRoute}/${currentUserRetweets[j]._id}`,updatedPost);
-			tweets[j] = res.data.obj;
-			setCurrentUserRetweets(tweets);
-
-			const check2 = await currentUser.likes.some(element=>{
-				if(element._id === res.data.obj._id){
-					return true;
+				// console.log(check)
+				if(!check){
+					likes.push(user);
+				}else{
+					const idx = likes.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					likes.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const userLiked = [res.data.obj, ...currentUser.likes];
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.likes.findIndex(element=>{
+				const updatedPost = {...post, 'likes':likes }
+				const res = await axios.post(`${updatedPostRoute}/${currentUserRetweets[j]._id}`,updatedPost);
+				tweets[j] = res.data.obj;
+				setCurrentUserRetweets(tweets);
+
+				const check2 = await currentUser.likes.some(element=>{
 					if(element._id === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let userLiked = [...currentUser.likes];
-				await userLiked.splice(idx,1);
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const userLiked = [res.data.obj, ...currentUser.likes];
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.likes.findIndex(element=>{
+						if(element._id === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let userLiked = [...currentUser.likes];
+					await userLiked.splice(idx,1);
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',currentUserRetweets[j]._id)
 			}
-			socket.emit('refetch-post',currentUserRetweets[j]._id)
 		}
 	}
 
@@ -482,66 +531,68 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(currentUser){
 			let tweets = currentUserRetweets;
 			const {data} = await axios.get(`${getPostByIdRoute}/${currentUserRetweets[j]._id}`);
-			const post = data.post[0];
-			let retweetedBy = post.retweetedBy;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			const check = retweetedBy.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let retweetedBy = post.retweetedBy;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			if(!check){
-				retweetedBy.push(user);
-			}else{
-				const idx = retweetedBy.findIndex(element=>{
+				const check = retweetedBy.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				retweetedBy.splice(idx,1);
-			}
-			const updatedPost = {...post, 'retweetedBy':retweetedBy }
-			const res = await axios.post(`${updatedPostRoute}/${currentUserRetweets[j]._id}`,updatedPost);
-			
-			tweets[j] = res.data.obj;
-			setCurrentUserRetweets(tweets);
-
-			const check2 = await currentUser.retweets.some(element=>{
-				if(element === res.data.obj._id){
-					return true;
+				if(!check){
+					retweetedBy.push(user);
+				}else{
+					const idx = retweetedBy.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					retweetedBy.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const retweets = [res.data.obj._id, ...currentUser.retweets];
-				// const tweets = [data.post._id,...currentUser.tweets]
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.retweets.findIndex(element=>{
+				const updatedPost = {...post, 'retweetedBy':retweetedBy }
+				const res = await axios.post(`${updatedPostRoute}/${currentUserRetweets[j]._id}`,updatedPost);
+				
+				tweets[j] = res.data.obj;
+				setCurrentUserRetweets(tweets);
+
+				const check2 = await currentUser.retweets.some(element=>{
 					if(element === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let retweets = [...currentUser.retweets];
-				await retweets.splice(idx,1);
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const retweets = [res.data.obj._id, ...currentUser.retweets];
+					// const tweets = [data.post._id,...currentUser.tweets]
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.retweets.findIndex(element=>{
+						if(element === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let retweets = [...currentUser.retweets];
+					await retweets.splice(idx,1);
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',currentUserRetweets[j]._id)			
 			}
-			socket.emit('refetch-post',currentUserRetweets[j]._id)			
 		}
 	}
 	// console.log(currentUser)
@@ -550,66 +601,68 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(currentUser){
 			let tweets = currentUserLikes;
 			const {data} = await axios.get(`${getPostByIdRoute}/${currentUserLikes[j]._id}`);
-			const post = data.post[0];
-			let retweetedBy = post.retweetedBy;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			const check = retweetedBy.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let retweetedBy = post.retweetedBy;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			if(!check){
-				retweetedBy.push(user);
-			}else{
-				const idx = retweetedBy.findIndex(element=>{
+				const check = retweetedBy.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				retweetedBy.splice(idx,1);
-			}
-			const updatedPost = {...post, 'retweetedBy':retweetedBy }
-			const res = await axios.post(`${updatedPostRoute}/${currentUserLikes[j]._id}`,updatedPost);
-			
-			tweets[j] = res.data.obj;
-			setCurrentUserLikes(tweets);
-
-			const check2 = await currentUser.retweets.some(element=>{
-				if(element === res.data.obj._id){
-					return true;
+				if(!check){
+					retweetedBy.push(user);
+				}else{
+					const idx = retweetedBy.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					retweetedBy.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const retweets = [res.data.obj._id, ...currentUser.retweets];
-				// const tweets = [data.post._id,...currentUser.tweets]
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.retweets.findIndex(element=>{
+				const updatedPost = {...post, 'retweetedBy':retweetedBy }
+				const res = await axios.post(`${updatedPostRoute}/${currentUserLikes[j]._id}`,updatedPost);
+				
+				tweets[j] = res.data.obj;
+				setCurrentUserLikes(tweets);
+
+				const check2 = await currentUser.retweets.some(element=>{
 					if(element === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let retweets = [...currentUser.retweets];
-				await retweets.splice(idx,1);
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const retweets = [res.data.obj._id, ...currentUser.retweets];
+					// const tweets = [data.post._id,...currentUser.tweets]
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.retweets.findIndex(element=>{
+						if(element === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let retweets = [...currentUser.retweets];
+					await retweets.splice(idx,1);
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',currentUserLikes[j]._id)	
 			}
-			socket.emit('refetch-post',currentUserLikes[j]._id)	
 		}
 	}
 
@@ -617,66 +670,68 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		if(currentUser){
 			let tweets = currentUserTweets;
 			const {data} = await axios.get(`${getPostByIdRoute}/${currentUserTweets[j]._id}`);
-			const post = data.post[0];
-			let retweetedBy = post.retweetedBy;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			const check = retweetedBy.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let retweetedBy = post.retweetedBy;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			if(!check){
-				retweetedBy.push(user);
-			}else{
-				const idx = retweetedBy.findIndex(element=>{
+				const check = retweetedBy.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				retweetedBy.splice(idx,1);
-			}
-			const updatedPost = {...post, 'retweetedBy':retweetedBy }
-			const res = await axios.post(`${updatedPostRoute}/${currentUserTweets[j]._id}`,updatedPost);
-			
-			tweets[j] = res.data.obj;
-			setCurrentUserTweets(tweets);
-
-			const check2 = await currentUser.retweets.some(element=>{
-				if(element === res.data.obj._id){
-					return true;
+				if(!check){
+					retweetedBy.push(user);
+				}else{
+					const idx = retweetedBy.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					retweetedBy.splice(idx,1);
 				}
-				return false
-			})
-			
-			if(!check2){
-				const retweets = [res.data.obj._id, ...currentUser.retweets];
-				// const tweets = [data.post._id,...currentUser.tweets]
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.retweets.findIndex(element=>{
+				const updatedPost = {...post, 'retweetedBy':retweetedBy }
+				const res = await axios.post(`${updatedPostRoute}/${currentUserTweets[j]._id}`,updatedPost);
+				
+				tweets[j] = res.data.obj;
+				setCurrentUserTweets(tweets);
+
+				const check2 = await currentUser.retweets.some(element=>{
 					if(element === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let retweets = [...currentUser.retweets];
-				await retweets.splice(idx,1);
-				const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
-					retweets
-				})
-				setCurrentUser(result.data.obj);
+				
+				if(!check2){
+					const retweets = [res.data.obj._id, ...currentUser.retweets];
+					// const tweets = [data.post._id,...currentUser.tweets]
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.retweets.findIndex(element=>{
+						if(element === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let retweets = [...currentUser.retweets];
+					await retweets.splice(idx,1);
+					const result = await axios.post(`${updateUserRetweets}/${currentUser._id}`,{
+						retweets
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',currentUserTweets[j]._id)
 			}
-			socket.emit('refetch-post',currentUserTweets[j]._id)
 		}else{
 			setShowLoginNow(true)
 		}
@@ -762,7 +817,6 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			id:currentUserTweets[j]._id
 		})
 		fetchTweets()
-
 	}
 
 	return (
@@ -781,7 +835,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			<div className="sticky z-40 top-0 gap-8 w-full backdrop-blur-lg z-30 flex items-center hover:bg-gray-100/80 dark:hover:bg-gray-900/80 
 			transition-all duration-200 ease-in-out cursor-pointer md:px-4 px-2 py-1 dark:bg-[#100C08]/50 bg-white/50">
 				<HiOutlineArrowLeft 
-				onClick={()=>{setCurrentWindow('Home');setDisplayUser('')}}
+				onClick={()=>{setCurrentWindow('Home');router.push('/')}}
 				className="h-[18px] cursor-pointer w-[18px] text-black dark:text-gray-200"/>
 				<div className={`flex select-none flex-col ${!accountFound && 'hidden'}`}>
 					<h1 className="md:text-xl text-lg text-black dark:text-gray-200 font-semibold">{displayUser?.name}</h1>
@@ -817,7 +871,8 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						<button 
 						onClick={()=>{
 							if(currentUser){
-								followUser()
+								followUser();
+								setUserFollowing(!userFollowing);
 							}else{
 								setShowLoginNow(true)
 							}
@@ -901,7 +956,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						}}
 						className={`relative whitespace-nowrap w-[100%] px-7 flex items-center justify-center 
 						${currentHeading === head.title ? 'text-black dark:text-gray-200':'text-gray-500 dark:text-gray-400'} py-3 
-						hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-bg duration-200 font-semibold select-none cursor-pointer ease-in-out no_highlights`}>
+						sm:hover:bg-gray-200/70 sm:dark:hover:bg-gray-800/70 transition-bg duration-200 font-semibold select-none cursor-pointer ease-in-out no_highlights`}>
 							{head.title}
 							<div className={`absolute bottom-0 w-[50%] rounded-full h-[4px] ${currentHeading === head.title ? 'bg-sky-500':'bg-transparent'}`}/>
 						</div>
@@ -976,11 +1031,13 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 										</div>
 										<BsThreeDots 
 										onClick={()=>{
-											let btn = document.getElementById(`post-${j}`)
-											if(btn.classList.value.includes('hidden')){
-												btn.classList.remove('hidden');
-											}else{
-												btn.classList.add('hidden')
+											if(displayUser._id === currentUser._id){
+												let btn = document.getElementById(`post-${j}`)
+												if(btn.classList.value.includes('hidden')){
+													btn.classList.remove('hidden');
+												}else{
+													btn.classList.add('hidden')
+												}												
 											}
 
 										}}
@@ -992,7 +1049,29 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
 								}}
 								className="w-full text-lg">
-									<h1 className="w-full text-gray-900 dark:text-gray-300 select-none break-words">{main.text}</h1>
+									<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 select-none break-words">{
+										main?.text?.split(' ')?.map((txt,j)=>{
+										if(txt[0] === '#'){
+											return <span key={j}> <a 
+											onClick={()=>{
+												// stopAudio8()
+												// setSoundAllowed(false);
+												setSearchText(txt);
+												router.push('/explore')
+											}}
+												
+											className="text-sky-500 hover:underline" key={j} > {txt}</a></span>
+										}else{
+											return <span key={j}> <a 
+											onClick={()=>{
+												// stopAudio8()
+												// setSoundAllowed(false);
+												let route = `/trend?trend=${main._id}`
+												router.push(route)
+											}} key={j} > {txt}</a></span>
+											
+										}
+									})}</h1>
 								</div>	
 								<div 
 								onClick={()=>{

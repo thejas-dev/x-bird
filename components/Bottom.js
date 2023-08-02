@@ -28,7 +28,10 @@ export default function Bottom({ setCurrentWindow, currentWindow }) {
       <div
         onClick={() => {
           if(currentWindow === 'Home'){
-            document.getElementById('tweetArea').scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" });
+            let ele = document.getElementById('tweetArea')
+            if(ele){
+              ele.scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" });
+            }
           }
           router.push("/");
         }}

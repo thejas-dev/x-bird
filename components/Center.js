@@ -100,10 +100,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 
 		ele.addEventListener('touchmove', function(e) {
 		  scrollY = startY - e.touches[0].clientY;
-		  if(scrollY > 40){
+		  if(scrollY > 20){
 		  	setBottomHide(true)
 		  }
-		  if(scrollY < -40){		  	
+		  if(scrollY < -10){		  	
 		  	setBottomHide(false)
 		  }
 		});
@@ -231,58 +231,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		setUrl(newArr);
 	}
 
-	// useEffect(()=>{
-	// 	const image_input = document.querySelector('#file1');
-	// 	if(image_input){
-	// 		setPath('');
-	// 		image_input.addEventListener('change',()=>{
-	// 			const reader = new FileReader();
-			
-	// 			reader.addEventListener('load',()=>{
-	// 				setUrl2(reader.result);
-	// 			});
-	// 			reader.readAsDataURL(image_input.files[0]);
-	// 		})
-	// 	}
 	
-	// },[path])
-
-	// const url8Setter = async() => {
-	// 	const videoElementTemp = document.getElementById('file8')
-	// 	const video_input = videoElementTemp.files[0];
-	// 	  if (video_input) {
-	// 	    // Check if the file is a video format
-	// 	    if (video_input.type.startsWith('video/')) {
-	// 	      // Create a video element to load the selected video
-	// 	      const videoElement = document.createElement('video');
-	// 	      videoElement.preload = 'metadata';
-
-	// 	      // Set the video file as the source of the video element
-	// 	      videoElement.src = URL.createObjectURL(video_input);
-
-	// 	      // Wait for the video metadata to be loaded
-	// 	      videoElement.addEventListener('loadedmetadata', () => {
-	// 	        // Check the duration of the video
-	// 	        if (videoElement.duration <= 60) {
-	// 	          // Update the state with the video URL
-	// 	          setVideoUrl(videoElement.src);
-	// 			  setPath8('');		          
-	// 	        } else {
-	// 			  setPath8('');
-	// 	          setWarnAboutAudio('Video duration exceeds maximum of 1 minute.');
-	// 			  setTimeout(()=>{setWarnAboutAudio('')},5000)
-	// 	        }
-	// 	      });
-
-	// 	      // Release the URL object once the video is no longer needed
-	// 	      videoElement.addEventListener('ended', () => {
-	// 	        URL.revokeObjectURL(videoElement.src);
-	// 	      });
-	// 	    } else {
-	// 	      console.log('Invalid video format. Please upload a valid video.');
-	// 	    }
-	// 	  }
-	// }	
 
 	const url8Setter = async () => {
 	  const videoElementTemp = document.getElementById('file8');
@@ -545,78 +494,81 @@ export default function Center({setCurrentWindow,currentWindow}) {
 			})
 			// console.log(idx)
 			const {data} = await axios.get(`${getPostByIdRoute}/${mainFeed[idx]._id}`);
-			const post = data.post[0];
-			let posts = [...mainFeed];
-			posts[idx] = post;
-			setMainFeed(posts)
+			if(data?.post[0]){
+				const post = data?.post[0];
+				let posts = [...mainFeed];
+				posts[idx] = post;				
+				setMainFeed(posts)
+			}
 		}
 	}
 
 	const likeThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${mainFeed[j]._id}`);
-			const post = data.post[0];
-			let likes = post.likes;
-			const user = {
-				name:currentUser.name,
-				id:currentUser._id,
-				username:currentUser.username,
-				image:currentUser.image
-			}
-			// console.log(likes,user)
-			const check = likes.some(element=>{
-				if(element.id === user.id){
-					return true;
+			if(data?.post[0]){
+				const post = data.post[0];
+				let likes = post.likes;
+				const user = {
+					name:currentUser.name,
+					id:currentUser._id,
+					username:currentUser.username,
+					image:currentUser.image
 				}
-				return false
-			})
-			// console.log(check)
-			if(!check){
-				likes.push(user);
-			}else{
-				const idx = likes.findIndex(element=>{
+				// console.log(likes,user)
+				const check = likes.some(element=>{
 					if(element.id === user.id){
-						return true
+						return true;
 					}
 					return false
 				})
-				likes.splice(idx,1);
-			}
-			const updatedPost = {...post, 'likes':likes }
-			const res = await axios.post(`${updatedPostRoute}/${mainFeed[j]._id}`,updatedPost);
-			const main = [...mainFeed];
-			main[j] = res.data.obj;
-			setMainFeed(main);
-
-			const check2 = await currentUser.likes.some(element=>{
-				if(element._id === res.data.obj._id){
-					return true;
+				// console.log(check)
+				if(!check){
+					likes.push(user);
+				}else{
+					const idx = likes.findIndex(element=>{
+						if(element.id === user.id){
+							return true
+						}
+						return false
+					})
+					likes.splice(idx,1);
 				}
-				return false
-			})
+				const updatedPost = {...post, 'likes':likes }
+				const res = await axios.post(`${updatedPostRoute}/${mainFeed[j]._id}`,updatedPost);
+				const main = [...mainFeed];
+				main[j] = res.data.obj;
+				setMainFeed(main);
 
-			if(!check2){
-				const userLiked = [res.data.obj, ...currentUser.likes];
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
-			}else{
-				const idx = await currentUser.likes.findIndex(element=>{
+				const check2 = await currentUser.likes.some(element=>{
 					if(element._id === res.data.obj._id){
-						return true
+						return true;
 					}
 					return false
 				})
-				let userLiked = [...currentUser.likes];
-				await userLiked.splice(idx,1);
-				const result = await axios.post(`${updateUser}/${currentUser._id}`,{
-					userLiked
-				})
-				setCurrentUser(result.data.obj);
+
+				if(!check2){
+					const userLiked = [res.data.obj, ...currentUser.likes];
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}else{
+					const idx = await currentUser.likes.findIndex(element=>{
+						if(element._id === res.data.obj._id){
+							return true
+						}
+						return false
+					})
+					let userLiked = [...currentUser.likes];
+					await userLiked.splice(idx,1);
+					const result = await axios.post(`${updateUser}/${currentUser._id}`,{
+						userLiked
+					})
+					setCurrentUser(result.data.obj);
+				}
+				socket.emit('refetch-post',mainFeed[j]._id)								
 			}
-			socket.emit('refetch-post',mainFeed[j]._id)
-			
 		}else{
 			setShowLoginNow(true)
 		}
@@ -700,26 +652,27 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const viewThisTweet = async(j) => {
 		if(currentUser){
 			const {data} = await axios.get(`${getPostByIdRoute}/${mainFeed[j]._id}`);
-			const post = data.post[0];
-			let views = post.views;
-			const check = views.some(element=>{
-				if(element === currentUser._id){
-					return true;
+			if(data.post[0]){
+				const post = data.post[0];
+				let views = post.views;
+				const check = views.some(element=>{
+					if(element === currentUser._id){
+						return true;
+					}
+					return false
+				})
+				if(!check){
+					views.push(currentUser._id);
+					const updatedPost = {...post, 'views':views}
+					const res = await axios.post(`${updatedPostRoute}/${mainFeed[j]._id}`,updatedPost);
+					let main = [...mainFeed];
+					main[j] = res.data.obj;
+					setMainFeed(main);
 				}
-				return false
-			})
-			if(!check){
-				views.push(currentUser._id);
-				const updatedPost = {...post, 'views':views}
-				const res = await axios.post(`${updatedPostRoute}/${mainFeed[j]._id}`,updatedPost);
-				let main = [...mainFeed];
-				main[j] = res.data.obj;
-				setMainFeed(main);
-			}
+			}			
 		}
 	}
 
-	// console.log(currentUser)
 
 	const openEmojiInput = () => setEmojiInput(!emojiInput)
 

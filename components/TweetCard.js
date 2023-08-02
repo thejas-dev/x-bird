@@ -61,7 +61,12 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	}
 
 	useEffect(()=>{
-		setLiked(isLiked());
+		if(main){
+			isLiked()
+		}
+	},[main])
+
+	useEffect(()=>{
 		return ()=> {
 			stopAudio8();
 			setImPlaying(false);
@@ -102,15 +107,15 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		}
 	},[soundAllowed])
 
-	const isLiked = () => {
-		let res = main?.likes?.some(element=>{
+	const isLiked = async() => {
+		let res = await main?.likes?.some(element=>{
 			if(element?.id === currentUser?._id){
 				return true;
 				
 			}
 			return false
 		})
-		return res
+		setLiked(res);		
 	}
 
 	useEffect(()=>{
