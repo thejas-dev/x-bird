@@ -63,7 +63,8 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [openSongSelection,setOpenSongSelection] = useState(false);
 	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
 	const [searchSongValue,setSearchSongValue] = useState('Anirudh');
-	const [songSearchResults,setSongSearchResults] = useState([])
+	const [songSearchResults,setSongSearchResults] = useState([]);
+	const [notFirstTime,setNotFirstTime] = useState(false);
 
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -416,8 +417,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	}
 
 	useEffect(()=>{
-		if(tweetText === ''){
+		if(tweetText === '' && notFirstTime){
 			autoResize2()
+		}else{
+			setNotFirstTime(true)
 		}
 	},[tweetText])
 
