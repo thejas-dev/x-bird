@@ -22,7 +22,7 @@ export default function Bottom({ setCurrentWindow, currentWindow }) {
   
 
   return (
-    <div className={`${currentChat || sideBar || bottomHide ? '-bottom-[100px]' : 'bottom-0'} transition-all duration-300 ease-in-out xs:hidden 
+    <div className={`${currentChat || sideBar || bottomHide || currentWindow === 'Messages' ? '-bottom-[100px]' : 'bottom-0'} transition-all duration-300 ease-in-out xs:hidden 
     border-t-[1px] border-gray-200/60 fixed w-full flex p-2 
     justify-around bg-white dark:bg-[#100C08]/80 dark:border-gray-700/60 backdrop-blur-xl ${!currentUser && 'hidden'} z-50`}>
       <div
