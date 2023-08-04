@@ -14,8 +14,9 @@ import {getPostByIdRoute,updatedPostRoute,getUserByIdRoute,updateUser,updateUser
 import DateDiff from 'date-diff';
 import axios from 'axios'
 import {motion} from 'framer-motion'
+import TweetCard from './TweetCard'
 import {socket} from '../service/socket';
-import ReactPlayer from 'react-player';
+import ReactPlayer from 'react-player/lazy';
 import {useRouter} from 'next/router';
 
 let userTweets = [];
@@ -109,7 +110,9 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	}, []);
 
 	const findUserFun = (url) => {
-
+		setCurrentUserTweets([]);
+		setCurrentUserLikes([]);
+		setCurrentUserRetweets([]);
 		setLoading(true);
 		if(url && currentUser){
 			const id = url;
@@ -158,6 +161,12 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			setLoading(false);
 			setAccountFound(false);
 		}
+		setTimeout(() => {
+			
+		  		checkAccounInfo();
+			
+		}, 3000);
+
 	},[])
 
 	useEffect(()=>{
@@ -171,6 +180,10 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	},[needToReloadProfile])
 
 	const findUserByUrl = async(url) => {
+
+		setCurrentUserTweets([]);
+		setCurrentUserLikes([]);
+		setCurrentUserRetweets([]);
 		setLoading(true);
 		// console.log(location.search.split('=')[1])
 		const {data} = await axios.get(`${getUserByIdRoute}/${url}`);
@@ -185,6 +198,10 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	}
 
 	const findUser = async() => {
+
+		setCurrentUserTweets([]);
+		setCurrentUserLikes([]);
+		setCurrentUserRetweets([]);
 		setLoading(true);
 		// console.log(location.search.split('=')[1])
 		const {data} = await axios.get(`${getUserByIdRoute}/${location.search.split('=')[1]}`);
@@ -204,22 +221,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				setCurrentUserTweets([]);
 				fetchTweets()
 			}
-			const check = displayUser?.followers?.some(element=>{
-				if(element.id === currentUser?._id){
-					return true;
-				}
-				return false
-			})		
-			if(check){
-				setUserFollowing(true);
-			}else{
-				setUserFollowing(false);
-			}
-			if(displayUser._id === currentUser._id){
-				setOwnAccount(true);
-			}else{
-				setOwnAccount(false)
-			}
+			checkAccounInfo();
 			if(currentHeading === 'Trends'){
 				
 			}else if(currentHeading === 'Likes') {
@@ -228,7 +230,31 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				fetchRetweets()
 			}
 		}	
+		setTimeout(() => {
+			
+		  		checkAccounInfo();
+			
+		}, 3000);
 	},[displayUser])
+
+	const checkAccounInfo = () => {
+		const check = displayUser?.followers?.some(element=>{
+			if(element.id === currentUser?._id){
+				return true;
+			}
+			return false
+		})		
+		if(check){
+			setUserFollowing(true);
+		}else{
+			setUserFollowing(false);
+		}
+		if(displayUser._id === currentUser._id){
+			setOwnAccount(true);
+		}else{
+			setOwnAccount(false)
+		}
+	}
 
 	useEffect(()=>{
 		if(displayUser){
@@ -819,6 +845,10 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		fetchTweets()
 	}
 
+	const viewThisTweet = () => {
+
+	}
+
 	return (
 		<div className="lg:w-[44.6%] relative  md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 
 		dark:border-gray-600 scrollbar-none overflow-y-scroll overflow-x-hidden">
@@ -976,392 +1006,25 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				{		
 					currentHeading === 'Trends' ?
 					currentUserTweets?.map((main,j)=>(
-						<motion.div 
-						initial={{
-							opacity:0,
-						}}
-						whileInView={{opacity:1}}
-						transition={{duration:0.4}}
-						viewport={{ once: true }}
-						key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-						border-gray-300/70 dark:border-gray-700/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/50 
-						transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
-							<img 
-							onClick={()=>{
-								window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-								setCurrentWindow('tweet')
-							}}
-							src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
-							<div className="flex flex-col w-full overflow-hidden">
-								<div className='flex gap-1 w-full shrink truncate justify-between' >
-									<div className="flex gap-1 truncate shrink items-center ">
-										<h1 
-										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-											setCurrentWindow('tweet')
-										}}
-										className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
-											{main.user.name}
-										</h1>
-										<h1 
-										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-											setCurrentWindow('tweet')
-										}}
-										className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
-										<h1 
-										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-											setCurrentWindow('tweet')
-										}}
-										className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
-											calDate(main.createdAt)
-										}</h1>
-									</div>
-									<div className="p-1 relative rounded-full md:hover:bg-sky-300/20 dark:md:hover:bg-sky-800/20 transition-all duration-200 ease-in-out group">
-										<div 
-										id={`post-${j}`}
-										onClick={()=>{
-											deleteThisOwnTweet(j);
-										}}
-										className="absolute px-2 py-1 rounded-xl backdrop-blur-lg border-[1px] 
-										right-8 z-50 top-0 bottom-0 my-auto flex items-center justify-center border-red-500 
-										text-black dark:text-gray-200 hidden font-semibold hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out">
-											Delete Post
-										</div>
-										<BsThreeDots 
-										onClick={()=>{
-											if(displayUser._id === currentUser._id){
-												let btn = document.getElementById(`post-${j}`)
-												if(btn.classList.value.includes('hidden')){
-													btn.classList.remove('hidden');
-												}else{
-													btn.classList.add('hidden')
-												}												
-											}
-
-										}}
-										className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
-									</div>
-								</div>
-								<div 
-								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
-								}}
-								className="w-full text-lg">
-									<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 select-none break-words">{
-										main?.text?.split(' ')?.map((txt,j)=>{
-										if(txt[0] === '#'){
-											return <span key={j}> <a 
-											onClick={()=>{
-												// stopAudio8()
-												// setSoundAllowed(false);
-												setSearchText(txt);
-												router.push('/explore')
-											}}
-												
-											className="text-sky-500 hover:underline" key={j} > {txt}</a></span>
-										}else{
-											return <span key={j}> <a 
-											onClick={()=>{
-												// stopAudio8()
-												// setSoundAllowed(false);
-												let route = `/trend?trend=${main._id}`
-												router.push(route)
-											}} key={j} > {txt}</a></span>
-											
-										}
-									})}</h1>
-								</div>	
-								<div 
-								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
-								}}
-								className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
-									{
-										main.images.length>0 &&
-											main.images.map((ur,i)=>(
-											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
-												<div className="absolute h-full w-full z-10 transition-all duration-200 
-												ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10"/>
-												<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
-											</div>
-											))
-
-									}
-									{
-										main?.videos &&
-										<div className="relative rounded-md mt-2 overflow-hidden">												
-											<ReactPlayer url={main?.videos} controls={true} width='100%' height='100%'/>								
-										</div>
-									}
-								</div>
-								<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
-									<div 
-									onClick={()=>{
-										window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-										setCurrentWindow('tweet')
-									}}
-									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
-											<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-										</div>
-										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
-											{millify(main.comments.length)}
-										</h1>
-									</div>
-									<div 
-									onClick={()=>{retweetThisOwnTweet(j);
-										if(currentUser){
-											makeMeSpin(j)
-										}
-									}}
-									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] sm:group-hover:bg-green-300/30 sm:dark:group-hover:bg-green-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
-											<AiOutlineRetweet id={`retweet-${j}`} className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
-											${main.retweetedBy.some(element=>{
-												if(element.id === currentUser?._id){
-													return true;
-												}
-												return false
-											}) &&  'text-green-500' }
-											`}/>
-										</div>
-										<h1 className={`text-md text-gray-500
-										${main.retweetedBy.some(element=>{
-											if(element.id === currentUser?._id){
-												return true;
-											}
-											return false
-										}) &&  'text-green-500' }
-										group-hover:text-green-500`}>
-											{millify(main.retweetedBy.length)}
-										</h1>
-									</div>
-									<div
-									onClick={()=>{
-										likeThisTweet(j);
-										if(currentUser)
-											{makeMePink(j)
-										}
-									}}
-									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] sm:group-hover:bg-pink-300/30 sm:dark:group-hover:bg-pink-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
-											{
-												main?.likes?.some(element=>{
-													if(element.id === currentUser?._id){
-														return true;
-													}
-													return false
-												}) ? 
-												<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600"/>
-												:
-												<AiOutlineHeart 
-												id={`like-${j}`}
-												className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600"/>
-											}
-										</div>
-										<h1 className={`text-md text-gray-500 group-hover:text-pink-500 
-										${main.likes.some(element=>{
-											if(element.id === currentUser?._id){
-												return true;
-											}
-											return false
-										}) &&  'text-pink-500' }
-										`}>
-											{millify(main.likes.length)}
-										</h1>
-									</div>
-									<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
-											<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-										</div>
-										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
-											{millify(main.views.length)}
-										</h1>
-									</div>
-									<div 
-									onClick={()=>{
-
-									}}
-									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
-											<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-										</div>
-									</div>
-								</div>
-
-
-							</div>	
-						</motion.div>
-
+						<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} currentWindow={currentWindow} 
+							calDate={calDate} BsThreeDots={BsThreeDots} FaRegComment={FaRegComment} millify={millify} AiOutlineRetweet={AiOutlineRetweet}
+							retweetThisTweet={retweetThisOwnTweet} makeMeSpin={makeMeSpin} likeThisTweet={likeThisTweet} makeMePink={makeMePink}
+							AiFillHeart={AiFillHeart} AiOutlineHeart={AiOutlineHeart} currentUser={currentUser}
+							BsGraphUpArrow={BsGraphUpArrow} BsFillShareFill={BsFillShareFill} viewThisTweet={viewThisTweet} own={true}
+							deleteThisOwnTweet={deleteThisOwnTweet} displayUser={displayUser}
+						/>
+						
 					))
 					:
 					currentHeading === 'Likes' ? 
 					currentUserLikes?.map((main,j)=>(
-						<motion.div 
-						initial={{
-							opacity:0,
-						}}
-						whileInView={{opacity:1}}
-						transition={{duration:0.4}}
-						viewport={{ once: true }}
-						key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
-						border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 
-						transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
-							<img onClick={()=>{
-								window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-								setCurrentWindow('tweet')
-							}}
-							src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
-							<div className="flex flex-col w-full overflow-hidden">
-								<div className='flex gap-1 w-full shrink truncate justify-between' >
-									<div className="flex gap-1 truncate shrink items-center ">
-										<h1 onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-											setCurrentWindow('tweet')
-										}}
-										className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
-											{main.user.name}
-										</h1>
-										<h1 
-										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-											setCurrentWindow('tweet')
-										}}
-										className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
-										<h1 
-										onClick={()=>{
-											window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-											setCurrentWindow('tweet')
-										}}
-										className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
-											calDate(main.createdAt)
-										}</h1>
-									</div>
-									<div className="p-1 rounded-full md:hover:bg-sky-300/20 transition-all duration-200 ease-in-out group">
-										<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
-									</div>
-								</div>
-								<div 
-								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
-								}}
-								className="w-full text-lg">
-									<h1 className="w-full text-gray-900 dark:text-gray-300 select-none break-words">{main.text}</h1>
-								</div>	
-								<div 
-								onClick={()=>{
-									window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
-								}}
-								className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
-									{
-										main.images.length>0 &&
-											main.images.map((ur,i)=>(
-											<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
-												<div className="absolute h-full w-full z-10 transition-all duration-200 
-												ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10"/>
-												<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
-											</div>
-											))
-
-									}
-									{
-										main?.videos &&
-										<div className="relative rounded-md mt-2 overflow-hidden">												
-											<ReactPlayer url={main?.videos} controls={true} width='100%' height='100%'/>								
-										</div>
-									}
-								</div>
-								<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
-									<div 
-									onClick={()=>{
-										window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
-										setCurrentWindow('tweet')
-									}}
-									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
-											<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-										</div>
-										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
-											{millify(main.comments.length)}
-										</h1>
-									</div>
-									<div 
-									onClick={()=>retweetThisLikedTweet(j)}
-									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] sm:group-hover:bg-green-300/30 sm:dark:group-hover:bg-green-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
-											<AiOutlineRetweet className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
-											${main.retweetedBy.some(element=>{
-												if(element.id === currentUser?._id){
-													return true;
-												}
-												return false
-											}) &&  'text-green-500' }
-											`}/>
-										</div>
-										<h1 className={`text-md text-gray-500
-										${main.retweetedBy.some(element=>{
-											if(element.id === currentUser?._id){
-												return true;
-											}
-											return false
-										}) &&  'text-green-500' }
-										group-hover:text-green-500`}>
-											{millify(main.retweetedBy.length)}
-										</h1>
-									</div>
-									<div
-									onClick={()=>{likeThisLikeTweet(j);makeMePink(j)}}
-									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] sm:group-hover:bg-pink-300/30 sm:dark:group-hover:bg-pink-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
-											{
-												main.likes.some(element=>{
-													if(element.id === currentUser?._id){
-														return true;
-													}
-													return false
-												}) ? 
-												<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600"/>
-												:
-												<AiOutlineHeart 
-												id={`like-${j}`}
-												className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600"/>
-											}
-										</div>
-										<h1 className={`text-md text-gray-500 group-hover:text-pink-500 
-										${main.likes.some(element=>{
-											if(element.id === currentUser?._id){
-												return true;
-											}
-											return false
-										}) &&  'text-pink-500' }
-										`}>
-											{millify(main.likes.length)}
-										</h1>
-									</div>
-									<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
-											<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-										</div>
-										<h1 className="text-md text-gray-500 group-hover:text-sky-500">
-											{millify(main.views.length)}
-										</h1>
-									</div>
-									<div 
-									onClick={()=>{
-
-									}}
-									className="flex group md:gap-[6px] gap-[3px] items-center">
-										<div className="p-[10px] group-hover:bg-sky-300/30 group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
-											<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
-										</div>
-									</div>
-								</div>
-
-
-							</div>	
-						</motion.div>
+						<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} currentWindow={currentWindow} 
+							calDate={calDate} BsThreeDots={BsThreeDots} FaRegComment={FaRegComment} millify={millify} AiOutlineRetweet={AiOutlineRetweet}
+							retweetThisTweet={retweetThisLikedTweet} makeMeSpin={makeMeSpin} likeThisTweet={likeThisLikeTweet} makeMePink={makeMePink}
+							AiFillHeart={AiFillHeart} AiOutlineHeart={AiOutlineHeart} currentUser={currentUser} displayUser={displayUser}
+							BsGraphUpArrow={BsGraphUpArrow} BsFillShareFill={BsFillShareFill} viewThisTweet={viewThisTweet}
+						/>
+						
 
 					))
 					:
@@ -1383,7 +1046,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 						}}
 						className="absolute hover:underline top-1 left-[10%] flex items-center text-sm font-semibold gap-[10px] dark:text-gray-500 text-gray-600">
 							<AiOutlineRetweet className="h-4 w-4"/> {
-								ownAccount ? 'You Retweeted' : `Retrend by ${displayUser?.name}`
+								ownAccount ? 'You Re-trended' : `Re-trend by ${displayUser?.name}`
 							}
 						</div>
 							<img onClick={()=>{
@@ -1557,3 +1220,388 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 	)
 }
+
+
+// <motion.div 
+// initial={{
+// 	opacity:0,
+// }}
+// whileInView={{opacity:1}}
+// transition={{duration:0.4}}
+// viewport={{ once: true }}
+// key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
+// border-gray-300/70 dark:border-gray-700/70 hover:bg-gray-200/40 dark:hover:bg-gray-900/50 
+// transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
+// 	<img 
+// 	onClick={()=>{
+// 		window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 		setCurrentWindow('tweet')
+// 	}}
+// 	src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
+// 	<div className="flex flex-col w-full overflow-hidden">
+// 		<div className='flex gap-1 w-full shrink truncate justify-between' >
+// 			<div className="flex gap-1 truncate shrink items-center ">
+// 				<h1 
+// 				onClick={()=>{
+// 					window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 					setCurrentWindow('tweet')
+// 				}}
+// 				className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
+// 					{main.user.name}
+// 				</h1>
+// 				<h1 
+// 				onClick={()=>{
+// 					window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 					setCurrentWindow('tweet')
+// 				}}
+// 				className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
+// 				<h1 
+// 				onClick={()=>{
+// 					window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 					setCurrentWindow('tweet')
+// 				}}
+// 				className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
+// 					calDate(main.createdAt)
+// 				}</h1>
+// 			</div>
+// 			<div className="p-1 relative rounded-full md:hover:bg-sky-300/20 dark:md:hover:bg-sky-800/20 transition-all duration-200 ease-in-out group">
+// 				<div 
+// 				id={`post-${j}`}
+// 				onClick={()=>{
+// 					deleteThisOwnTweet(j);
+// 				}}
+// 				className="absolute px-2 py-1 rounded-xl backdrop-blur-lg border-[1px] 
+// 				right-8 z-50 top-0 bottom-0 my-auto flex items-center justify-center border-red-500 
+// 				text-black dark:text-gray-200 hidden font-semibold hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out">
+// 					Delete Post
+// 				</div>
+// 				<BsThreeDots 
+// 				onClick={()=>{
+// 					if(displayUser._id === currentUser._id){
+// 						let btn = document.getElementById(`post-${j}`)
+// 						if(btn.classList.value.includes('hidden')){
+// 							btn.classList.remove('hidden');
+// 						}else{
+// 							btn.classList.add('hidden')
+// 						}												
+// 					}
+
+// 				}}
+// 				className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
+// 			</div>
+// 		</div>
+// 		<div 
+// 		onClick={()=>{
+// 			window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
+// 		}}
+// 		className="w-full text-lg">
+// 			<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 select-none break-words">{
+// 				main?.text?.split(' ')?.map((txt,j)=>{
+// 				if(txt[0] === '#'){
+// 					return <span key={j}> <a 
+// 					onClick={()=>{
+// 						// stopAudio8()
+// 						// setSoundAllowed(false);
+// 						setSearchText(txt);
+// 						router.push('/explore')
+// 					}}
+						
+// 					className="text-sky-500 hover:underline" key={j} > {txt}</a></span>
+// 				}else{
+// 					return <span key={j}> <a 
+// 					onClick={()=>{
+// 						// stopAudio8()
+// 						// setSoundAllowed(false);
+// 						let route = `/trend?trend=${main._id}`
+// 						router.push(route)
+// 					}} key={j} > {txt}</a></span>
+					
+// 				}
+// 			})}</h1>
+// 		</div>	
+// 		<div 
+// 		onClick={()=>{
+// 			window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
+// 		}}
+// 		className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
+// 			{
+// 				main.images.length>0 &&
+// 					main.images.map((ur,i)=>(
+// 					<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
+// 						<div className="absolute h-full w-full z-10 transition-all duration-200 
+// 						ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10"/>
+// 						<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
+// 					</div>
+// 					))
+
+// 			}
+// 			{
+// 				main?.videos &&
+// 				<div className="relative rounded-md mt-2 overflow-hidden">												
+// 					<ReactPlayer url={main?.videos} controls={true} width='100%' height='100%'/>								
+// 				</div>
+// 			}
+// 		</div>
+// 		<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
+// 			<div 
+// 			onClick={()=>{
+// 				window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 				setCurrentWindow('tweet')
+// 			}}
+// 			className="flex group md:gap-[6px] gap-[3px] items-center">
+// 				<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
+// 					<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
+// 				</div>
+// 				<h1 className="text-md text-gray-500 group-hover:text-sky-500">
+// 					{millify(main.comments.length)}
+// 				</h1>
+// 			</div>
+// 			<div 
+// 			onClick={()=>{retweetThisOwnTweet(j);
+// 				if(currentUser){
+// 					makeMeSpin(j)
+// 				}
+// 			}}
+// 			className="flex group md:gap-[6px] gap-[3px] items-center">
+// 				<div className="p-[10px] sm:group-hover:bg-green-300/30 sm:dark:group-hover:bg-green-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
+// 					<AiOutlineRetweet id={`retweet-${j}`} className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
+// 					${main.retweetedBy.some(element=>{
+// 						if(element.id === currentUser?._id){
+// 							return true;
+// 						}
+// 						return false
+// 					}) &&  'text-green-500' }
+// 					`}/>
+// 				</div>
+// 				<h1 className={`text-md text-gray-500
+// 				${main.retweetedBy.some(element=>{
+// 					if(element.id === currentUser?._id){
+// 						return true;
+// 					}
+// 					return false
+// 				}) &&  'text-green-500' }
+// 				group-hover:text-green-500`}>
+// 					{millify(main.retweetedBy.length)}
+// 				</h1>
+// 			</div>
+// 			<div
+// 			onClick={()=>{
+// 				likeThisTweet(j);
+// 				if(currentUser)
+// 					{makeMePink(j)
+// 				}
+// 			}}
+// 			className="flex group md:gap-[6px] gap-[3px] items-center">
+// 				<div className="p-[10px] sm:group-hover:bg-pink-300/30 sm:dark:group-hover:bg-pink-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
+// 					{
+// 						main?.likes?.some(element=>{
+// 							if(element.id === currentUser?._id){
+// 								return true;
+// 							}
+// 							return false
+// 						}) ? 
+// 						<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600"/>
+// 						:
+// 						<AiOutlineHeart 
+// 						id={`like-${j}`}
+// 						className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600"/>
+// 					}
+// 				</div>
+// 				<h1 className={`text-md text-gray-500 group-hover:text-pink-500 
+// 				${main.likes.some(element=>{
+// 					if(element.id === currentUser?._id){
+// 						return true;
+// 					}
+// 					return false
+// 				}) &&  'text-pink-500' }
+// 				`}>
+// 					{millify(main.likes.length)}
+// 				</h1>
+// 			</div>
+// 			<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
+// 				<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
+// 					<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
+// 				</div>
+// 				<h1 className="text-md text-gray-500 group-hover:text-sky-500">
+// 					{millify(main.views.length)}
+// 				</h1>
+// 			</div>
+// 			<div 
+// 			onClick={()=>{
+
+// 			}}
+// 			className="flex group md:gap-[6px] gap-[3px] items-center">
+// 				<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
+// 					<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
+// 				</div>
+// 			</div>
+// 		</div>
+
+
+// 	</div>	
+// </motion.div>
+
+
+// <motion.div 
+// initial={{
+// 	opacity:0,
+// }}
+// whileInView={{opacity:1}}
+// transition={{duration:0.4}}
+// viewport={{ once: true }}
+// key={j} className={`w-full border-b-[1.6px] p-3 flex basis-auto md:gap-4 sm:gap-2 gap-2 
+// border-gray-300/70 dark:border-gray-700/70 dark:hover:bg-gray-900/40 hover:bg-gray-200/40 
+// transition-all z-0 duration-200 ease-in cursor-pointer no_highlights`}>
+// 	<img onClick={()=>{
+// 		window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 		setCurrentWindow('tweet')
+// 	}}
+// 	src={main?.user?.image} alt="" className="rounded-full select-none h-12 w-12 shadow-md hover:shadow-xl hover:shadow-sky-600/30"/>
+// 	<div className="flex flex-col w-full overflow-hidden">
+// 		<div className='flex gap-1 w-full shrink truncate justify-between' >
+// 			<div className="flex gap-1 truncate shrink items-center ">
+// 				<h1 onClick={()=>{
+// 					window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 					setCurrentWindow('tweet')
+// 				}}
+// 				className="text-lg truncate font-semibold text-black dark:text-gray-200 select-none hover:cursor-pointer hover:underline">
+// 					{main.user.name}
+// 				</h1>
+// 				<h1 
+// 				onClick={()=>{
+// 					window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 					setCurrentWindow('tweet')
+// 				}}
+// 				className="text-gray-500 text-md truncate select-none hidden sm:block">@{main.user.username}</h1>
+// 				<h1 
+// 				onClick={()=>{
+// 					window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 					setCurrentWindow('tweet')
+// 				}}
+// 				className="text-gray-500 text-md truncate  whitespace-nowrap select-none "> - {
+// 					calDate(main.createdAt)
+// 				}</h1>
+// 			</div>
+// 			<div className="p-1 rounded-full md:hover:bg-sky-300/20 transition-all duration-200 ease-in-out group">
+// 				<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
+// 			</div>
+// 		</div>
+// 		<div 
+// 		onClick={()=>{
+// 			window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
+// 		}}
+// 		className="w-full text-lg">
+// 			<h1 className="w-full text-gray-900 dark:text-gray-300 select-none break-words">{main.text}</h1>
+// 		</div>	
+// 		<div 
+// 		onClick={()=>{
+// 			window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);setCurrentWindow('tweet')
+// 		}}
+// 		className={`rounded-2xl ${main.images.length>0 && 'mt-3'} grid rounded-2xl ${main.images.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
+// 			{
+// 				main.images.length>0 &&
+// 					main.images.map((ur,i)=>(
+// 					<div className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
+// 						<div className="absolute h-full w-full z-10 transition-all duration-200 
+// 						ease-in-out group-hover:bg-gray-500/10 dark:group-hover:bg-gray-700/10"/>
+// 						<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
+// 					</div>
+// 					))
+
+// 			}
+// 			{
+// 				main?.videos &&
+// 				<div className="relative rounded-md mt-2 overflow-hidden">												
+// 					<ReactPlayer url={main?.videos} controls={true} width='100%' height='100%'/>								
+// 				</div>
+// 			}
+// 		</div>
+// 		<div className="mt-3 lg:pr-10 md:pr-2 pr-0 justify-between w-full md:w-[85%] lg:w-[100%] xl:w-[90%] flex items-center flex-wrap">
+// 			<div 
+// 			onClick={()=>{
+// 				window.history.replaceState({id:100},'Tweet',`?trend=${main._id}`);
+// 				setCurrentWindow('tweet')
+// 			}}
+// 			className="flex group md:gap-[6px] gap-[3px] items-center">
+// 				<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
+// 					<FaRegComment className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
+// 				</div>
+// 				<h1 className="text-md text-gray-500 group-hover:text-sky-500">
+// 					{millify(main.comments.length)}
+// 				</h1>
+// 			</div>
+// 			<div 
+// 			onClick={()=>retweetThisLikedTweet(j)}
+// 			className="flex group md:gap-[6px] gap-[3px] items-center">
+// 				<div className="p-[10px] sm:group-hover:bg-green-300/30 sm:dark:group-hover:bg-green-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
+// 					<AiOutlineRetweet className={`h-5 group-hover:text-green-500 transition-all duration-200 ease-in-out w-5 text-gray-600
+// 					${main.retweetedBy.some(element=>{
+// 						if(element.id === currentUser?._id){
+// 							return true;
+// 						}
+// 						return false
+// 					}) &&  'text-green-500' }
+// 					`}/>
+// 				</div>
+// 				<h1 className={`text-md text-gray-500
+// 				${main.retweetedBy.some(element=>{
+// 					if(element.id === currentUser?._id){
+// 						return true;
+// 					}
+// 					return false
+// 				}) &&  'text-green-500' }
+// 				group-hover:text-green-500`}>
+// 					{millify(main.retweetedBy.length)}
+// 				</h1>
+// 			</div>
+// 			<div
+// 			onClick={()=>{likeThisLikeTweet(j);makeMePink(j)}}
+// 			className="flex group md:gap-[6px] gap-[3px] items-center">
+// 				<div className="p-[10px] sm:group-hover:bg-pink-300/30 sm:dark:group-hover:bg-pink-700/30 active:scale-50 transition-all duration-200 ease-in-out rounded-full">
+// 					{
+// 						main.likes.some(element=>{
+// 							if(element.id === currentUser?._id){
+// 								return true;
+// 							}
+// 							return false
+// 						}) ? 
+// 						<AiFillHeart id={`like-${j}`} className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-pink-600"/>
+// 						:
+// 						<AiOutlineHeart 
+// 						id={`like-${j}`}
+// 						className="h-5 group-hover:text-pink-500 transition-all duration-200 ease-in-out w-5 text-gray-600"/>
+// 					}
+// 				</div>
+// 				<h1 className={`text-md text-gray-500 group-hover:text-pink-500 
+// 				${main.likes.some(element=>{
+// 					if(element.id === currentUser?._id){
+// 						return true;
+// 					}
+// 					return false
+// 				}) &&  'text-pink-500' }
+// 				`}>
+// 					{millify(main.likes.length)}
+// 				</h1>
+// 			</div>
+// 			<div className="group md:gap-[6px] gap-[3px] hidden xs:flex items-center">
+// 				<div className="p-[10px] group-hover:bg-sky-300/30 dark:group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
+// 					<BsGraphUpArrow className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
+// 				</div>
+// 				<h1 className="text-md text-gray-500 group-hover:text-sky-500">
+// 					{millify(main.views.length)}
+// 				</h1>
+// 			</div>
+// 			<div 
+// 			onClick={()=>{
+
+// 			}}
+// 			className="flex group md:gap-[6px] gap-[3px] items-center">
+// 				<div className="p-[10px] group-hover:bg-sky-300/30 group-hover:bg-sky-700/30 transition-all duration-200 ease-in-out rounded-full">
+// 					<BsFillShareFill className="h-4 w-4 group-hover:text-sky-500 transition-all duration-200 ease-in-out text-gray-600"/>
+// 				</div>
+// 			</div>
+// 		</div>
+
+
+// 	</div>	
+// </motion.div>

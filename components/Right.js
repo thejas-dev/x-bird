@@ -2,7 +2,7 @@ import {FiSearch} from 'react-icons/fi'
 import {useRecoilState} from 'recoil'
 import {currentChatState,currentUserState,chatsState,mainFeedState,
 	callerIdState,groupCallerState,inCallState,currentHeadingState,
-	maxImageState,showMaxImageState} from '../atoms/userAtom'
+	maxImageState,showMaxImageState,showLoginNowState} from '../atoms/userAtom'
 import {HiOutlineChevronDoubleDown,HiOutlineArrowLeft,HiOutlineArrowDown} from 'react-icons/hi';
 import {RiMailAddLine,RiSendPlane2Line} from 'react-icons/ri';
 import {CiMicrophoneOn} from 'react-icons/ci';
@@ -36,6 +36,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 
 	const [currentChat,setCurrentChat] = useRecoilState(currentChatState);
 	const [currentUser,setCurrentUser] = useRecoilState(currentUserState);
+	const [showLoginNow,setShowLoginNow] = useRecoilState(showLoginNowState);
 	const [search,setSearch] = useState('');
 	const [chats,setChats] = useRecoilState(chatsState);
 	const [revealExploreInfo,setRevealExploreInfo] = useState(false);

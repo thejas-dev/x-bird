@@ -1,8 +1,8 @@
 import {FiChevronDown,FiChevronUp} from 'react-icons/fi';
 import {useState,useEffect,useRef} from 'react';
 import {BsCardImage,BsEmojiSmile,BsGraphUpArrow,BsFillShareFill,BsThreeDots,BsFillPeopleFill} from 'react-icons/bs';
-import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart,AiOutlinePlusCircle} from 'react-icons/ai';
-import {MdVideoLibrary} from 'react-icons/md';
+import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart,AiOutlinePlusCircle,AiOutlineSearch} from 'react-icons/ai';
+import {MdVideoLibrary,MdArrowUpward} from 'react-icons/md';
 import {FaRegComment} from 'react-icons/fa';
 import {useRecoilState} from 'recoil';
 import {BiWorld} from 'react-icons/bi';
@@ -23,6 +23,7 @@ import DateDiff from 'date-diff';
 import {socket} from '../service/socket';
 import TweetCard from './TweetCard'
 import ReactPlayer from 'react-player'
+import SongCard from './SongCard'
 
 let imageUrl = [];
 
@@ -57,6 +58,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [warnAboutAudio,setWarnAboutAudio] = useState('');
 	const [path8,setPath8] = useState('');
 	const [videoUrl,setVideoUrl] = useState('');
+	const [songUrl,setSongUrl] = useState('');
+	const [openSongSelection,setOpenSongSelection] = useState(false);
+	const [searchSongValue,setSearchSongValue] = useState('Anirudh');
+	const [songSearchResults,setSongSearchResults] = useState([])
 
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -192,6 +197,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 				if(audioUrl){
 					uploadAudioAndTweet([...imageUrl,response.url]);
 					imageUrl = [...imageUrl,response.url];
+				}else if(songUrl){
+					tweetNow([...imageUrl,response.url],songUrl);
+					imageUrl = [...imageUrl,response.url];
+					setSongUrl('');					
 				}else{
 					tweetNow([...imageUrl,response.url])
 					imageUrl = [...imageUrl,response.url];					
@@ -281,6 +290,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 			        reader.addEventListener('load', () => {
 			          if (audioPathCheck(reader.result)) {
 			            setAudioUrl(reader.result);
+			            setSongUrl('');
 			            setPath6('');
 			          }else{
 			          	setPath6('');
@@ -673,6 +683,32 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		}
 	}
 
+	const searchForSong = async() => {
+		const options = {
+		  method: 'GET',
+		  url: 'https://deezerdevs-deezer.p.rapidapi.com/search',
+		  params: {q: searchSongValue},
+		  headers: {
+		    'X-RapidAPI-Key': 'c700295c4cmsh81288634e18d04ap1a9dfdjsncaf0431c1db8',
+		    'X-RapidAPI-Host': 'deezerdevs-deezer.p.rapidapi.com'
+		  }
+		};
+
+		try {
+			const response = await axios.request(options);
+			if(response?.data?.data?.length > 0){
+				setSongSearchResults(response?.data?.data)
+			}
+		} catch (error) {
+			console.error(error);
+		}
+	}
+
+	useEffect(()=>{
+		if(searchSongValue.length > 3){
+			searchForSong()
+		}
+	},[searchSongValue])
 
 	const openEmojiInput = () => setEmojiInput(!emojiInput)
 
@@ -807,12 +843,21 @@ export default function Center({setCurrentWindow,currentWindow}) {
 							}
 							{
 								url?.length > 0 &&
-								<div className="flex">
+								<div className="flex gap-2">
+									<div 
+									onClick={()=>{if(!loader) {setOpenSongSelection(!openSongSelection)}}}
+									className={`border-[1.3px] ${audioUrl && 'hidden'} flex items-center border-sky-500 text-sky-500 w-auto mt-4 gap-1 font-semibold
+									rounded-full px-2 py-1 hover:bg-gray-200/50 dark:hover:bg-gray-800/70 transition-all duration-300 ease-in-out cursor-pointer`}>
+										<AiOutlineSearch className={`h-5 w-5 text-sky-500`}/> {songUrl ? audioFileName : 'Add Music'}
+										{songUrl && <RxCross2 onClick={()=>setSongUrl('')} className={`h-5 w-5 text-sky-500`}/> }
+									</div>
 									<div 
 									onClick={()=>{if(!loader) {openAudioInput()}}}
-									className="border-[1.3px] flex items-center border-sky-500 text-sky-500 w-auto mt-4 gap-1 font-semibold
-									rounded-full px-2 py-1 hover:bg-gray-200/50 dark:hover:bg-gray-800/70 transition-all duration-300 ease-in-out cursor-pointer">
-										<AiOutlinePlusCircle className={`h-5 w-5 text-sky-500`}/> {audioUrl ? audioFileName : 'Add Song'}
+									className={`border-[1.3px] ${songUrl && 'hidden'} flex items-center border-sky-500 text-sky-500 w-auto mt-4 gap-1 font-semibold
+									rounded-full px-2 py-1 hover:bg-gray-200/50 dark:hover:bg-gray-800/70 transition-all duration-300 
+									ease-in-out cursor-pointer`}>
+										<AiOutlinePlusCircle className={`h-5 w-5 text-sky-500`}/> {audioUrl ? audioFileName : 'Add My Music'} 
+										{audioUrl && <RxCross2 onClick={()=>setAudioUrl('')} className={`h-5 w-5 text-sky-500`}/> }
 									</div>
 									<input type="file" id="audioFile" accept="audio/*" 
 									value={path6} 
@@ -839,6 +884,40 @@ export default function Center({setCurrentWindow,currentWindow}) {
 							ease-in-out text-red-500`}>{warnAboutAudio}</span>
 							
 							<div className="mt-4 h-[1px] w-full dark:bg-gray-500/80 peer-focus-within:bg-sky-500/70 bg-gray-200/80"/>
+							<div className={`${openSongSelection && !audioUrl ? 'h-[300px] border-[1px]' : 'h-[0px]'} peer-focus-within:border-t-sky-500/70 
+							transition-all duration-300 ease-in-out	overflow-hidden w-full border-gray-500/80 relative rounded-xl mt-2`}>
+								<div className="sticky px-3 py-2 top-0 w-full flex items-center gap-2 border-b-[1px] border-gray-300
+								dark:border-gray-700/70 backdrop-blur-md">
+									<div onClick={()=>setOpenSongSelection(false)} className="rounded-full 
+									dark:hover:bg-gray-700/50 hover:bg-gray-300/50 transition-all	duration-200 ease-in-out cursor-pointer">
+										<MdArrowUpward className="text-black dark:text-gray-200 h-6 w-6 "/>
+									</div>
+									<div className="w-full flex items-center rounded-2xl dark:bg-gray-800/40 
+									bg-gray-200/60 px-3 py-2 gap-2 border-gray-800/20 border-[1px] focus-within:border-sky-500">
+										<AiOutlineSearch className="h-6 w-6 text-black dark:text-gray-300"/> 
+										<input type="text" value={searchSongValue} onChange={(e)=>{
+											setSearchSongValue(e.target.value)
+										}} className="w-full bg-transparent h-full text-md outline-none 
+										ring-0 text-black dark:text-gray-200 placeholder:text-gray-500" 
+										placeholder="Search for music"
+										/>
+									</div>
+								</div>
+								<div className={`w-full h-full overflow-y-scroll scrollbar-thin scrollbar-thumb-sky-500 
+								dark:scrollbar-track-gray-800/50 scrollbar-track-gray-100/50 scrollbar-thumb-rounded-xl`}>
+									{
+										songSearchResults?.map((res,j)=>(
+											<SongCard res={res} j={j} key={j} setSongUrl={setSongUrl} 
+											songUrl={songUrl} audioUrl={audioUrl} setAudioUrl={setAudioUrl} 
+											searchSongValue={searchSongValue} setSearchSongValue={setSearchSongValue}
+											audioFileName={audioFileName} setAudioFileName={setAudioFileName}
+											openSongSelection={openSongSelection} setOpenSongSelection={setOpenSongSelection}
+											/>
+										))
+									}
+
+								</div>
+							</div>
 							<div className="flex items-center justify-between py-3">
 								<div className="flex items-center">
 									<div className="cursor-pointer rounded-full p-2 hover:bg-sky-200/60 dark:hover:bg-sky-800/40 transition-all duration-200 ease-in-out">

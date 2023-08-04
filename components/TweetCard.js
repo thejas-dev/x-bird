@@ -8,13 +8,14 @@ import {useRecoilState} from 'recoil'
 import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {motion} from 'framer-motion'
-import ReactPlayer from 'react-player'
+import ReactPlayer from 'react-player/lazy'
+import {useSound} from 'use-sound';
 
 let audio;
 
 export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,FaRegComment,millify,
 	AiOutlineRetweet,retweetThisTweet,makeMeSpin,likeThisTweet,makeMePink,AiFillHeart,AiOutlineHeart,
-	BsFillShareFill,BsGraphUpArrow,currentUser,viewThisTweet,currentWindow
+	BsFillShareFill,BsGraphUpArrow,currentUser,viewThisTweet,currentWindow,own,deleteThisOwnTweet,displayUser
 }) {
 	const ref = useRef()
 	const playerRef = useRef(null);
@@ -29,6 +30,11 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const [haveAudio,setHaveAudio] = useState(false);
 	const router = useRouter();
 	const [audioPlaying,setAudioPlaying] = useState(false);
+	const [imagekitAudio,setImagekitAudio] = useState(false);
+	const [play, { stop:stopAudio8 }] = useSound(main?.audio,{
+		loop:true,
+		format:"mp3"
+	});
 
 	const handlePlay = () => {
 	    playerRef.current?.getInternalPlayer()?.play();
@@ -38,13 +44,13 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	    playerRef.current?.getInternalPlayer()?.pause();
 	  };
 
-	const play = () => {
+	const playImagekitAudio = () => {
 		if(audio){
 			audio.play()
 		}
 	}
 
-	const stopAudio8 = () => {
+	const stopAudio8ImagekitAudio = () => {
 		if(audio){
 			audio.pause()
 			audio.currentTime = 0;
@@ -69,7 +75,9 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	useEffect(()=>{
 		return ()=> {
 			stopAudio8();
+			stopAudio8ImagekitAudio()
 			setImPlaying(false);
+			setHaveAudio(false);
 		}
 	},[])
 
@@ -77,12 +85,17 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		if(isIntersecting){
 			viewThisTweet(j)
 			if(soundAllowed && !audioPlaying && main?.audio && !imPlaying){
-				play()	
+				if(imagekitAudio){
+					playImagekitAudio()
+				}else{
+					play()	
+				}
 				setAudioPlaying(true)
 				setImPlaying(true)
 			}
 		}else{
 			if(main?.audio && audioPlaying){
+				stopAudio8ImagekitAudio()
 				stopAudio8()
 				setAudioPlaying(false)
 				setImPlaying(false)	
@@ -94,14 +107,19 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	useEffect(()=>{
 		if(soundAllowed){
 			if(isIntersecting && main?.audio && !audioPlaying && !imPlaying){
-				play()
+				if(imagekitAudio){
+					playImagekitAudio()
+				}else{
+					play()
+				}
 				setAudioPlaying(true)
 				setImPlaying(true)				
 			}
 		}else{
 			if(main?.audio){
+				stopAudio8ImagekitAudio()
+				stopAudio8()		
 				setAudioPlaying(false)
-				stopAudio8()
 				setImPlaying(false)
 			}
 		}
@@ -119,9 +137,19 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	}
 
 	useEffect(()=>{
-		if(main?.audio){
+		if(main?.audio.length > 1){
 			setHaveAudio(true);
 			loadAudio()
+		}else{
+			setHaveAudio(false);
+		}
+		if(main?.audio){
+			let mainSplitted = main?.audio?.split('.');
+			if(main?.audio?.split('.')[mainSplitted.length - 1] === 'mp3'){
+				setImagekitAudio(false)
+			}else{
+				setImagekitAudio(true)
+			}
 		}
 	},[main])
 
@@ -180,9 +208,38 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							calDate(main.createdAt)
 						}</h1>
 					</div>
-					<div className="p-1 rounded-full md:hover:bg-sky-300/20 transition-all duration-200 ease-in-out group">
-						<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
-					</div>
+					{
+						own ? 
+						<div className="p-1 relative rounded-full md:hover:bg-sky-300/20 dark:md:hover:bg-sky-800/20 transition-all duration-200 ease-in-out group">
+							<div 
+							id={`post-${j}`}
+							onClick={()=>{
+								deleteThisOwnTweet(j);
+							}}
+							className="absolute px-2 py-1 rounded-xl backdrop-blur-lg border-[1px] 
+							right-8 z-50 top-0 bottom-0 my-auto flex items-center justify-center border-red-500 
+							text-black dark:text-gray-200 hidden font-semibold hover:bg-gray-200/70 dark:hover:bg-gray-800/70 transition-all duration-200 ease-in-out">
+								Delete Post
+							</div>
+							<BsThreeDots 
+							onClick={()=>{
+								if(displayUser._id === currentUser._id){
+									let btn = document.getElementById(`post-${j}`)
+									if(btn.classList.value.includes('hidden')){
+										btn.classList.remove('hidden');
+									}else{
+										btn.classList.add('hidden')
+									}												
+								}
+
+							}}
+							className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
+						</div>
+						:
+						<div className="p-1 rounded-full md:hover:bg-sky-300/20 transition-all duration-200 ease-in-out group">
+							<BsThreeDots className="text-gray-500 group-hover:text-sky-500 transition-all duration-200 ease-in-out h-5 w-5"/>
+						</div>
+					}
 				</div>
 				<div
 				className="w-full text-lg">
