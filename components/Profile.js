@@ -235,26 +235,31 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		  		checkAccounInfo();
 			
 		}, 3000);
-	},[displayUser])
+	},[displayUser,currentUser])
 
 	const checkAccounInfo = () => {
-		const check = displayUser?.followers?.some(element=>{
-			if(element.id === currentUser?._id){
-				return true;
+		if(displayUser && currentUser){
+			const check = displayUser?.followers?.some(element=>{
+				if(element.id === currentUser?._id){
+					return true;
+				}
+				return false
+			})		
+			if(check){
+				setUserFollowing(true);
+			}else{
+				setUserFollowing(false);
 			}
-			return false
-		})		
-		if(check){
-			setUserFollowing(true);
+			if(displayUser._id === currentUser._id){
+				setOwnAccount(true);
+			}else{
+				setOwnAccount(false)
+			}			
 		}else{
-			setUserFollowing(false);
-		}
-		if(displayUser._id === currentUser._id){
-			setOwnAccount(true);
-		}else{
-			setOwnAccount(false)
+
 		}
 	}
+
 
 	useEffect(()=>{
 		if(displayUser){

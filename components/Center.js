@@ -8,12 +8,13 @@ import {useRecoilState} from 'recoil';
 import {BiWorld} from 'react-icons/bi';
 import {currentChatState,homeState,currentUserState,showLoginNowState,mainFeedState,
 	loaderState,sidebarState,followingFeedState,forYouState,bottomHideState,needToRefetchState,
-	mainFeedNotAddedState
+	mainFeedNotAddedState,soundAllowedState
 	} from '../atoms/userAtom'
 import {MdSchedule} from 'react-icons/md'
 import {HiOutlineLocationMarker} from 'react-icons/hi';
 import {createTweet,getAllPosts,getPostByIdRoute,updatedPostRoute,
-	updateUser,updateUserTweets,updateUserRetweets,getAllFollowingPosts} from '../utils/ApiRoutes';
+	updateUser,updateUserTweets,updateUserRetweets,getAllFollowingPosts,
+	songSearchRoute} from '../utils/ApiRoutes';
 import axios from 'axios'
 import {RxCross2} from 'react-icons/rx';
 import millify from 'millify';
@@ -60,6 +61,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [videoUrl,setVideoUrl] = useState('');
 	const [songUrl,setSongUrl] = useState('');
 	const [openSongSelection,setOpenSongSelection] = useState(false);
+	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
 	const [searchSongValue,setSearchSongValue] = useState('Anirudh');
 	const [songSearchResults,setSongSearchResults] = useState([])
 
@@ -88,8 +90,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 
 	useEffect(()=>{
 		if(home === 'For you'){
+			setSoundAllowed(false)
 			setMainFeed(foryou);
 		}else{
+			setSoundAllowed(false)
 			setMainFeed(followingFeed);
 		}
 	},[home,foryou,followingFeed])
@@ -336,6 +340,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	useEffect(()=>{
 		fetchTimeLine();
 		if(currentUser){
+			setFollowingFeed([])			
 			fetchFollowingFeed();
 		}
 	},[])
@@ -357,6 +362,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const refetchFeed = () => {
 		fetchTimeLine();
 		if(currentUser){
+			setFollowingFeed([])
 			fetchFollowingFeed();
 		}
 	}
@@ -372,8 +378,16 @@ export default function Center({setCurrentWindow,currentWindow}) {
 
 	const addFollowFeedWithForYou = async() => {
 		if(mainFeedNotAdded){
-			let followFeed = [...followingFeed, ...foryou];
-			setFollowingFeed(followFeed);
+			const followingFeedIds = new Set(followingFeed.map(post => post._id.toString()));
+
+			const filteredMainFeed = foryou.filter(post => !followingFeedIds.has(post._id.toString()));
+
+			let newFeed = [...followingFeed, ...filteredMainFeed];
+			// followingFeed.push(...filteredMainFeed);
+			// console.log(mainFeed,followingFeed);
+			// let followFeed = [...followingFeed, ...foryou];
+			setFollowingFeed(newFeed);
+			console.log(newFeed)
 			setMainFeedNotAdded(false)
 		}
 	}
@@ -393,6 +407,20 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		}
 	}
 
+	function autoResize2() {
+		const ele = document.getElementById('tweetArea');
+		if(ele){
+			ele.style.height = 'auto',
+			ele.style.height = ele.scrollHeight + 'px'
+		}		
+	}
+
+	useEffect(()=>{
+		if(tweetText === ''){
+			autoResize2()
+		}
+	},[tweetText])
+
 	useEffect(()=>{
 		function autoResize() {
 			this.style.height = 'auto',
@@ -403,6 +431,11 @@ export default function Center({setCurrentWindow,currentWindow}) {
 			ele.addEventListener('input',autoResize,false);
 		}
 
+		return () => {
+			if (ele) {
+			  ele.removeEventListener('input', autoResize, false);
+			}
+		};
 	},[])
 
 	useEffect(()=>{
@@ -447,7 +480,8 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		const {data} = await axios.post(createTweet,{text,user,images,audio,videos,public:tweetPublic});
 		setUrl([]);
 		setAudioUrl('');
-		imageUrl = []
+		imageUrl = [];
+		autoResize2();
 		setTweetText('');
 		setLoader(false);
 		setMainFeed(mainFeed=>[data.post,...mainFeed]);
@@ -472,7 +506,8 @@ export default function Center({setCurrentWindow,currentWindow}) {
 		const {data} = await axios.post(createTweet,{text,user,images,audio,videos,public:tweetPublic});
 		setUrl([]);
 		setAudioUrl('');
-		imageUrl = []
+		imageUrl = [];
+		autoResize2();
 		setTweetText('');
 		setLoader(false);
 		setMainFeed(mainFeed=>[data.post,...mainFeed]);
@@ -684,24 +719,10 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	}
 
 	const searchForSong = async() => {
-		const options = {
-		  method: 'GET',
-		  url: 'https://deezerdevs-deezer.p.rapidapi.com/search',
-		  params: {q: searchSongValue},
-		  headers: {
-		    'X-RapidAPI-Key': 'c700295c4cmsh81288634e18d04ap1a9dfdjsncaf0431c1db8',
-		    'X-RapidAPI-Host': 'deezerdevs-deezer.p.rapidapi.com'
-		  }
-		};
+		setSongSearchResults([]);
+		const {data} = await axios.get(`${songSearchRoute}/${searchSongValue}`);
+		setSongSearchResults(data.data);
 
-		try {
-			const response = await axios.request(options);
-			if(response?.data?.data?.length > 0){
-				setSongSearchResults(response?.data?.data)
-			}
-		} catch (error) {
-			console.error(error);
-		}
 	}
 
 	useEffect(()=>{
@@ -815,7 +836,9 @@ export default function Center({setCurrentWindow,currentWindow}) {
  										setTweetText(e.target.value)
  									}
  								}}
- 								className={`text-xl resize-none overflow-hidden h-7 w-full placeholder:text-gray-500 ${loader ? 'text-gray-400/70 dark:text-gray-700/70' : 'text-gray-900 dark:text-gray-100'} bg-transparent outline-none`}
+ 								className={`text-xl resize-none overflow-hidden h-7 w-full placeholder:text-gray-500 
+ 								${loader ? 'text-gray-400/70 dark:text-gray-700/70' : 'text-gray-900 dark:text-gray-100'} 
+ 								bg-transparent outline-none`}
  								placeholder="Create a trend?!"
  								/>
 							</div>
@@ -983,13 +1006,14 @@ export default function Center({setCurrentWindow,currentWindow}) {
 								
 							
 								return (
-								<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} currentWindow={currentWindow} 
-								calDate={calDate} BsThreeDots={BsThreeDots} FaRegComment={FaRegComment} millify={millify} AiOutlineRetweet={AiOutlineRetweet}
-								retweetThisTweet={retweetThisTweet} makeMeSpin={makeMeSpin} likeThisTweet={likeThisTweet} makeMePink={makeMePink}
-								AiFillHeart={AiFillHeart} AiOutlineHeart={AiOutlineHeart} currentUser={currentUser}
-								BsGraphUpArrow={BsGraphUpArrow} BsFillShareFill={BsFillShareFill} viewThisTweet={viewThisTweet}
-								/>
-
+								<div key={j}>
+									<TweetCard  main={main} j={j} key={j} setCurrentWindow={setCurrentWindow} currentWindow={currentWindow} 
+									calDate={calDate} BsThreeDots={BsThreeDots} FaRegComment={FaRegComment} millify={millify} AiOutlineRetweet={AiOutlineRetweet}
+									retweetThisTweet={retweetThisTweet} makeMeSpin={makeMeSpin} likeThisTweet={likeThisTweet} makeMePink={makeMePink}
+									AiFillHeart={AiFillHeart} AiOutlineHeart={AiOutlineHeart} currentUser={currentUser} home={home}
+									BsGraphUpArrow={BsGraphUpArrow} BsFillShareFill={BsFillShareFill} viewThisTweet={viewThisTweet}
+									/>
+								</div>
 							)}
 							)
 						}

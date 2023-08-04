@@ -8,7 +8,7 @@ export default function SongCard({res,j,setSongUrl,songUrl,audioUrl,setAudioUrl,
 	audioFileName,setAudioFileName,openSongSelection,setOpenSongSelection}) {
 	
 	const [isPlaying,setIsPlaying] = useState(false);
-	const [play, { stop }] = useSound(res.preview,{
+	const [play, { stop }] = useSound(res?.preview,{
 		onend :()=>{
 			stop();setIsPlaying(false)
 		}
@@ -16,7 +16,17 @@ export default function SongCard({res,j,setSongUrl,songUrl,audioUrl,setAudioUrl,
 
 	useEffect(()=>{
 		player = document.getElementById('audioEle')
+
+		return ()=>{
+			stop();setIsPlaying(false);
+		}
 	},[])
+
+	useEffect(()=>{
+		if(!openSongSelection){
+			stop();
+		}
+	},[openSongSelection])
 
 	useEffect(()=>{
 		if(res){
@@ -48,6 +58,7 @@ export default function SongCard({res,j,setSongUrl,songUrl,audioUrl,setAudioUrl,
 			onClick={()=>{
 				setAudioFileName(res?.album?.title);
 				setSongUrl(res?.preview);
+				stop();
 				setAudioUrl('');
 				setOpenSongSelection(false);
 			}} className="flex items-center gap-2 w-full w-[90%]">

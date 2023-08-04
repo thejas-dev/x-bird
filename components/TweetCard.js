@@ -2,7 +2,7 @@ import {useRef,useState,useEffect} from 'react'
 import {useIsVisible} from '../hooks/useIsVisible';
 import {showClipboardState,searchTextState,soundAllowedState,imPlayingState,
 	maxImageState,showMaxImageState} from '../atoms/userAtom';
-import {useRouter} from 'next/navigation'
+import {useRouter} from 'next/router'
 import {host} from '../utils/ApiRoutes'
 import {useRecoilState} from 'recoil'
 import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
@@ -12,10 +12,12 @@ import ReactPlayer from 'react-player/lazy'
 import {useSound} from 'use-sound';
 
 let audio;
+var timer;
 
 export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,FaRegComment,millify,
 	AiOutlineRetweet,retweetThisTweet,makeMeSpin,likeThisTweet,makeMePink,AiFillHeart,AiOutlineHeart,
-	BsFillShareFill,BsGraphUpArrow,currentUser,viewThisTweet,currentWindow,own,deleteThisOwnTweet,displayUser
+	BsFillShareFill,BsGraphUpArrow,currentUser,viewThisTweet,currentWindow,own,deleteThisOwnTweet,displayUser,
+	home
 }) {
 	const ref = useRef()
 	const playerRef = useRef(null);
@@ -80,6 +82,15 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 			setHaveAudio(false);
 		}
 	},[])
+
+	useEffect(()=>{
+		if(home){
+			stopAudio8();
+			stopAudio8ImagekitAudio();
+			setImPlaying(false);
+			setSoundAllowed(false);
+		}
+	},[home])
 
 	useEffect(()=>{
 		if(isIntersecting){
@@ -153,7 +164,22 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		}
 	},[main])
 
+	function onClickHandler(event,ur) {
+	  clearTimeout(timer);
+	  
+	  if (event.detail === 1) {
+	    timer = setTimeout(() => {
+	      	stopAudio8()
+			setSoundAllowed(false);
+			let route = `/trend?trend=${main._id}`
+			router.push(route)
+	    }, 200)
 
+	  } else if (event.detail === 2) {
+	    document.getElementById(`like-${j}`).focus();
+		likeThisTweet(j);
+	  }
+	}
 
 	return(
 		<motion.div 
@@ -276,9 +302,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						main?.images?.length>0 &&
 							main?.images?.map((ur,i)=>(
 							<div 
-							onClick={()=>{
-								setMaxImage(ur);
-								setShowMaxImage(true)
+							onClick={(e)=>{
+								onClickHandler(e,ur)
 							}}
 							className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 								<div className="absolute h-full w-full z-10 transition-all duration-200 
@@ -370,6 +395,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 						if(currentUser){
 							makeMePink(j)
 							setLiked(!liked)
+							likeThisTweet(j);
+						}else{
 							likeThisTweet(j);
 						}
 					}}

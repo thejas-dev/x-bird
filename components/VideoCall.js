@@ -1,5 +1,5 @@
 import {ImPhoneHangUp} from 'react-icons/im';
-import {useState,useEffect} from 'react';
+import {useState,useEffect,useRef} from 'react';
 import {MdOutlineCameraswitch} from 'react-icons/md'
 import {BsMic,BsMicMute,BsCameraVideo,BsCameraVideoOff} from 'react-icons/bs';
 import {TbScreenShare} from 'react-icons/tb';
@@ -12,6 +12,7 @@ import {socket} from '../service/socket'
 import { v4 as uuidv4 } from 'uuid';
 import {useSound} from 'use-sound';
 import {FiVideoOff,FiMinimize2} from 'react-icons/fi';
+import {motion} from 'framer-motion';
 
 let myPeer;
 let myStream;
@@ -47,6 +48,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 	const [permissionGranted,setPermissionGranted] = useState(true);
 	const [stopAudio,setStopAudio] = useState(false);
 	const [openMaxWindow,setOpenMaxWindow] = useState(false);
+	const constraintsRef = useRef(null)
 
 	const [play2, { stop:stopAudio3 }] = useSound('dialer.mp3',{
 	  loop:true
@@ -530,7 +532,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 					<h1 className="text-md text-white font-semibold">{userAlreadyInCall?.name} in call</h1>
 				</div>
 			</div>
-			<div className="h-full relative w-full flex md:pt-8 justify-center">
+			<motion.div ref={constraintsRef} className="h-full relative w-full flex md:pt-8 justify-center">
 				<div className={`absolute z-50 top-2 ${showNewUserAlert ? 'left-2' : '-left-[100%]'} bg-black/70 px-2 py-2
 				text-white backdrop-blur-sm flex items-center gap-3 rounded-lg transition-all duration-300 ease-in-out`}>
 					<img src={newUserAlert?.image} alt="" className="h-6 w-6 rounded-full" /> {newUserAlert?.name} joined
@@ -559,7 +561,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 					onClick={()=>setHideOptions(!hideOptions)}
 					className="h-full w-full object-cover object-center bg-black sm:rounded-2xl" src=""></video>
 				</div>
-				<div 
+				<motion.div drag dragConstraints={constraintsRef} dragTransition={{ bounceStiffness: 600, bounceDamping: 10 }} 
 				onClick={()=>{
 					setOpenMaxWindow(true);
 					let maxVideo = document.getElementById('videoMaxStream');
@@ -580,7 +582,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 					<div className={`w-[50%] md:w-[30%] ${acceptedCall ? 'hidden' : 'block'} aspect-square rounded-full`}>
 						<img src={currentCaller?.image} alt="" className="animate-pulse rounded-full h-full w-full"/>						
 					</div>
-				</div>
+				</motion.div>
 
 
 				<div className={`absolute flex xs:gap-8 gap-5 ${hideOptions ? '-bottom-[20%]' : 'md:bottom-3 bottom-5'} items-center  
@@ -625,7 +627,7 @@ export default function VideoCall({currentWindow,setCurrentWindow,
 					</div>
 
 				</div>	
-			</div>
+			</motion.div>
 			<div className={`fixed ${openMaxWindow && accepted ? 'h-full w-full' : 'h-0 w-0'} left-0 bg-black/30 
 			backdrop-blur-md top-0 right-0 bottom-0 m-auto z-30 flex items-center justify-center transition-all
 			duration-300 ease-in-out`}>

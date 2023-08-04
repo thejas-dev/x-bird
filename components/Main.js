@@ -417,7 +417,7 @@ export default function Main() {
 			m-auto z-50 overflow-hidden transition-all duration-200 ease-in`}>
 				<div className="h-full flex items-center justify-center w-full relative p-2">
 					<div onClick={()=>setShowMaxImage(false)}
-					className="absolute md:top-4 top-2 left-2 md:left-5 rounded-full dark:bg-gray-800/70 bg-gray-300/70
+					className="absolute md:top-4 top-2 right-2 md:right-5 rounded-full dark:bg-gray-800/70 bg-gray-300/70
 					transition-all duration-300 ease-in-out cursor-pointer p-1 dark:hover:bg-gray-700/70">
 						<RxCross2 className="text-black dark:text-gray-200 h-6 w-6 z-50"/>
 
