@@ -1,6 +1,8 @@
 import {AiOutlinePauseCircle,AiOutlinePlayCircle} from 'react-icons/ai'
 import {useState,useEffect} from 'react';
 import {useSound} from 'use-sound';
+import {playingSong} from '../atoms/userAtom';
+import {useRecoilState} from 'recoil';
 
 let player;
 
@@ -8,11 +10,22 @@ export default function SongCard({res,j,setSongUrl,songUrl,audioUrl,setAudioUrl,
 	audioFileName,setAudioFileName,openSongSelection,setOpenSongSelection}) {
 	
 	const [isPlaying,setIsPlaying] = useState(false);
+	const [nowPlaying,setNowPlaying] = useRecoilState(playingSong);
+
+
 	const [play, { stop }] = useSound(res?.preview,{
 		onend :()=>{
 			stop();setIsPlaying(false)
 		}
 	});
+
+	useEffect(()=>{
+		if(nowPlaying){
+			if(nowPlaying !== res?.preview){
+				stop()
+			}
+		}
+	},[nowPlaying])
 
 	useEffect(()=>{
 		player = document.getElementById('audioEle')
@@ -69,7 +82,7 @@ export default function SongCard({res,j,setSongUrl,songUrl,audioUrl,setAudioUrl,
 				sm:w-auto w-[80%] font-semibold dark:text-gray-200 text-black ">{res?.album?.title}</h6>
 			</div>
 			<div 
-			onClick={()=>setIsPlaying(!isPlaying)}
+			onClick={()=>{setIsPlaying(!isPlaying);setNowPlaying(res?.preview)}}
 			className="rounded-full border-[1px] border-sky-500 ">
 				{
 					isPlaying ? 

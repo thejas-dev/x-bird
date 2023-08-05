@@ -184,3 +184,8 @@ export const needToReloadProfileState = atom({
 	key:"needToReloadProfileState",
 	default:false
 })
+
+export const playingSong = atom({
+	key:"playingSong",	
+	default:''
+})
