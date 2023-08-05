@@ -644,7 +644,7 @@ export default function Main() {
 							onBlur={()=>document.getElementById('bio').classList.remove('text-sky-500')}
 							value={bio}
 							onChange={(e)=>setBio(e.target.value)}
-							className="w-full text-lg
+							className="w-full text-lg outline-none
 							text-black placeholder:text-gray-500/70 dark:placeholder:text-gray-400/70 dark:text-gray-200 bg-transparent resize-none h-[100px]"/>
 						</div>	
 
