@@ -11,6 +11,7 @@ import {motion} from 'framer-motion'
 import ReactPlayer from 'react-player/lazy'
 import {useSound} from 'use-sound';
 import React from 'react';
+import ReactAudioPlayer from 'react-audio-player';
 
 let audio;
 var timer;
@@ -22,6 +23,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 }) {
 	const ref = useRef()
 	const playerRef = useRef(null);
+	const audioRef = useRef(null);
 	const isIntersecting = useIsVisible(ref)
 	const [showClipboard,setShowClipboard] = useRecoilState(showClipboardState);
 	const [searchText,setSearchText] = useRecoilState(searchTextState);
@@ -35,10 +37,25 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const [audioPlaying,setAudioPlaying] = useState(false);
 	const [imagekitAudio,setImagekitAudio] = useState(false);
 	const [showHeartAnimation,setShowHeartAnimation] = useState(false);
-	const [play, { stop:stopAudio8 }] = useSound(main?.audio,{
-		loop:true,
-		format:"mp3"
-	});
+	const [songUrl,setSongUrl] = useState('');
+	// const [play, { stop:stopAudio8 }] = useSound(main?.audio,{
+	// 	loop:true,
+	// 	format:"mp3",
+	// 	key:j
+	// });
+
+	const play = () => {
+	    if (audioRef.current) {
+	      audioRef.current.audioEl.current.play();
+	    }
+	};
+
+	const stopAudio8 = () => {
+	    if (audioRef.current) {
+	      audioRef.current.audioEl.current.pause();
+	    }
+	};
+
 
 	const handlePlay = () => {
 	    playerRef.current?.getInternalPlayer()?.play();
@@ -77,6 +94,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	},[main])
 
 	useEffect(()=>{
+		setSongUrl(main?.audio);
 		return ()=> {
 			stopAudio8();
 			stopAudio8ImagekitAudio()
@@ -98,6 +116,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 		if(isIntersecting){
 			viewThisTweet(j)
 			if(soundAllowed && !audioPlaying && main?.audio && !imPlaying){
+				setSongUrl(main?.audio);
 				if(imagekitAudio){
 					playImagekitAudio()
 				}else{
@@ -108,6 +127,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 			}
 		}else{
 			if(main?.audio && audioPlaying){
+				setSongUrl(main?.audio);
 				stopAudio8ImagekitAudio()
 				stopAudio8()
 				setAudioPlaying(false)
@@ -120,6 +140,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	useEffect(()=>{
 		if(soundAllowed){
 			if(isIntersecting && main?.audio && !audioPlaying && !imPlaying){
+				setSongUrl(main?.audio);
 				if(imagekitAudio){
 					playImagekitAudio()
 				}else{
@@ -130,6 +151,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 			}
 		}else{
 			if(main?.audio){
+				setSongUrl(main?.audio);
 				stopAudio8ImagekitAudio()
 				stopAudio8()		
 				setAudioPlaying(false)
@@ -157,6 +179,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 			setHaveAudio(false);
 		}
 		if(main?.audio){
+			setSongUrl(main?.audio);
 			let mainSplitted = main?.audio?.split('.');
 			if(main?.audio?.split('.')[mainSplitted.length - 1] === 'mp3'){
 				setImagekitAudio(false)
@@ -164,7 +187,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 				setImagekitAudio(true)
 			}
 		}
-	},[main])
+	},[main,j])
 
 	function onClickHandler(event,ur) {
 	  clearTimeout(timer);
@@ -351,6 +374,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					m-auto opacity-0 ${showHeartAnimation ? 'pop' : ''} ${main?.images?.length < 1 && 'hidden'} `}>
 						<AiFillHeart className="h-full w-full text-white"/>
 					</div>
+					<ReactAudioPlayer ref={audioRef} src={songUrl} autoPlay={false} controls={false} />
 					{
 						main?.images?.length>0 &&
 							main?.images?.map((ur,i)=>(
