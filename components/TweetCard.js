@@ -12,6 +12,7 @@ import ReactPlayer from 'react-player/lazy'
 import {useSound} from 'use-sound';
 import React from 'react';
 import ReactAudioPlayer from 'react-audio-player';
+import Image from 'next/image';
 
 let audio;
 var timer;
@@ -385,7 +386,15 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
 								<div className="absolute h-full w-full transition-all duration-200 
 								ease-in-out group-hover:bg-gray-500/10"/>
-								<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
+					            <Image
+					              src={ur}
+					              alt=""
+					              width={500}
+      							  height={500}
+					              objectFit="cover"
+					              loading="lazy"
+					              className="select-none transition-all duration-300 ease-in-out"
+					            />
 							</div>
 							))
 
