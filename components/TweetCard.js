@@ -277,7 +277,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					}
 				</div>
 				<div
-				className={`w-full text-lg ${main?.text?.length < 1 && 'hidden'} `}>
+				className={`w-full text-md ${main?.text?.length < 1 && 'hidden'} `}>
 					<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 break-words"
 					style={{ whiteSpace: 'pre-line' }}>
 					{main?.text?.split('\n')?.map((line, i) => (
