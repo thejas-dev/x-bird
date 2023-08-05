@@ -1698,8 +1698,9 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 				</div>
 				<div className={`fixed right-7 lg:w-[36.4%] xl:w-[28.4%] w-0 border-gray-300 dark:border-gray-700 border-[1.5px] flex flex-col h-full 
 				overflow-hidden bg-white dark:bg-[#100C08]/70 backdrop-blur-md ${!currentChat && 'pt-4'} h-[95%] w-full ${msgReveal ? '-bottom-[60px]' : '-bottom-[90%]'} transition-all 
-				duration-200 ease-in-out  rounded-2xl shadow-xl pb-[60px] ${!currentUser && 'hidden'} `}>
-					<div className={`flex cursor-pointer items-center justify-between ${currentChat && 'hidden'} w-full px-5 shadow-sm pb-3 mx-auto`}>
+				duration-200 ease-in-out  rounded-2xl shadow-xl pb-[60px] ${!currentUser && 'hidden'} ease-in-out flex-col flex w-full`}>
+					<div className={`flex cursor-pointer items-center justify-between 
+					${currentChat && 'hidden'} w-full px-5 shadow-sm pb-3 mx-auto`}>
 						<h1 
 						onClick={()=>setMsgReveal(!msgReveal)}
 						className="text-black dark:text-gray-200 text-2xl select-none font-semibold">Messages</h1>
@@ -1716,7 +1717,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							</div>
 						</div>
 					</div>
-					<div className={`h-[100%] transition-all duration-200 ease-in-out flex-col flex w-full`}>
+					<div className={`h-[100%] transition-all duration-200 ${!currentChat && 'overflow-y-auto' } scrollbar scrollbar-thin scrollbar-thumb-rounded-xl scrollbar-thumb-sky-500 `}>
 						{
 							currentChat ? 
 							<div className="h-full w-full flex flex-col relative">
@@ -1939,7 +1940,7 @@ export default function Right({setCurrentWindow,currentWindow,newMessageSearch,
 							chats.map((chat,i)=>(
 								<div key={i}
 								onClick={()=>{setCurrentChat(chat)}}
-								className={`px-3 overflow-hidden py-[14px] hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all duration-200 ease-in-out 
+								className={`px-3 overflow-hidden py-[10px] hover:bg-gray-200/40 dark:hover:bg-gray-800/40 transition-all duration-200 ease-in-out 
 								cursor-pointer flex items-center gap-3 group w-full ${i === 0 ? 'border-y-[1px]':'border-b-[1px]'} 
 								border-gray-300/70 dark:border-gray-700/70 `}>
 									{

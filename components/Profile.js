@@ -10,7 +10,8 @@ import {BsGraphUpArrow,BsFillShareFill,BsThreeDots} from 'react-icons/bs';
 import {AiOutlineRetweet,AiOutlineHeart,AiFillHeart} from 'react-icons/ai';
 import {MdOutlineLocationOn} from 'react-icons/md';
 import {getPostByIdRoute,updatedPostRoute,getUserByIdRoute,updateUser,updateUserRetweets,
-	updateUserFollowing,updateUserFollowers,removePost,updateUserTweets} from '../utils/ApiRoutes';
+	updateUserFollowing,updateUserFollowers,removePost,updateUserTweets,
+	searchProfileWithUsername} from '../utils/ApiRoutes';
 import DateDiff from 'date-diff';
 import axios from 'axios'
 import {motion} from 'framer-motion'
@@ -96,8 +97,10 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 	useEffect(() => {
 	  const handleRouteChange = (url) => {
-	    findUserFun(url.split('=')[1])
-	    // console.log(url)
+
+	  	if(url.split('?')[1]?.includes('profile')){
+	    	findUserFun(url.split('=')[1])
+	  	}
 	  };
 
 	  // Add the event listener for route changes
@@ -110,6 +113,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	}, []);
 
 	const findUserFun = (url) => {
+
 		setCurrentUserTweets([]);
 		setCurrentUserLikes([]);
 		setCurrentUserRetweets([]);
@@ -127,9 +131,9 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		}else if(url){
 			findUserByUrl(url)
 		}else{
-			setAccountFound(true);
-			setDisplayUser(currentUser);
-			setOwnAccount(true);
+			setAccountFound(false);
+			// setDisplayUser(currentUser);
+			setOwnAccount(false);
 			setLoading(false)
 		}
 	}
@@ -149,23 +153,27 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 			}
 		}else if(router?.query?.profile){
 			findUser()
-		}else if(currentUser){
-			setAccountFound(true);
-			setDisplayUser(currentUser);
-			setOwnAccount(true);
-			setLoading(false)
+		}else if(router?.query?.username){
+			findUserByUsername()
 		}else if(location.search){
+			// console.log("io ran")
+
 			let id = location.search.split('=')[1]
 			findUserFun(id)
+		}else if(currentUser){
+			setAccountFound(false);
+			// setDisplayUser(currentUser);
+			setOwnAccount(false);
+			setLoading(false)
 		}else{
 			setLoading(false);
 			setAccountFound(false);
 		}
-		setTimeout(() => {
+		// setTimeout(() => {
 			
-		  		checkAccounInfo();
+		//   		checkAccounInfo();
 			
-		}, 3000);
+		// }, 3000);
 
 	},[])
 
@@ -185,6 +193,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		setCurrentUserLikes([]);
 		setCurrentUserRetweets([]);
 		setLoading(true);
+		// console.log(" i ran")
 		// console.log(location.search.split('=')[1])
 		const {data} = await axios.get(`${getUserByIdRoute}/${url}`);
 		if(data.status === false){
@@ -203,7 +212,6 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		setCurrentUserLikes([]);
 		setCurrentUserRetweets([]);
 		setLoading(true);
-		// console.log(location.search.split('=')[1])
 		const {data} = await axios.get(`${getUserByIdRoute}/${location.search.split('=')[1]}`);
 		if(data?.status === false){
 			setAccountFound(false);
@@ -211,6 +219,27 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		}else{
 			setAccountFound(true);
 			setDisplayUser(data?.user);
+			setLoading(false);
+		}
+	}
+
+	const findUserByUsername = async() => {
+
+		setCurrentUserTweets([]);
+		setCurrentUserLikes([]);
+		setCurrentUserRetweets([]);
+		setLoading(true);
+		// console.log(location.search.split('=')[1])
+		const {data} = await axios.post(searchProfileWithUsername,{
+			searchText:location.search.split('=')[1]
+		});
+		// const {data} = await axios.get(`${getUserByIdRoute}/${}`);
+		if(data?.status === false){
+			setAccountFound(false);
+			setLoading(false);
+		}else{
+			setAccountFound(true);
+			setDisplayUser(data?.user[0]);
 			setLoading(false);
 		}
 	}
@@ -230,11 +259,11 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				fetchRetweets()
 			}
 		}	
-		setTimeout(() => {
+		// setTimeout(() => {
 			
-		  		checkAccounInfo();
+		//   		checkAccounInfo();
 			
-		}, 3000);
+		// }, 3000);
 	},[displayUser,currentUser])
 
 	const checkAccounInfo = () => {

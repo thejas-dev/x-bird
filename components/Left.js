@@ -144,11 +144,11 @@ export default function Left({setCurrentWindow,currentWindow}) {
 						// setCurrentWindow('Profile')
 						// window.history.replaceState({id:100},'Default',`?profile=${currentUser._id}`);
 						setSideBar(false)
-						if(currentWindow === 'Profile'){
-							location.reload()
-						}else{
-							// setCurrentWindow('Profile')
-						}
+						// if(currentWindow === 'Profile'){
+						// 	location.reload()
+						// }else{
+						// 	// setCurrentWindow('Profile')
+						// }
 					}}
 					className="flex items-center gap-4 rounded-full px-4 py-4 cursor-pointer hover:bg-gray-200/70 dark:hover:bg-gray-800/80 transition-all duration-200 ease-in-out">
 						{

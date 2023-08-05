@@ -25,7 +25,7 @@ import Lists from './Lists'
 import {useRecoilState} from 'recoil'
 import {currentChatState,chatsState,currentUserState,mainFeedState,displayUserState,
 	showLoginNowState,showClipboardState,themeState,homeState,callerIdState,needToRefetchState,
-	soundAllowedState,maxImageState,showMaxImageState,msgRevealState,bottomHideState
+	soundAllowedState,maxImageState,showMaxImageState,msgRevealState,bottomHideState,needToReloadProfileState
 	} from '../atoms/userAtom'
 import ImageKit from "imagekit"
 import Notifications from './Notifications';
@@ -37,7 +37,7 @@ export default function Main() {
 	const [currentWindow,setCurrentWindow] = useState('Bookmarks');
 	const [openOverlay,setOpenOverlay] = useState([]);
 	const [overlayFor,setOverlayFor] = useState('');
-	const [needToReloadProfile,setNeedToReloadProfile] = useState(false);
+	const [needToReloadProfile,setNeedToReloadProfile] = useRecoilState(needToReloadProfileState);
 	const [newMessageSearch,setNewMessageSearch] = useState(false);
 	const [searchResult,setSearchResult] = useState([]); 
 	const [searchText,setSearchText] = useState('');
@@ -800,11 +800,11 @@ export default function Main() {
 										onClick={()=>{
 											modifySelectedUsers(res);
 										}}
-										className={`flex z-40 ${res?.group && 'hidden'} overflow-hidden cursor-pointer gap-[7px] w-full px-4 w-full hover:bg-gray-200/50 
+										className={`flex z-40 ${res?.group && 'hidden'} cursor-pointer gap-[7px] w-full px-4 w-full hover:bg-gray-200/50 
 										dark:hover:bg-gray-800/50 transition-all duration-200 ease-in-out py-3`}>
 											{
 												res?.group ? 
-												<div className="h-12 w-12 rounded-full overflow-hidden grid grid-cols-2">
+												<div className="h-12 w-12 rounded-full  grid grid-cols-2">
 													{
 														res?.image?.map((img,j)=>{
 															if(res.image.length === 3){
@@ -868,7 +868,9 @@ export default function Main() {
 								onClick={()=>{
 										setOpenOverlay([]);
 										setOverlayFor('');
-										window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+										let route = `/profile?profile=${user.id || user._id}`
+										router.push(route)
+										// window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
 										if(currentWindow === 'Profile'){
 											setNeedToReloadProfile(true);
 										}else{
@@ -881,7 +883,9 @@ export default function Main() {
 									onClick={()=>{
 										setOpenOverlay([]);
 										setOverlayFor('');
-										window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+										let route = `/profile?profile=${user.id || user._id}`
+										router.push(route)
+										// window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
 										if(currentWindow === 'Profile'){
 											setNeedToReloadProfile(true);
 										}else{
@@ -896,7 +900,9 @@ export default function Main() {
 												onClick={()=>{
 													setOpenOverlay([]);
 													setOverlayFor('');
-													window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+													let route = `/profile?profile=${user.id || user._id}`
+													router.push(route)
+													// window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
 													if(currentWindow === 'Profile'){
 														setNeedToReloadProfile(true);
 													}else{
@@ -911,7 +917,9 @@ export default function Main() {
 													
 													setOpenOverlay([]);
 													setOverlayFor('');
-													window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+													let route = `/profile?profile=${user.id || user._id}`
+													router.push(route)
+													// window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
 													if(currentWindow === 'Profile'){
 														setNeedToReloadProfile(true);
 													}else{
@@ -933,7 +941,9 @@ export default function Main() {
 												
 													setOpenOverlay([]);
 													setOverlayFor('');
-													window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+													let route = `/profile?profile=${user.id || user._id}`
+													router.push(route)
+													// window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
 													if(currentWindow === 'Profile'){
 														setNeedToReloadProfile(true);
 													}else{
@@ -948,7 +958,9 @@ export default function Main() {
 												
 													setOpenOverlay([]);
 													setOverlayFor('');
-													window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
+													let route = `/profile?profile=${user.id || user._id}`
+													router.push(route)
+													// window.history.replaceState({id:100},'Default',`?profile=${user.id || user._id}`);
 													if(currentWindow === 'Profile'){
 														setNeedToReloadProfile(true);
 													}else{

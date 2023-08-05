@@ -704,7 +704,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 		<div className="lg:w-[44.6%] relative md:w-[70%] xs:w-[90%] w-[100%] flex flex-col h-full border-r-[1.3px] border-gray-200 dark:border-gray-600 scrollbar-none overflow-y-scroll">
 			<div className="sticky top-0 gap-6 w-full backdrop-blur-lg z-30 flex items-center md:px-4 px-2 py-3 bg-white/50 dark:bg-[#100C08]/50">
 				<HiOutlineArrowLeft 
-				onClick={()=>{router.push('/');setCurrentPost('');}}
+				onClick={()=>{router.push('/')}}
 				className="h-[18px] cursor-pointer w-[18px] text-black dark:text-gray-200"/>
 				<h1 className="select-none text-xl text-black font-semibold dark:text-gray-200">Trend</h1>
 			</div>

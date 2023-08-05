@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {motion} from 'framer-motion'
 import ReactPlayer from 'react-player/lazy'
 import {useSound} from 'use-sound';
+import React from 'react';
 
 let audio;
 var timer;
@@ -33,6 +34,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const router = useRouter();
 	const [audioPlaying,setAudioPlaying] = useState(false);
 	const [imagekitAudio,setImagekitAudio] = useState(false);
+	const [showHeartAnimation,setShowHeartAnimation] = useState(false);
 	const [play, { stop:stopAudio8 }] = useSound(main?.audio,{
 		loop:true,
 		format:"mp3"
@@ -176,7 +178,14 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	    }, 200)
 
 	  } else if (event.detail === 2) {
-	    document.getElementById(`like-${j}`).focus();
+	  	if(currentUser){
+	  		setShowHeartAnimation(true);
+	  		setTimeout(()=>{setShowHeartAnimation(false)},1000)
+	  	}
+	    document.getElementById(`like-${j}`).classList.add('scale-75');
+	    setTimeout(()=>{
+	    	document.getElementById(`like-${j}`).classList.remove('scale-75');
+	    },300)
 		likeThisTweet(j);
 	  }
 	}
@@ -269,35 +278,78 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 				</div>
 				<div
 				className="w-full text-lg">
-					<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 select-none break-words">{
-
-						main?.text?.split(' ')?.map((txt,j)=>{
-						if(txt[0] === '#'){
-							return <span key={j}> <a 
-							onClick={()=>{
-								stopAudio8()
-								setSoundAllowed(false);
-								setSearchText(txt);
-								router.push('/explore')
-							}}
-								
-							className="text-sky-500 hover:underline" key={j} > {txt}</a></span>
-						}else{
-							return <span key={j}> <a 
-							onClick={()=>{
-								stopAudio8()
-								setSoundAllowed(false);
-								let route = `/trend?trend=${main._id}`
-								router.push(route)
-							}} key={j} > {txt}</a></span>
-							
-						}
-					})}</h1>
+					<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 break-words"
+					style={{ whiteSpace: 'pre-line' }}>
+					{main?.text?.split('\n')?.map((line, i) => (
+					    <React.Fragment key={i}>
+					      {line.split(' ')?.map((txt, j) => {
+					        if (txt.startsWith('#')) {
+					          return (
+					            <span key={j}>
+					              {' '}
+					              <a
+					                onClick={() => {
+					                  stopAudio8();
+					                  setSoundAllowed(false);
+					                  setSearchText(txt);
+					                  router.push('/explore');
+					                }}
+					                className="text-sky-500 hover:underline"
+					                key={j}
+					              >
+					                {txt}
+					              </a>
+					            </span>
+					          );
+					        } else if (txt.startsWith('@')) {
+					          const username = txt.substring(1); // Remove the @ symbol
+					          return (
+					            <span key={j}>
+					              {' '}
+					              <a
+					                onClick={() => {
+					                  stopAudio8();
+					                  setSoundAllowed(false);
+					                  let route = `/profile?username=${username}`
+									  router.push(route)
+					                }}
+					                className="text-sky-500 hover:underline"
+					                key={j}
+					              >
+					                {txt}
+					              </a>
+					            </span>
+					          );
+					        } else {
+					          return (
+					            <span key={j}>
+					              {' '}
+					              <a
+					                onClick={() => {
+					                  stopAudio8();
+					                  setSoundAllowed(false);
+					                  let route = `/trend?trend=${main._id}`;
+					                  router.push(route);
+					                }}
+					                key={j}
+					              >
+					                {txt}
+					              </a>
+					            </span>
+					          );
+					        }
+					      })}
+					      <br />
+					    </React.Fragment>
+					  ))}
+					  </h1>
 				</div>	
 				<div 
-				
 				className={`rounded-2xl ${main?.images?.length>0 && 'mt-3'} grid rounded-2xl ${main?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} 
-				gap-1 overflow-hidden relative z-10`}>
+				gap-1 overflow-hidden relative z-0`}>
+					<div className={`absolute h-[70px] z-10 w-[70px] inset-0 m-auto opacity-0 ${showHeartAnimation ? 'pop' : ''}`}>
+						<AiFillHeart className="h-full w-full text-white"/>
+					</div>
 					{
 						main?.images?.length>0 &&
 							main?.images?.map((ur,i)=>(
@@ -306,7 +358,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 								onClickHandler(e,ur)
 							}}
 							className="relative group flex items-center justify-center cursor-pointer overflow-hidden" key={i}>
-								<div className="absolute h-full w-full z-10 transition-all duration-200 
+								<div className="absolute h-full w-full transition-all duration-200 
 								ease-in-out group-hover:bg-gray-500/10"/>
 								<img src={ur} alt="" className="select-none w-full h-full transition-all duration-300 ease-in-out"/>
 							</div>

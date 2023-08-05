@@ -179,3 +179,8 @@ export const msgRevealState = atom({
 	key:"msgRevealState",
 	default:false
 })
+
+export const needToReloadProfileState = atom({
+	key:"needToReloadProfileState",
+	default:false
+})

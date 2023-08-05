@@ -62,10 +62,11 @@ export default function SongCard({res,j,setSongUrl,songUrl,audioUrl,setAudioUrl,
 				setAudioUrl('');
 				setOpenSongSelection(false);
 			}} className="flex items-center gap-2 w-full w-[90%]">
-				<div className="rounded-full md:w-auto sm:w-[10%] w-[20%] overflow-hidden">
-					<img src={res?.album?.cover_big} alt="" className="h-11 w-11 aspect-square rounded-full"/>
+				<div className="rounded-full sm:w-auto w-auto overflow-hidden">
+					<img src={res?.album?.cover_big} alt="" className="h-11 w-11 aspect-square object-cover rounded-full"/>
 				</div>
-				<h6 className="text-md leading-normal md:w-auto break-all sm:w-[80%] w-[80%] font-semibold dark:text-gray-200 text-black ">{res?.album?.title}</h6>
+				<h6 className="text-md leading-normal break-all md:w-[80%]
+				sm:w-auto w-[80%] font-semibold dark:text-gray-200 text-black ">{res?.album?.title}</h6>
 			</div>
 			<div 
 			onClick={()=>setIsPlaying(!isPlaying)}

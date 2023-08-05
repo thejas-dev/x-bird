@@ -19,6 +19,7 @@ export const getUserByIdRoute = `${host}/api/auth/getUserByIdRoute`;
 export const updateUserFollowing = `${host}/api/auth/updateUserFollowing`;
 export const updateUserFollowers = `${host}/api/auth/updateUserFollowers`;
 export const searchProfile  = `${host}/api/auth/searchProfile`;
+export const searchProfileWithUsername = `${host}/api/auth/searchProfileWithUsername`;
 export const sendMsgRoute = `${host}/api/auth/addMessage`;
 export const updateUserChats  = `${host}/api/auth/updateUserChats`;
 export const getAllMsgRoute = `${host}/api/auth/getAllMsgRoute`;

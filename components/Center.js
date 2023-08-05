@@ -14,7 +14,7 @@ import {MdSchedule} from 'react-icons/md'
 import {HiOutlineLocationMarker} from 'react-icons/hi';
 import {createTweet,getAllPosts,getPostByIdRoute,updatedPostRoute,
 	updateUser,updateUserTweets,updateUserRetweets,getAllFollowingPosts,
-	songSearchRoute} from '../utils/ApiRoutes';
+	songSearchRoute,searchProfileWithUsername} from '../utils/ApiRoutes';
 import axios from 'axios'
 import {RxCross2} from 'react-icons/rx';
 import millify from 'millify';
@@ -62,9 +62,13 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	const [songUrl,setSongUrl] = useState('');
 	const [openSongSelection,setOpenSongSelection] = useState(false);
 	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
-	const [searchSongValue,setSearchSongValue] = useState('Anirudh');
+	const [searchSongValue,setSearchSongValue] = useState('');
 	const [songSearchResults,setSongSearchResults] = useState([]);
 	const [notFirstTime,setNotFirstTime] = useState(false);
+	const [songLoading,setSongLoading] = useState(false);
+	const [mentionTabOpen,setMentionTabOpen] = useState(false);
+	const [mentionUserName,setMentionUserName] = useState('');
+	const [mentionUserResult,setMentionUserResult] = useState([]);
 
 	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -388,7 +392,7 @@ export default function Center({setCurrentWindow,currentWindow}) {
 			// console.log(mainFeed,followingFeed);
 			// let followFeed = [...followingFeed, ...foryou];
 			setFollowingFeed(newFeed);
-			console.log(newFeed)
+			// console.log(newFeed)
 			setMainFeedNotAdded(false)
 		}
 	}
@@ -722,22 +726,68 @@ export default function Center({setCurrentWindow,currentWindow}) {
 	}
 
 	const searchForSong = async() => {
-		setSongSearchResults([]);
 		const {data} = await axios.get(`${songSearchRoute}/${searchSongValue}`);
 		setSongSearchResults(data.data);
+		setSongLoading(false);		
+	}
 
+	const searchForSongInitial = async() => {
+		const {data} = await axios.get(`${songSearchRoute}/Anirudh`);
+		setSongSearchResults(data.data);
+		setSongLoading(false);		
 	}
 
 	useEffect(()=>{
-		if(searchSongValue.length > 3){
-			searchForSong()
-		}
-	},[searchSongValue])
+		searchForSongInitial()
+	},[])
 
+	// useEffect(()=>{
+	// 	if(searchSongValue.length > 3){
+	// 		searchForSong()
+	// 	}
+	// },[searchSongValue])
+
+	const songSearch = async() =>  {
+		if(searchSongValue.length > 2 && !songLoading){
+			setSongSearchResults([]);
+			setSongLoading(true);
+			searchForSong()	
+		}
+	}
+
+	useEffect(()=>{
+		if(url.length<1){
+			setOpenSongSelection(false)
+		}
+	},[url])
+
+	const findUserByUsername = async() => {
+		const {data} = await axios.post(searchProfileWithUsername,{
+			searchText:mentionUserName
+		});
+		setMentionUserResult(data.user);
+	}
+
+	useEffect(()=>{
+		if(mentionUserName){
+			findUserByUsername();
+		}
+	},[mentionUserName])
+
+
+	const handleMentionClick = (username) => {
+	  const mentionRegex = /@\w+\s*$/;
+	  const updatedText = tweetText.replace(mentionRegex, `@${username} `);
+	  setTweetText(updatedText);
+	  document.getElementById('tweetArea').focus();
+	  setMentionTabOpen(false);
+	  setMentionUserName('');
+	};
+	
 	const openEmojiInput = () => setEmojiInput(!emojiInput)
 
 	const openAudioInput = () => document.getElementById('audioFile').click()
-
+	
 	
 
 	return (
@@ -836,6 +886,21 @@ export default function Center({setCurrentWindow,currentWindow}) {
  								value={tweetText}
  								onChange={(e)=>{
  									if(!loader){
+ 										let char = e.target.value[e.target.value.length - 1]
+ 										if(char === '@'){
+ 											setMentionTabOpen(true);
+ 											setMentionUserName(''); 											
+ 										}	
+ 										if(char === ' '){
+ 											setMentionTabOpen(false);
+ 											setMentionUserName('');
+ 										}
+
+ 										if((mentionTabOpen || char === '@') && char !== ' '){
+											let text = e?.target?.value?.substring(e?.target?.value?.lastIndexOf('@') + 1);
+											setMentionUserName(text); 											
+ 										}
+ 										
  										setTweetText(e.target.value)
  									}
  								}}
@@ -845,6 +910,29 @@ export default function Center({setCurrentWindow,currentWindow}) {
  								placeholder="Create a trend?!"
  								/>
 							</div>
+							{
+								<div className={`${mentionTabOpen && mentionUserResult?.length > 0 ? 'max-h-[300px] border-[1px]' : 'h-[0px]'}
+								transition-all duration-300 ease-in-out	overflow-hidden w-full border-gray-500/80 relative rounded-xl mt-2`}>
+									{
+										mentionUserResult?.map((who,i)=>(
+											<div 
+											onClick={()=>{
+												handleMentionClick(who?.username)
+											}}
+											className={`px-3 py-2 ${i > 3 && 'hidden' } flex justify-between hover:bg-gray-200 dark:hover:bg-gray-800/30
+											transition-all duration-200 ease-in-out cursor-pointer gap-2`} key={i}>
+												<div className="flex gap-2 items-center overflow-hidden">
+													<img src={who.image} className="h-12 w-12 rounded-xl"/>
+													<div className="flex flex-col gap-[2px] overflow-hidden">
+														<h1 className="text-black dark:text-gray-200 text-md font-semibold truncate">{who.name}</h1>
+														<h1 className="text-gray-500 text-md truncate">@{who.username}</h1>
+													</div>
+												</div>
+											</div>
+										))
+									}
+								</div>
+							}
 							{
 								url.length>0 &&
 								<div className={`mt-4 relative grid rounded-2xl ${url.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-2 overflow-hidden w-full`}>
@@ -918,18 +1006,26 @@ export default function Center({setCurrentWindow,currentWindow}) {
 									dark:hover:bg-gray-700/50 hover:bg-gray-300/50 transition-all	duration-200 ease-in-out cursor-pointer">
 										<MdArrowUpward className="text-black dark:text-gray-200 h-6 w-6 "/>
 									</div>
-									<div className="w-full flex items-center rounded-2xl dark:bg-gray-800/40 
+									<form 
+									onSubmit={e=>{
+										e.preventDefault();
+										songSearch()
+									}}
+									className="w-full flex items-center rounded-2xl dark:bg-gray-800/40 
 									bg-gray-200/60 px-3 py-2 gap-2 border-gray-800/20 border-[1px] focus-within:border-sky-500">
 										<AiOutlineSearch className="h-6 w-6 text-black dark:text-gray-300"/> 
 										<input type="text" value={searchSongValue} onChange={(e)=>{
 											setSearchSongValue(e.target.value)
 										}} className="w-full bg-transparent h-full text-md outline-none 
 										ring-0 text-black dark:text-gray-200 placeholder:text-gray-500" 
-										placeholder="Search for music"
+										placeholder="Search for songs"
 										/>
-									</div>
+										<h1 onClick={songSearch} className={`text-lg 
+										${songLoading || searchSongValue.length < 3 ? 'text-gray-500' : 'text-sky-500'}
+										cursor-pointer`}>Search</h1>
+									</form>
 								</div>
-								<div className={`w-full h-full overflow-y-scroll scrollbar-thin scrollbar-thumb-sky-500 
+								<div className={`w-full relative h-full overflow-y-scroll scrollbar-thin scrollbar-thumb-sky-500 pb-[60px]
 								dark:scrollbar-track-gray-800/50 scrollbar-track-gray-100/50 scrollbar-thumb-rounded-xl`}>
 									{
 										songSearchResults?.map((res,j)=>(
@@ -940,6 +1036,14 @@ export default function Center({setCurrentWindow,currentWindow}) {
 											openSongSelection={openSongSelection} setOpenSongSelection={setOpenSongSelection}
 											/>
 										))
+									}
+									{
+										songLoading &&
+										<div className="h-full flex  justify-center w-full
+										 absolute top-0 left-0 pt-[80px] backdrop-blur-lg">
+											<span className="loader5" />
+
+										</div>
 									}
 
 								</div>
