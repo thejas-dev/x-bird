@@ -347,7 +347,8 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 				<div 
 				className={`rounded-2xl ${main?.images?.length>0 && 'mt-3'} grid rounded-2xl ${main?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} 
 				gap-1 overflow-hidden relative z-0`}>
-					<div className={`absolute h-[70px] z-10 w-[70px] inset-0 m-auto opacity-0 ${showHeartAnimation ? 'pop' : ''}`}>
+					<div className={`absolute h-[70px] z-10 w-[70px] inset-0 
+					m-auto opacity-0 ${showHeartAnimation ? 'pop' : ''} ${main?.images?.length < 1 && 'hidden'} `}>
 						<AiFillHeart className="h-full w-full text-white"/>
 					</div>
 					{
