@@ -1,5 +1,6 @@
 import {MdPostAdd} from 'react-icons/md';
 import {useState,useEffect} from 'react';
+import {useRouter} from 'next/router';
 import {useRecoilState} from 'recoil'
 import {currentUserState,currentListState,bottomHideState,showLoginNowState} from '../atoms/userAtom'
 import {BiArrowBack} from 'react-icons/bi';
@@ -43,6 +44,7 @@ export default function Lists({currentWindow,setCurrentWindow}) {
  	const [description,setDescription] = useState('');
  	const [editListShow,setEditListShow] = useState(false);
  	const [backgroundImage,setBackgroundImage] = useState('');
+ 	const router = useRouter()
 	const [path4,setPath4] = useState('');
  	const imagekit = new ImageKit({
 	    publicKey : process.env.NEXT_PUBLIC_IMAGEKIT_ID,
@@ -712,7 +714,7 @@ export default function Lists({currentWindow,setCurrentWindow}) {
 			<div className="sticky top-0 gap-1 w-full backdrop-blur-lg z-30 flex items-center md:px-4 px-2 py-3 
 			dark:bg-[#100C08]/50 bg-white/50">
 				<div 
-				onClick={()=>setCurrentWindow('Home')}
+				onClick={()=>{setCurrentWindow('Home');router.push('/')}}
 				className="grid items-center p-1 hover:bg-gray-400/30 rounded-full transition-all duration-200 ease-in-out cursor-pointer select-none">
 					<BiArrowBack className="h-7 w-7 text-black dark:text-gray-200"/>
 				</div>
