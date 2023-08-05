@@ -107,7 +107,7 @@ export default function CategorySelector({showCategorySelector,setShowCategorySe
 							duration-200 ease-in-out cursor-pointer">
 								<RxCross2 className={`h-full w-full ${currentUser?.categories?.length < 2 ? 'text-gray-500 dark:text-gray-800' : 'text-black dark:text-gray-100'}`}/>
 							</div>
-							<h1 className="md:text-2xl pb-[1.5px] text-xl text-black dark:text-gray-200 font-semibold">Select your favorites</h1>
+							<h1 className="md:text-2xl pb-[1.5px] text-xl text-black dark:text-gray-200 font-semibold">Select your favorites (Atleast 4)</h1>
 						</div>
 						<button 
 						onClick={()=>{
