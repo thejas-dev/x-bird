@@ -579,6 +579,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 	useEffect(()=>{
 		if(currentHeading === 'Trends'){
+			setCurrentUserTweets([])
 			fetchTweets()
 		}else if(currentHeading === 'Likes') {
 			fetchLikes();
@@ -876,6 +877,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		const {data} = await axios.post(removePost,{
 			id:currentUserTweets[j]._id
 		})
+		setCurrentUserTweets([])
 		fetchTweets()
 	}
 
