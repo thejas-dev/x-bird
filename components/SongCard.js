@@ -23,6 +23,7 @@ export default function SongCard({res,j,setSongUrl,songUrl,audioUrl,setAudioUrl,
 		if(nowPlaying){
 			if(nowPlaying !== res?.preview){
 				stop()
+				setIsPlaying(false);
 			}
 		}
 	},[nowPlaying])
