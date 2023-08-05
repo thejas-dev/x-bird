@@ -980,7 +980,13 @@ export default function Main() {
 				</div>
 			</div>
 			
-			<div className={`fixed flex gap-2 items-center px-4 pr-7 py-2 top-2 shadow-xl hover:shadow-sky-600/60 shadow-sky-600/40 ${notify ? 'left-2':'-left-[50%]'} 
+			<div onClick={()=>{
+				router.push('/messages');
+				setNotify(false);
+				setTimeout(()=>{
+					setRevealNotify('');
+				},400)
+			}} className={`fixed flex gap-2 items-center px-4 pr-7 py-2 top-2 shadow-xl hover:shadow-sky-600/60 shadow-sky-600/40 ${notify ? 'left-2':'-left-[50%]'} 
 			bg-gray-50 dark:bg-gray-900 z-50 rounded-xl transition-all duration-300 ease-in-out border-gray-300/60 dark:border-gray-700/60 border-[1.4px]`}>
 				<img src={revealNotify?.user?.image}
 				alt=" "

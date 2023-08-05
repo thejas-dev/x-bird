@@ -62,17 +62,11 @@ export default function Home({providers,session2}) {
 	    });
 	    if(data.status === false){
 	      setName(session?.user.name);
-	      setUsername(session?.user.name);
+	      let username = session?.user?.name?.split(' ')[0]
+	      setUsername(username);
 	      setImage(session?.user.image);
 	      setImageSet(true);
 	      setEmail(session?.user.email);
-	      // const {data} = await axios.post(registerRoute,{
-	      //   email,name,username,image
-	      // })
-	      // if(!localStorage.getItem('xbird')){
-	      //   localStorage.setItem('xbird',JSON.stringify(data?.user.email));
-	      // }
-	      // setCurrentUser(data?.user);
 	      setCurrentWindow('accountset')
 	    }else{
 	      if(!localStorage.getItem('xbird')){
@@ -194,7 +188,7 @@ export default function Home({providers,session2}) {
 				if(data.status === true){
 					setPasswordNotMatch(false);
 					setName(ngaGmail.split('@')[0])
-					setUsername(ngaGmail.split('@')[0])
+					setUsername(ngaGmail.split('@')[0]?.split(' ')[0])
 					setCurrentWindow('accountset')
 					setCreatingNGAAccount(true);
 					setAccountAlreadyExist(false);

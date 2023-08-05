@@ -231,7 +231,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 							stopAudio8()
 							setSoundAllowed(false);
 						}}
-						className="text-gray-500 text-md truncate select-none hidden sm:block">@{main?.user?.username}</h1>
+						className="text-gray-500 text-lg truncate select-none hidden sm:block">@{main?.user?.username}</h1>
 						<h1 
 						onClick={()=>{
 							stopAudio8()
@@ -277,7 +277,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					}
 				</div>
 				<div
-				className="w-full text-lg">
+				className={`w-full text-lg ${main?.text?.length < 1 && 'hidden'} `}>
 					<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 break-words"
 					style={{ whiteSpace: 'pre-line' }}>
 					{main?.text?.split('\n')?.map((line, i) => (

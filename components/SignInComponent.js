@@ -17,7 +17,7 @@ export default function SignInComponent({loading,id,name,setName,setUsername,cur
 		<div className="h-[100%] bg-[#e6f2ff] p-2 relative flex w-full items-center justify-center ">
 			<div className={` flex justify-center left-0 top-0 z-50 items-center bg-black/70 backdrop-blur-md transition-all duration-300 ease-in-out ${finalLoading ? 'absolute' : 'hidden'} h-full w-full`}>
 				<span className="loader4 flex items-center justify-center">
-					<img src="twitter-icon.png" alt="" className="h-[50px] w-[50px] -rotate-[40deg]"/>
+					<img src="https://ik.imagekit.io/d3kzbpbila/thejashari_QSzOWJHFV?updatedAt=1690659361414" alt="" className="h-[50px] w-[50px] -rotate-[40deg]"/>
 				</span> 
 			</div>
 			{
@@ -45,7 +45,12 @@ export default function SignInComponent({loading,id,name,setName,setUsername,cur
 						<div class="input-group">
 							<label for="username">Gmail</label>
 							<input type="text" name="Gmail" id="username" placeholder=""
-							value={ngaGmail} onChange={(e)=>{setNgaGmail(e.target.value)}}
+							value={ngaGmail} onChange={(e)=>{
+								let char = e.target.value[e.target.value.length - 1]
+								if(char !== ' ' && char !== '#'){
+									setNgaGmail(e.target.value)
+								}
+							}}
 							/>
 						</div>
 						<div class="input-group">
@@ -157,7 +162,12 @@ export default function SignInComponent({loading,id,name,setName,setUsername,cur
 								onFocus={()=>document.getElementById('Username').classList.add('text-sky-500')}
 								onBlur={()=>document.getElementById('Username').classList.remove('text-sky-500')}
 								value={username}
-								onChange={(e)=>setUsername(e.target.value)}
+								onChange={(e)=>{
+									let char = e.target.value[e.target.value.length - 1]
+									if(char !== ' ' && char !== '@' && char !== '#'){
+										setUsername(e.target.value)
+									}
+								}}
 								className="w-full text-lg
 								text-gray-100 placeholder:text-gray-500/70 bg-transparent outline-none "/>
 							</div>
