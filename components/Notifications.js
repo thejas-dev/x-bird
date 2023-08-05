@@ -179,7 +179,7 @@ export default function Notification({currentWindow,setCurrentWindow,setShowThem
 					onClick={()=>{
 						window.location.href = `mailto:thejaskala308@gmail.com?subject=Trenzio Issue Report&body=`
 					}}
-					className="rounded-xl border-[1px] border-gray-300/80 dark:border-gray-700/50 cursor-pointer transition
+					className="rounded-xl border-[1px] mt-4 border-gray-300/80 dark:border-gray-700/50 cursor-pointer transition
 					duration-200 ease-in-out hover:bg-gray-200/50 dark:hover:bg-gray-900/70 px-3 
 					py-3 flex items-center justify-between">
 						<h1 className="text-xl font-semibold text-black dark:text-gray-200">Report issues</h1>
