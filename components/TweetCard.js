@@ -215,6 +215,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	    	document.getElementById(`like-${j}`).classList.remove('scale-75');
 	    },300)
 		likeThisTweet(j);
+		setLiked(!liked)
 	  }
 	}
 
