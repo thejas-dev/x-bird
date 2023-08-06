@@ -582,7 +582,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	}
 
 	useEffect(()=>{
-		if(currentHeading === 'Trends'){
+		if(currentHeading === 'Trends' && notFirstTime){
 			setCurrentUserTweets([])
 			fetchTweets()
 		}else if(currentHeading === 'Likes') {
