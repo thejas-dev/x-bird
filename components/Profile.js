@@ -323,7 +323,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 		}	
 		if(!notFirstTime){
 			setNotFirstTime(true)
-		}
+		};
 	},[])
 
 	const calDate = (date) => {
