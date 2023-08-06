@@ -41,7 +41,6 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 	const [searchText,setSearchText] = useRecoilState(searchTextState);
 	const [soundAllowed,setSoundAllowed] = useRecoilState(soundAllowedState);
 	const [postLoading,setPostLoading] = useState(false);
-	const [notFirstTime,setNotFirstTime] = useState(false);
 	const router = useRouter();
 
 	const fetchTweets = async() => {
@@ -293,7 +292,7 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 
 	useEffect(()=>{
 		if(displayUser){
-			if(!tweetFetched && currentUserTweets?.length < 1 && notFirstTime){
+			if(!tweetFetched && currentUserTweets?.length < 1){
 				setCurrentUserTweets([]);
 				fetchTweets()
 			}
@@ -321,9 +320,6 @@ export default function Profile({currentWindow,setCurrentWindow,setOpenOverlay,o
 				fetchRetweets()
 			}
 		}	
-		if(!notFirstTime){
-			setNotFirstTime(true)
-		}
 	},[])
 
 	const calDate = (date) => {
