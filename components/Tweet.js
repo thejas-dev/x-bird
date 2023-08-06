@@ -24,6 +24,7 @@ import { faVolumeXmark, faVolumeHigh } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import ReactPlayer from 'react-player'
 import {useRouter} from 'next/navigation';
+import React from 'react';
 
 let imageUrl = [];
 let audio;
