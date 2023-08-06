@@ -29,7 +29,18 @@ export default function App({ Component, pageProps: { session, ...pageProps} }) 
     } 
 
   },[router])
+  
+  useEffect(() => {
+    // Check if the user agent indicates the Instagram in-app browser
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    if(userAgent.includes('instagram')){
+      router.push('/notallowed')
+    }
 
+    return () => {
+    };
+  }, []);
+  
   return (
   <>
   <Head>
