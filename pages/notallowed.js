@@ -35,7 +35,7 @@ export default function LinkComponent() {
           <h1 className="text-gray-200 text-[18px] text-center px-4">
           	It seems like you are using instagram built-in broswer. The Instagram in-app browser lacks support for critical features like WebRTC, socket connections, and cookies, essential for a seamless experience in the Trendzio app. 
           	<br/><br/>
-          	To fully access all capabilities, we suggest opening the trendzio application in an external browser, ensuring real-time video streaming and optimal session management.
+          	To fully access all capabilities, we suggest opening the trendzio application in an external browser, ensuring real-time communication and optimal session management.
           </h1>
           <h1 onClick={copyLink} className="text-pink-500 text-xl cursor-pointer font-semibold">https://trendzio.vercel.app</h1>
           <p className="text-gray-300 px-5 text-center">
