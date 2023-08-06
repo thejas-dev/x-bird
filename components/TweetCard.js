@@ -39,6 +39,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 	const [imagekitAudio,setImagekitAudio] = useState(false);
 	const [showHeartAnimation,setShowHeartAnimation] = useState(false);
 	const [songUrl,setSongUrl] = useState('');
+	const [videoUrl,setVideoUrl] = useState('');
 	// const [play, { stop:stopAudio8 }] = useSound(main?.audio,{
 	// 	loop:true,
 	// 	format:"mp3",
@@ -115,7 +116,10 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 
 	useEffect(()=>{
 		if(isIntersecting){
-			viewThisTweet(j)
+			viewThisTweet(j);
+			if(main?.videos && !videoUrl){
+				setVideoUrl(main?.videos)
+			}			
 			if(soundAllowed && !audioPlaying && main?.audio && !imPlaying){
 				setSongUrl(main?.audio);
 				if(imagekitAudio){
@@ -402,7 +406,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					{
 						main?.videos &&
 						<div className="relative rounded-md mt-2 overflow-hidden">												
-							<ReactPlayer ref={playerRef} url={main?.videos} controls={true} width='100%' height='100%'/>								
+							<ReactPlayer ref={playerRef} url={videoUrl} controls={true} width='100%' height='100%'/>								
 						</div>
 					}
 					{
