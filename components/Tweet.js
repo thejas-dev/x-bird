@@ -11,7 +11,7 @@ import {FaRegComment} from 'react-icons/fa';
 import axios from 'axios'
 import millify from 'millify';
 import {currentUserState,loaderState,showLoginNowState,showClipboardState,soundAllowedState,
-	showMaxImageState,maxImageState} from '../atoms/userAtom';
+	showMaxImageState,maxImageState,searchTextState} from '../atoms/userAtom';
 import {useRecoilState} from 'recoil'
 import {getPostByIdRoute,updateUser,updatedPostRoute,updateUserRetweets,updateUserBookmarks} from '../utils/ApiRoutes';
 import EmojiPicker from 'emoji-picker-react';
@@ -49,6 +49,7 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 	const [audioPlaying,setAudioPlaying] = useState(false);
 	const [showMaxImage,setShowMaxImage] = useRecoilState(showMaxImageState)					
 	const [maxImage,setMaxImage] = useRecoilState(maxImageState)
+	const [searchText,setSearchText] = useRecoilState(searchTextState);
 	const [audioUrl,setAudioUrl] = useState('');
 	const [liked,setLiked] = useState(false);
 	const router = useRouter()
@@ -726,7 +727,71 @@ export default function Tweet({currentWindow,setCurrentWindow,setOpenOverlay,ope
 					</div>
 				</div>
 				<div className="pt-3 w-full">
-					<h1 className="w-full break-words text-lg text-black dark:text-gray-200">{currentPost?.text}</h1>
+					<h1 className="w-full z-50 text-gray-900 dark:text-gray-200 break-words"
+					style={{ whiteSpace: 'pre-line' }}>
+					{currentPost?.text?.split('\n')?.map((line, i) => (
+					    <React.Fragment key={i}>
+					      {line.split(' ')?.map((txt, j) => {
+					        if (txt.startsWith('#')) {
+					          return (
+					            <span key={j}>
+					              {' '}
+					              <a
+					                onClick={() => {
+					                  stop();
+					                  setSoundAllowed(false);
+					                  setSearchText(txt);
+					                  router.push('/explore');
+					                }}
+					                className="text-sky-500 hover:underline"
+					                key={j}
+					              >
+					                {txt}
+					              </a>
+					            </span>
+					          );
+					        } else if (txt.startsWith('@')) {
+					          const username = txt.substring(1); // Remove the @ symbol
+					          return (
+					            <span key={j}>
+					              {' '}
+					              <a
+					                onClick={() => {
+					                  stop();
+					                  setSoundAllowed(false);
+					                  let route = `/profile?username=${username}`
+									  router.push(route)
+					                }}
+					                className="text-sky-500 hover:underline"
+					                key={j}
+					              >
+					                {txt}
+					              </a>
+					            </span>
+					          );
+					        } else {
+					          return (
+					            <span key={j}>
+					              {' '}
+					              <a
+					                onClick={() => {
+					                  stop();
+					                  setSoundAllowed(false);
+					                  let route = `/trend?trend=${main._id}`;
+					                  router.push(route);
+					                }}
+					                key={j}
+					              >
+					                {txt}
+					              </a>
+					            </span>
+					          );
+					        }
+					      })}
+					      <br />
+					    </React.Fragment>
+					  ))}
+					  </h1>
 				</div>
 				<div className={`rounded-2xl mt-3 grid relative rounded-2xl ${currentPost?.images?.length>1 ? 'grid-cols-2' : 'grid-cols-1'} gap-1 overflow-hidden`}>
 					{
