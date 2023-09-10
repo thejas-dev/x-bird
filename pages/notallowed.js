@@ -33,7 +33,7 @@ export default function LinkComponent() {
         <div className="flex justify-center flex-col items-center gap-7">
 						
           <h1 className="text-gray-200 text-[18px] text-center px-4">
-          	It seems like you are using instagram's in-app browser. The Instagram in-app browser lacks support for critical features like WebRTC, socket connections, and cookies, essential for a seamless experience in the Trendzio app. 
+          	It seems like you are using instagram&apos;s in-app browser. The Instagram in-app browser lacks support for critical features like WebRTC, socket connections, and cookies, essential for a seamless experience in the Trendzio app. 
           	<br/><br/>
           	To fully access all capabilities, we suggest opening the trendzio application in an external browser, ensuring real-time communication and optimal session management.
           </h1>
