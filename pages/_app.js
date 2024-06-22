@@ -3,7 +3,7 @@ import { SessionProvider } from 'next-auth/react';
 import Head from 'next/head'
 import { RecoilRoot } from "recoil";
 import {useEffect} from 'react';
-import {useRouter} from 'next/router';
+import {useRouter} from 'next/navigation';
 
 import {Progress} from '../components';
 import {useProgressStore} from '../store';
