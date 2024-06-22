@@ -11,7 +11,7 @@ export default function LinkComponent() {
 
 
 	 const copyLink = () => {
-	    const link = 'https://trendzio.vercel.app';
+	    const link = 'https://trendzio-v1.vercel.app';
 
 	    // Create a temporary input element to copy the link to the clipboard
 	    const tempInput = document.createElement('input');
@@ -33,11 +33,11 @@ export default function LinkComponent() {
         <div className="flex justify-center flex-col items-center gap-7">
 						
           <h1 className="text-gray-200 text-[18px] text-center px-4">
-          	It seems like you are using instagram built-in broswer. The Instagram in-app browser lacks support for critical features like WebRTC, socket connections, and cookies, essential for a seamless experience in the Trendzio app. 
+          	It seems like you are using instagram&apos;s in-app browser. The Instagram in-app browser lacks support for critical features like WebRTC, socket connections, and cookies, essential for a seamless experience in the Trendzio app. 
           	<br/><br/>
           	To fully access all capabilities, we suggest opening the trendzio application in an external browser, ensuring real-time communication and optimal session management.
           </h1>
-          <h1 onClick={copyLink} className="text-pink-500 text-xl cursor-pointer font-semibold">https://trendzio.vercel.app</h1>
+          <h1 onClick={copyLink} className="text-pink-500 text-xl cursor-pointer font-semibold">https://trendzio-v1.vercel.app</h1>
           <p className="text-gray-300 px-5 text-center">
           Copy the link above and open it in a full browser such as <span className="text-pink-500 font-semibold">Google Chrome</span> or another browser of your choice. This will ensure that you have access to all the features, including real-time communication like group calls and proper session management.
         </p>
