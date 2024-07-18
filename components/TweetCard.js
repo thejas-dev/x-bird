@@ -527,7 +527,7 @@ export default function TweetCard({main,j,setCurrentWindow,calDate,BsThreeDots,F
 					</div>
 					<div 
 					onClick={()=>{
-						navigator.clipboard.writeText(host + '/trend?trend=' + main._id)
+						navigator.clipboard.writeText('https://trendzio-v1.vercel.app' + '/trend?trend=' + main._id)
 						setShowClipboard(true)
 					}}
 					className="flex group md:gap-[6px] gap-[3px] items-center">
